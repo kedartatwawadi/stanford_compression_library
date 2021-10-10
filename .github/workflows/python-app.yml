@@ -33,4 +33,5 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: unit tests
       run: |
+        export PYTHONPATH=$PYTHONPATH:.
         find . -name "*_tests.py" -exec py.test -s -v {} +
