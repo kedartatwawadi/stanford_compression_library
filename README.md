@@ -13,6 +13,13 @@ For example:
 export PYTHONPATH=$PYTHONPATH:/Users/kedar/code/stanford_compression_library
 ```
 - Run unit tests
+
+To run all tests:
+```
+find . -name "*_tests.py" -exec py.test -s -v {} +
+```
+
+To run a single test
 ```
 py.test -s -v core/data_stream_tests.py
 ```
