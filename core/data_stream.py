@@ -4,14 +4,13 @@ from core.util import compute_alphabet, compute_counts_dict
 from core.prob_dist import ProbabilityDist
 
 
-@dataclass
 class DataStream:
     """
     FIXME: for now data is only presented as a list of symbols
     """
 
-    data_list: List = None
-    alphabet: Set = None
+    def __init__(self, data_list: List):
+        self.data_list = data_list
 
     def set_alphabet(self):
         self.alphabet = compute_alphabet(self.data_list)
@@ -55,3 +54,46 @@ class DataStream:
 
         prob_dist = self.get_empirical_distribution()
         return prob_dist.entropy
+
+
+class StringDataStream(DataStream):
+    """
+    DataStream for which each element of the data_list is a str
+    For eg: ["0", "1"], ["A", "AAB", "BCE"]
+    """
+
+    @staticmethod
+    def validate_data_symbol(symbol) -> bool:
+        """
+        validates that the symbol is of type str
+        """
+        return isinstance(symbol, str)
+
+
+class BitstringDataStream(StringDataStream):
+    """
+    DataStream for which each element of the data_list is a str
+    For eg: ["0", "1"], ["A", "AAB", "BCE"]
+    """
+
+    @staticmethod
+    def validate_data_symbol(bitstring) -> bool:
+        """
+        validates that the symbol is of type str
+        """
+        # validate if input symbol is a string
+        is_str = super().validate_data_symbol(bitstring)
+        if is_str:
+            # validate if input symbol string contains only 0,1
+            is_bitstring = False
+
+            bitstring_list = [c for c in bitstring]
+            alphabet = compute_alphabet(bitstring_list)
+
+            if ("0" in alphabet) and ("1" in alphabet):
+                if len(alphabet) == 2:
+                    is_bitstring = False
+
+            return is_bitstring
+        else:
+            return False

@@ -13,7 +13,7 @@ class ProbabilityDistTest(unittest.TestCase):
         assert fair_coin_dist.entropy == 1.0
 
         dyadic_dist = ProbabilityDist({"A": 0.5, "B": 0.25, "C": 0.25})
-        print(dyadic_dist.entropy)
+        assert dyadic_dist.entropy == 1.5
 
     @unittest.expectedFailure
     def test_validation_failure(self):
