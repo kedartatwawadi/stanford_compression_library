@@ -25,3 +25,18 @@ def compute_counts_dict(data_list: List) -> dict:
         count_dict[d] += 1
 
     return count_dict
+
+
+def uint_to_bitstring(uint_data, bit_width=None):
+    """
+    converts an unsigned into to bits.
+    if bit_width is provided then data is converted accordingly
+    """
+    if bit_width is None:
+        return f"{uint_data:b}"
+    else:
+        return f"{uint_data:0{bit_width}b}"
+
+
+def bitstring_to_uint(bitstring):
+    return int(bitstring, 2)

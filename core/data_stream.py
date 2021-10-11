@@ -55,6 +55,9 @@ class DataStream:
         prob_dist = self.get_empirical_distribution()
         return prob_dist.entropy
 
+    def get_alphabet(self):
+        return compute_alphabet(self.data_list)
+
 
 class StringDataStream(DataStream):
     """
@@ -95,5 +98,40 @@ class BitstringDataStream(StringDataStream):
                     is_bitstring = False
 
             return is_bitstring
+        else:
+            return False
+
+
+class UintDataStream(DataStream):
+    """
+    stream consisting of unsigned integers
+    """
+
+    @staticmethod
+    def validate_data_symbol(symbol) -> bool:
+        """
+        validates that the symbol is of type str
+        """
+        if not isinstance(symbol, int):
+            return False
+        return symbol >= 0
+
+
+class BitsDataStream(DataStream):
+    """
+    stream consisting of bits. either ("0" or "1")
+    or (0,1)
+    """
+
+    @staticmethod
+    def validate_data_symbol(symbol) -> bool:
+        """
+        validates that the symbol is of type str
+        """
+
+        if isinstance(symbol, str):
+            return (symbol == "0") or (symbol == "1")
+        elif isinstance(symbol, int):
+            return (symbol == 0) or (symbol == 1)
         else:
             return False
