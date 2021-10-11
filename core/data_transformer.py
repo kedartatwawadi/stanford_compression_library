@@ -65,7 +65,7 @@ class BitstringToBitsTransformer(SplitStringTransformer):
 
     def transform(self, data_stream: BitstringDataStream) -> BitsDataStream:
         output_stream = super().transform(data_stream)
-        return BitsDataStream(output_stream)
+        return BitsDataStream(output_stream.data_list)
 
 
 class BitsToBitstringTransformer(DataTransformer):
@@ -73,20 +73,21 @@ class BitsToBitstringTransformer(DataTransformer):
     splits the input bitstring List into a list of bits
     """
 
-    def __init__(self, bit_width: int):
+    def __init__(self, bit_width: int = None):
         self.bit_width = bit_width
 
     def transform(self, bits_stream: BitsDataStream) -> BitstringDataStream:
-
         assert bits_stream.size % self.bit_width == 0
         output_list: List = []
-        current_ind = 0
-        for ind, bit in enumerate(bits_stream):
+        _str = ""
+        for ind, bit in enumerate(bits_stream.data_list):
             if (ind != 0) and (ind % self.bit_width) == 0:
-                current_ind += 1
-
+                output_list.append(_str)
+                _str = ""
             assert BitsDataStream.validate_data_symbol(bit)
-            output_list[current_ind] += str(bit)
+            _str += str(bit)
+
+        output_list.append(_str)
 
         return BitstringDataStream(output_list)
 
@@ -103,7 +104,7 @@ class UintToBitstringTransformer(DataTransformer):
 
     def transform(self, data_stream: UintDataStream):
         output_list: List[str] = []
-        for symbol in data_stream:
+        for symbol in data_stream.data_list:
             assert UintDataStream.validate_data_symbol(symbol)
             bitstring = uint_to_bitstring(symbol, bit_width=self.bit_width)
             output_list.append(bitstring)
@@ -120,8 +121,8 @@ class BitstringToUintTransformer(DataTransformer):
     def transform(self, data_stream: BitstringDataStream):
 
         output_list: List[str] = []
-        for bitstring in data_stream:
-            assert UintDataStream.validate_data_symbol(bitstring)
+        for bitstring in data_stream.data_list:
+            assert BitstringDataStream.validate_data_symbol(bitstring)
             uint_data = bitstring_to_uint(bitstring)
             output_list.append(uint_data)
 
@@ -138,7 +139,22 @@ class TableLookupTransformer(DataTransformer):
 
     def transform(self, data_stream: DataStream):
         output_list = []
-        for symbol in data_stream:
+        for symbol in data_stream.data_list:
             output_list.append(self.lookup_table[symbol])
 
         return DataStream(output_list)
+
+
+class CascadeTransformer(DataTransformer):
+    """
+    Runs multiple transformers in series
+    """
+
+    def __init__(self, transformer_list: List[DataTransformer]):
+        self.transformer_list = transformer_list
+
+    def transform(self, data_stream: DataStream):
+        output_stream = data_stream
+        for transformer in self.transformer_list:
+            output_stream = transformer.transform(output_stream)
+        return output_stream

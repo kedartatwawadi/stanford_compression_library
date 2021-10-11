@@ -12,9 +12,6 @@ class DataStream:
     def __init__(self, data_list: List):
         self.data_list = data_list
 
-    def set_alphabet(self):
-        self.alphabet = compute_alphabet(self.data_list)
-
     @property
     def size(self):
         return len(self.data_list)
@@ -85,19 +82,14 @@ class BitstringDataStream(StringDataStream):
         validates that the symbol is of type str
         """
         # validate if input symbol is a string
-        is_str = super().validate_data_symbol(bitstring)
+        is_str = isinstance(bitstring, str)
         if is_str:
             # validate if input symbol string contains only 0,1
-            is_bitstring = False
-
             bitstring_list = [c for c in bitstring]
             alphabet = compute_alphabet(bitstring_list)
 
-            if ("0" in alphabet) and ("1" in alphabet):
-                if len(alphabet) == 2:
-                    is_bitstring = False
-
-            return is_bitstring
+            binary_alphabet = {"0", "1"}
+            return alphabet.issubset(binary_alphabet)
         else:
             return False
 
