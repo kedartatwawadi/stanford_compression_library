@@ -6,7 +6,7 @@ from core.data_stream import (
     StringDataStream,
     UintDataStream,
 )
-from typing import List, Dict
+from typing import Callable, List, Dict
 
 from core.util import bitstring_to_uint, uint_to_bitstring
 
@@ -129,20 +129,35 @@ class BitstringToUintTransformer(DataTransformer):
         return UintDataStream(output_list)
 
 
-class TableLookupTransformer(DataTransformer):
+class LookupFuncTransformer(DataTransformer):
     """
-    returns value by using the lookup table
+    returns value by using the lookup function
+    For example:
+    If input stream is [0,1,1,2], and lookup func is
+    def func(x):
+        return x*2
+    then it will output [0, 2, 2, 4]
     """
 
-    def __init__(self, lookup_table: Dict):
-        self.lookup_table = lookup_table
+    def __init__(self, lookup_func: Callable):
+        self.lookup_func = lookup_func
 
     def transform(self, data_stream: DataStream):
         output_list = []
         for symbol in data_stream.data_list:
-            output_list.append(self.lookup_table[symbol])
+            output_list.append(self.lookup_func(symbol))
 
         return DataStream(output_list)
+
+
+class LookupTableTransformer(LookupFuncTransformer):
+    """
+    returns value based on the lookup table.
+    Can be implemented as a subclass of LookupFuncTransformer
+    """
+
+    def __init__(self, lookup_table: Dict):
+        super().__init__(lookup_func=lambda x: lookup_table[x])
 
 
 class CascadeTransformer(DataTransformer):

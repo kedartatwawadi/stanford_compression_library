@@ -6,7 +6,7 @@ from core.data_transformer import (
     BitstringToUintTransformer,
     CascadeTransformer,
     DataTransformer,
-    TableLookupTransformer,
+    LookupTableTransformer,
     UintToBitstringTransformer,
 )
 
@@ -35,7 +35,10 @@ class DataCompressor:
         The core encode function of the compressor
         """
 
+        # set the parameters of the encoder/decoder using the data_stream
         self.set_encoder_decoder_params(data_stream)
+
+        # perform the encoding
         output_bits_stream = self.encoder_transform.transform(data_stream)
 
         # the final output of encoder needs to be a stream of bits
@@ -74,7 +77,7 @@ class FixedBitwidthCompressor(DataCompressor):
         # create encoder and decoder transforms
         self.encoder_transform = CascadeTransformer(
             [
-                TableLookupTransformer(self.encoder_lookup_table),
+                LookupTableTransformer(self.encoder_lookup_table),
                 UintToBitstringTransformer(bit_width=self.bit_width),
                 BitstringToBitsTransformer(),
             ]
@@ -85,7 +88,7 @@ class FixedBitwidthCompressor(DataCompressor):
             [
                 BitsToBitstringTransformer(bit_width=self.bit_width),
                 BitstringToUintTransformer(),
-                TableLookupTransformer(self.decoder_lookup_table),
+                LookupTableTransformer(self.decoder_lookup_table),
             ]
         )
 

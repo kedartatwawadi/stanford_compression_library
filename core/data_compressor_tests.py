@@ -14,7 +14,7 @@ class FixedBitwidthCompressorTest(unittest.TestCase):
         compressor = FixedBitwidthCompressor()
 
         # create some sample data
-        data_list = ["A", "B", "C", "D", "A", "C"]
+        data_list = ["A", "B", "C", "C", "A", "C"]
         data_stream = DataStream(data_list)
 
         # test encode
