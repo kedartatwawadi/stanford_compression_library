@@ -1,5 +1,4 @@
 from core.data_compressor import DataCompressor
-import numpy as np
 from core.data_transformer import (
     BitstringToBitsTransformer,
     CascadeTransformer,

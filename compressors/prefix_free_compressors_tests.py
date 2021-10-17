@@ -1,5 +1,5 @@
 import unittest
-from compressors.prefix_free_coompressors import UniversalUintCompressor
+from compressors.prefix_free_compressors import UniversalUintCompressor
 from core.data_stream import UintDataStream
 
 
