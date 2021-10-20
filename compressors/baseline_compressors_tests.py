@@ -1,6 +1,5 @@
 import unittest
-from core.data_compressor import FixedBitwidthCompressor
-
+from compressors.baseline_compressors import FixedBitwidthCompressor
 from core.data_stream import DataStream
 
 
