@@ -2,10 +2,11 @@ import numpy as np
 from dataclasses import dataclass
 from typing import Any
 
+
 @dataclass
 class Symbol:
-    """
-    """
+    """ """
+
     id: Any = None
     prob: float = 0
 
@@ -25,7 +26,7 @@ class ProbabilityDist:
     @property
     def size(self):
         return len(self.symbol_list)
-    
+
     # sorts the symbol_list according to the prob val
     def sort(self):
         self.symbol_list.sort(key=lambda x: x.prob)
@@ -35,7 +36,7 @@ class ProbabilityDist:
 
     def pop(self, ind=-1):
         return self.symbol_list.pop(ind)
-    
+
     def get_symbol(self, ind):
         return self.symbol_list[ind]
 
@@ -61,7 +62,3 @@ class ProbabilityDist:
 
         # FIXME: check if this needs a tolerance range
         assert sum_of_probs == 1.0, "probabilities should sum to 1.0"
-
-
-
-

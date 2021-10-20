@@ -6,8 +6,8 @@ from core.data_transformer import (
     BitstringToBitsTransformer,
     CascadeTransformer,
     LookupFuncTransformer,
+    BitsParserTransformer,
 )
-from core.misc_transformers import BitsParserTransformer
 
 
 @dataclass
@@ -15,52 +15,32 @@ class HuffmanTree:
     left_child: Any = None
     right_child: Any = None
     id: Any = None
+    code: str = ""
+
+    @property
+    def is_leaf_node(self):
+        return (self.left_child is None) and (self.right_child is None)
 
     def get_encoding_table(self):
         """
-        perform DFS graph traversal to get the code (any traversal will do)
+        parse the tree and get the encoding table
         """
-        pass
 
+        if self.is_leaf_node:
+            return {self.id: self.code}
 
-def build_huffman_tree(prob_dist: ProbabilityDist):
-    """
-    Build the huffman coding tree
-    NOTE: Not the most efficient implementation. The insertion/sorting efficiency can be improved 
+        encoding_table = dict()
+        if self.left_child is not None:
+            self.left_child.code = self.code + "0"
+            left_table_dict = self.left_child.get_encoding_table()
+            encoding_table.update(left_table_dict)
 
-    1. Sort the prob distribution, combine last two symbols into a single symbol
-    2. Continue until a single symbol is left
-    """
-    # create a prob_dist from the HuffmanTree objects
-    prob_dict_tree = {}
-    for symbol in prob_dist.symbol_list:
-        prob_dict_tree[HuffmanTree(id=symbol.id)] = symbol.prob
+        if self.right_child is not None:
+            self.right_child.code = self.code + "0"
+            right_table_dict = self.right_child.get_encoding_table()
+            encoding_table.update(right_table_dict)
 
-    node_prob_dist = ProbabilityDist(prob_dict_tree)
-
-    while node_prob_dist.size > 1:
-
-        # sort the prob dist
-        node_prob_dist.sort()
-
-        # get the last two symbols
-        last1 = node_prob_dist.pop()
-        last2 = node_prob_dist.pop()
-
-        # insert a symbol with the sum of the two probs
-        combined_prob = last1.prob+last2.prob
-        combined_node = HuffmanTree(left_child=last1, right_child=last2)
-        node_prob_dist.add(prob=combined_prob, id=combined_node)
-
-
-    # finally the node_prob_dist should contain a single element
-    assert len(node_prob_dist) == 1
-    ProbabilityDist._validate_prob_dist(node_prob_dist)
-
-    # return the huffman tree
-    return node_prob_dist.pop()
-
-
+        return encoding_table
 
 
 class HuffmanCoder(DataCompressor):
@@ -73,13 +53,11 @@ class HuffmanCoder(DataCompressor):
         # build the huffman tree
         self.huffman_tree = self.build_huffman_tree(prob_dist)
 
-        #
-
     @staticmethod
     def build_huffman_tree(prob_dist: ProbabilityDist):
         """
         Build the huffman coding tree
-        NOTE: Not the most efficient implementation. The insertion/sorting efficiency can be improved 
+        NOTE: Not the most efficient implementation. The insertion/sorting efficiency can be improved
 
         1. Sort the prob distribution, combine last two symbols into a single symbol
         2. Continue until a single symbol is left
@@ -101,10 +79,9 @@ class HuffmanCoder(DataCompressor):
             last2 = node_prob_dist.pop()
 
             # insert a symbol with the sum of the two probs
-            combined_prob = last1.prob+last2.prob
+            combined_prob = last1.prob + last2.prob
             combined_node = HuffmanTree(left_child=last1, right_child=last2)
             node_prob_dist.add(prob=combined_prob, id=combined_node)
-
 
         # finally the node_prob_dist should contain a single element
         assert len(node_prob_dist) == 1
@@ -112,8 +89,6 @@ class HuffmanCoder(DataCompressor):
 
         # return the huffman tree
         return node_prob_dist.pop()
-    
-
 
     @staticmethod
     def encoder_lookup_func(x: int):
@@ -157,4 +132,3 @@ class HuffmanCoder(DataCompressor):
 
         # create decoder transform
         self.decoder_transform = BitsParserTransformer(self.decoder_bits_parser)
-

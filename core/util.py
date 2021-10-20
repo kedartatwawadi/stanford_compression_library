@@ -1,6 +1,7 @@
 from typing import Set, List
 from dataclasses import dataclass
 
+
 def compute_alphabet(data_list: List) -> Set:
     alphabet = set()
     for d in data_list:
@@ -44,5 +45,5 @@ def bitstring_to_uint(bitstring):
 
 @dataclass
 class BinaryTree:
-    left_child: BinaryTree= None
+    left_child: BinaryTree = None
     right_child: BinaryTree = None
