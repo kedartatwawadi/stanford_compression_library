@@ -3,10 +3,9 @@ from core.data_transformer import (
     BitstringToBitsTransformer,
     CascadeTransformer,
     LookupFuncTransformer,
+    BitsParserTransformer,
 )
 from core.data_stream import UintDataStream
-from core.misc_transformers import BitsParserTransformer
-
 from core.util import bitstring_to_uint, uint_to_bitstring
 
 
