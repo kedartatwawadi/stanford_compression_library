@@ -28,8 +28,9 @@ class ProbabilityDist:
         return len(self.symbol_list)
 
     # sorts the symbol_list according to the prob val
-    def sort(self):
-        self.symbol_list.sort(key=lambda x: x.prob)
+    def sort(self, reverse=True):
+        sort_func = (lambda x: -x.prob) if reverse else (lambda x: x.prob)
+        self.symbol_list.sort(key=sort_func)
 
     def add(self, id, prob):
         self.symbol_list.append(Symbol(id=id, prob=prob))

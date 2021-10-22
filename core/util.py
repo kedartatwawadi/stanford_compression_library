@@ -41,9 +41,3 @@ def uint_to_bitstring(uint_data, bit_width=None):
 
 def bitstring_to_uint(bitstring):
     return int(bitstring, 2)
-
-
-@dataclass
-class BinaryTree:
-    left_child: BinaryTree = None
-    right_child: BinaryTree = None
