@@ -1,67 +1,39 @@
 import numpy as np
-from dataclasses import dataclass
-from typing import Any
-
-
-@dataclass
-class Symbol:
-    """ """
-
-    id: Any = None
-    prob: float = 0
-
-    def __repr__(self):
-        return f"Symbol({self.id}: {self.prob})"
 
 
 class ProbabilityDist:
     """
-    TODO: add description
+    Wrapper around a probability dict
     """
 
     def __init__(self, prob_dict=None):
         self._validate_prob_dist(prob_dict)
-
-        self.symbol_list = []
-        for id, prob in prob_dict.items():
-            self.symbol_list.append(Symbol(id=id, prob=prob))
+        self.prob_dict = prob_dict
 
     def __repr__(self):
-        return self.symbol_list.__repr__()
+        return f"ProbabilityDist({self.prob_dict.__repr__()}"
 
     @property
     def size(self):
-        return len(self.symbol_list)
+        return len(self.prob_dict)
 
     @property
     def alphabet(self):
-        return [s.id for s in self.symbol_list]
+        return list(self.prob_dict)
 
     @property
     def prob_list(self):
-        return [s.prob for s in self.symbol_list]
-
-    # sorts the symbol_list according to the prob val
-    def sort(self, reverse=True):
-        sort_func = (lambda x: -x.prob) if reverse else (lambda x: x.prob)
-        self.symbol_list.sort(key=sort_func)
-
-    def add(self, id, prob):
-        self.symbol_list.append(Symbol(id=id, prob=prob))
-
-    def pop(self, ind=-1):
-        return self.symbol_list.pop(ind)
-
-    def get_symbol(self, ind):
-        return self.symbol_list[ind]
+        return [self.prob_dict[s] for s in self.alphabet]
 
     @property
     def entropy(self):
         entropy = 0
-        for symbol in self.symbol_list:
-            prob = symbol.prob
+        for _, prob in self.prob_dict.items():
             entropy += -prob * np.log2(prob)
         return entropy
+
+    def probability(self, alphabet):
+        return self.prob_dict[alphabet]
 
     @staticmethod
     def _validate_prob_dist(prob_dict):

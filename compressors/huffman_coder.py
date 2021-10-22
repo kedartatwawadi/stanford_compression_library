@@ -17,6 +17,7 @@ class HuffmanTree:
     right_child: Any = None
     id: Any = None
     code: str = ""
+    prob: float = None
 
     def __hash__(self):
         """
@@ -37,42 +38,38 @@ class HuffmanTree:
         1. Sort the prob distribution, combine last two symbols into a single symbol
         2. Continue until a single symbol is left
         """
-        # create a prob_dist from the HuffmanTree objects
-        # NOTE: as the operation of construction of Huffman Tree involves sorting a prob dist,
-        # merging nodes etc, they are kind of operations on the probability distribution itself.
-        # we overload the "id" field of each Symbol object as a HuffmanTree
-
         # Lets say we have symbols {1,2,3,4,5,6} with prob {p1, p2,...p6}
-        # We first start by initializing a "list" (represented as a ProbabilityDist)
-        # {HuffmanTree(id=3): p3, HuffmanTree(id=6): p6, ... }
-        prob_dict_tree = {}
-        for symbol in prob_dist.symbol_list:
-            prob_dict_tree[cls(id=symbol.id)] = symbol.prob
+        # We first start by initializing a list
+        # [ HuffmanTree(id=3, prob=p3), (HuffmanTree(id=6, prob=p6),  ]
 
-        node_prob_dist = ProbabilityDist(prob_dict_tree)
+        node_list = []
+        for a in prob_dist.alphabet:
+            node = cls(id=a, prob=prob_dist.probability(a))
+            node_list.append(node)
 
-        while node_prob_dist.size > 1:
+        while len(node_list) > 1:
 
-            # sort the prob dist (acc to probability values)
+            # sort the prob dist in the reverse order(acc to probability values)
             # For example, if we assume the probabilites are p1 < p2 < p3 ... < p6
-            # {HuffmanTree(id=6): p6, HuffmanTree(id=5): p5, ... }
-            node_prob_dist.sort(reverse=True)
+            # [HuffmanTree(id=6, prob=p6), HuffmanTree(id=5, prob=p5), ... ]
+            node_list.sort(key=lambda x: -x.prob)
 
             # get the last two symbols
-            last1 = node_prob_dist.pop()
-            last2 = node_prob_dist.pop()
+            last1 = node_list.pop()
+            last2 = node_list.pop()
 
             # insert a symbol with the sum of the two probs
             combined_prob = last1.prob + last2.prob
-            combined_node = cls(left_child=last1.id, right_child=last2.id)
-            node_prob_dist.add(prob=combined_prob, id=combined_node)
+            combined_node = cls(left_child=last1, right_child=last2, prob=combined_prob)
+            node_list.append(combined_node)
 
         # finally the node_prob_dist should contain a single element
-        assert node_prob_dist.size == 1
+        assert len(node_list) == 1
 
         # return the huffman tree
         # only one element should remain
-        return node_prob_dist.pop().id
+        huffman_tree = node_list[0]
+        return huffman_tree
 
     def get_encoding_table(self):
         """

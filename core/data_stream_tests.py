@@ -23,8 +23,7 @@ class DataStreamTest(unittest.TestCase):
 
         # check empirical dist
         prob_dist = data_stream.get_empirical_distribution(order=0)
-        for s in prob_dist.symbol_list:
-            assert s.prob == 0.5
+        prob_dist.prob_dict[0] == 0.5
 
         # check entropy
         entropy = data_stream.get_entropy(order=0)
