@@ -19,12 +19,6 @@ class HuffmanTree:
     code: str = ""
     prob: float = None
 
-    def __hash__(self):
-        """
-        this allows adding the object to a dictionary as a key
-        """
-        return hash(self.id)
-
     @property
     def is_leaf_node(self):
         return (self.left_child is None) and (self.right_child is None)
