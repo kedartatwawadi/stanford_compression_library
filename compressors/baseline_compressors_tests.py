@@ -1,6 +1,7 @@
 import unittest
 from compressors.baseline_compressors import FixedBitwidthCompressor
 from core.data_stream import DataStream
+from utils.test_utils import try_lossless_compression
 
 
 class FixedBitwidthCompressorTest(unittest.TestCase):
@@ -16,15 +17,8 @@ class FixedBitwidthCompressorTest(unittest.TestCase):
         data_list = ["A", "B", "C", "C", "A", "C"]
         data_stream = DataStream(data_list)
 
-        # test encode
-        output_bits_stream = compressor.encode(data_stream)
-
-        # test decode
-        decoded_stream = compressor.decode(output_bits_stream)
-
-        # check if the encoding/decoding was lossless
-        for inp_symbol, out_symbol in zip(data_stream.data_list, decoded_stream.data_list):
-            assert inp_symbol == out_symbol
+        is_lossless, codelen = try_lossless_compression(data_stream, compressor)
+        assert is_lossless
 
         # check if the length of the encoding was correct
-        assert output_bits_stream.size == 12
+        assert codelen == len(data_list) * 2

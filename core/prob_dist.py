@@ -10,6 +10,9 @@ class Symbol:
     id: Any = None
     prob: float = 0
 
+    def __repr__(self):
+        return f"Symbol({self.id}: {self.prob})"
+
 
 class ProbabilityDist:
     """
@@ -23,9 +26,20 @@ class ProbabilityDist:
         for id, prob in prob_dict.items():
             self.symbol_list.append(Symbol(id=id, prob=prob))
 
+    def __repr__(self):
+        return self.symbol_list.__repr__()
+
     @property
     def size(self):
         return len(self.symbol_list)
+
+    @property
+    def alphabet(self):
+        return [s.id for s in self.symbol_list]
+
+    @property
+    def prob_list(self):
+        return [s.prob for s in self.symbol_list]
 
     # sorts the symbol_list according to the prob val
     def sort(self, reverse=True):

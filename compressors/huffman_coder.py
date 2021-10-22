@@ -18,6 +18,12 @@ class HuffmanTree:
     id: Any = None
     code: str = ""
 
+    def __hash__(self):
+        """
+        this allows adding the object to a dictionary as a key
+        """
+        return hash(self.id)
+
     @property
     def is_leaf_node(self):
         return (self.left_child is None) and (self.right_child is None)
@@ -58,16 +64,15 @@ class HuffmanTree:
 
             # insert a symbol with the sum of the two probs
             combined_prob = last1.prob + last2.prob
-            combined_node = cls(left_child=last1, right_child=last2)
+            combined_node = cls(left_child=last1.id, right_child=last2.id)
             node_prob_dist.add(prob=combined_prob, id=combined_node)
 
         # finally the node_prob_dist should contain a single element
-        assert len(node_prob_dist) == 1
-        ProbabilityDist._validate_prob_dist(node_prob_dist)
+        assert node_prob_dist.size == 1
 
         # return the huffman tree
         # only one element should remain
-        return node_prob_dist.pop()
+        return node_prob_dist.pop().id
 
     def get_encoding_table(self):
         """
@@ -117,20 +122,15 @@ class HuffmanTree:
 class HuffmanCoder(DataCompressor):
     """
     Huffman Coder implementation
-
     """
 
-    def set_encoder_decoder_params(self, data_stream: DataStream):
-
-        # get probability dist from the data
-        prob_dist = data_stream.get_empirical_distribution()
-
+    def __init__(self, prob_dist: ProbabilityDist):
         # build the huffman tree
-        self.huffman_tree = self.build_huffman_tree(prob_dist)
+        self.huffman_tree = HuffmanTree.build_huffman_tree(prob_dist)
         self.encoder_lookup_table = self.huffman_tree.get_encoding_table()
 
         # create encoder and decoder transforms
-        self.encoder_transform = CascadeTransformer(
+        encoder_transform = CascadeTransformer(
             [
                 LookupTableTransformer(self.encoder_lookup_table),
                 BitstringToBitsTransformer(),
@@ -138,4 +138,5 @@ class HuffmanCoder(DataCompressor):
         )
 
         # create decoder transform
-        self.decoder_transform = BitsParserTransformer(self.huffman_tree.decode_next_symbol)
+        decoder_transform = BitsParserTransformer(self.huffman_tree.decode_next_symbol)
+        super().__init__(encoder_transform=encoder_transform, decoder_transform=decoder_transform)
