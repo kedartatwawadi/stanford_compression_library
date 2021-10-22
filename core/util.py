@@ -1,5 +1,4 @@
 from typing import Set, List
-from dataclasses import dataclass
 
 
 def compute_alphabet(data_list: List) -> Set:
