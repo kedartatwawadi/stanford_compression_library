@@ -1,21 +1,19 @@
 import unittest
-from core.data_compressor import FixedBitwidthCompressor
+from compressors.prefix_free_compressors import UniversalUintCompressor
+from core.data_stream import UintDataStream
 
-from core.data_stream import DataStream
 
-
-class FixedBitwidthCompressorTest(unittest.TestCase):
+class UintUniversalCompressorTest(unittest.TestCase):
     """
-    checks basic operations for a DataStream
     FIXME: improve these tests
     """
 
     def test_encode_decode(self):
-        compressor = FixedBitwidthCompressor()
+        compressor = UniversalUintCompressor()
 
         # create some sample data
-        data_list = ["A", "B", "C", "C", "A", "C"]
-        data_stream = DataStream(data_list)
+        data_list = [0, 0, 1, 3, 4, 100]
+        data_stream = UintDataStream(data_list)
 
         # test encode
         output_bits_stream = compressor.encode(data_stream)
@@ -26,6 +24,3 @@ class FixedBitwidthCompressorTest(unittest.TestCase):
         # check if the encoding/decoding was lossless
         for inp_symbol, out_symbol in zip(data_stream.data_list, decoded_stream.data_list):
             assert inp_symbol == out_symbol
-
-        # check if the length of the encoding was correct
-        assert output_bits_stream.size == 12
