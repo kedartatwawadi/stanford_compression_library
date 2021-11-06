@@ -25,6 +25,13 @@ py.test -s -v core/data_stream_tests.py
 ```
 
 
+## How to submit code
+
+Run a formatter before submitting PR
+```
+black <dir/file> --line-length 100
+```
+
 ## Contact
 The best way to contact the maintainers is to file an issue with your question. 
 If not please use the following email:
