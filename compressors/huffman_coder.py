@@ -12,7 +12,7 @@ from core.data_transformer import (
 
 
 @dataclass
-class HuffmanTree:
+class HuffmanNode:
     left_child: Any = None
     right_child: Any = None
     id: Any = None
@@ -22,48 +22,6 @@ class HuffmanTree:
     @property
     def is_leaf_node(self):
         return (self.left_child is None) and (self.right_child is None)
-
-    @classmethod
-    def build_huffman_tree(cls, prob_dist: ProbabilityDist):
-        """
-        Build the huffman coding tree
-        NOTE: Not the most efficient implementation. The insertion/sorting efficiency can be improved
-
-        1. Sort the prob distribution, combine last two symbols into a single symbol
-        2. Continue until a single symbol is left
-        """
-        # Lets say we have symbols {1,2,3,4,5,6} with prob {p1, p2,...p6}
-        # We first start by initializing a list
-        # [ HuffmanTree(id=3, prob=p3), (HuffmanTree(id=6, prob=p6),  ]
-
-        node_list = []
-        for a in prob_dist.alphabet:
-            node = cls(id=a, prob=prob_dist.probability(a))
-            node_list.append(node)
-
-        while len(node_list) > 1:
-
-            # sort the prob dist in the reverse order(acc to probability values)
-            # For example, if we assume the probabilites are p1 < p2 < p3 ... < p6
-            # [HuffmanTree(id=6, prob=p6), HuffmanTree(id=5, prob=p5), ... ]
-            node_list.sort(key=lambda x: -x.prob)
-
-            # get the last two symbols
-            last1 = node_list.pop()
-            last2 = node_list.pop()
-
-            # insert a symbol with the sum of the two probs
-            combined_prob = last1.prob + last2.prob
-            combined_node = cls(left_child=last1, right_child=last2, prob=combined_prob)
-            node_list.append(combined_node)
-
-        # finally the node_prob_dist should contain a single element
-        assert len(node_list) == 1
-
-        # return the huffman tree
-        # only one element should remain
-        huffman_tree = node_list[0]
-        return huffman_tree
 
     def get_encoding_table(self):
         """
@@ -86,13 +44,67 @@ class HuffmanTree:
 
         return encoding_table
 
+
+class HuffmanTree:
+    def __init__(self, prob_dist: ProbabilityDist):
+        """
+        create the huffman tree
+        """
+        self.prob_dist = prob_dist
+        self.root_node = self.build_huffman_tree(self.prob_dist)
+
+    @staticmethod
+    def build_huffman_tree(prob_dist: ProbabilityDist) -> HuffmanNode:
+        """
+        Build the huffman coding tree
+        NOTE: Not the most efficient implementation. The insertion/sorting efficiency can be improved
+
+        1. Sort the prob distribution, combine last two symbols into a single symbol
+        2. Continue until a single symbol is left
+        """
+        # Lets say we have symbols {1,2,3,4,5,6} with prob {p1, p2,...p6}
+        # We first start by initializing a list
+        # [ HuffmanNode(id=3, prob=p3), (HuffmanTree(id=6, prob=p6),  ]
+
+        node_list = []
+        for a in prob_dist.alphabet:
+            node = HuffmanNode(id=a, prob=prob_dist.probability(a))
+            node_list.append(node)
+
+        while len(node_list) > 1:
+
+            # sort the prob dist in the reverse order(acc to probability values)
+            # For example, if we assume the probabilites are p1 < p2 < p3 ... < p6
+            # [HuffmanNode(id=6, prob=p6), HuffmanNode(id=5, prob=p5), ... ]
+            node_list.sort(key=lambda x: -x.prob)
+
+            # get the last two symbols
+            last1 = node_list.pop()
+            last2 = node_list.pop()
+
+            # insert a symbol with the sum of the two probs
+            combined_prob = last1.prob + last2.prob
+            combined_node = HuffmanNode(left_child=last1, right_child=last2, prob=combined_prob)
+            node_list.append(combined_node)
+
+        # finally the node_prob_dist should contain a single element
+        assert len(node_list) == 1
+
+        # return the huffman tree
+        # only one element should remain
+        root_node = node_list[0]
+        return root_node
+
+    def get_encoding_table(self):
+        return self.root_node.get_encoding_table()
+
     def decode_next_symbol(self, data_stream: BitsDataStream, start_ind: int):
         """
         decode function (to be used with BitsParserTransformer)
         """
 
         # infer the length
-        curr_node = self
+        curr_node = self.root_node
 
         # continue decoding until we reach leaf node
         while not curr_node.is_leaf_node:
@@ -117,7 +129,7 @@ class HuffmanCoder(DataCompressor):
 
     def __init__(self, prob_dist: ProbabilityDist):
         # build the huffman tree
-        self.huffman_tree = HuffmanTree.build_huffman_tree(prob_dist)
+        self.huffman_tree = HuffmanTree(prob_dist)
         self.encoder_lookup_table = self.huffman_tree.get_encoding_table()
 
         # create encoder and decoder transforms
