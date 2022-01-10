@@ -93,7 +93,7 @@ class HuffmanTree:
             # create a min-heap (in-place) from the node list, so that we can get the
             heapq.heapify(node_heap)
 
-            # get the last two symbols
+            # get the two smallest symbols
             last1 = heapq.heappop(node_heap)
             last2 = heapq.heappop(node_heap)
 
