@@ -24,6 +24,9 @@ To run a single test
 py.test -s -v core/data_stream_tests.py
 ```
 
+## Getting started with understanding the library
+In-depth information about the library will be in the comments. Tutorials/articles etc will be posted on the wiki page: 
+https://github.com/kedartatwawadi/stanford_compression_library/wiki/Introduction-to-the-Stanford-Compression-Library
 
 ## How to submit code
 
