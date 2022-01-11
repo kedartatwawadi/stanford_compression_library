@@ -5,7 +5,7 @@ from core.data_stream import UintDataStream
 
 class UintUniversalCompressorTest(unittest.TestCase):
     """
-    FIXME: improve these tests
+    FIXME: @tpulkit -> improve these tests
     """
 
     def test_encode_decode(self):
