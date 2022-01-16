@@ -1,5 +1,5 @@
 import unittest
-from compressors.huffman_coder import HuffmanCoder
+from compressors.huffman_coder import HuffmanCoder, HuffmanTree
 import numpy as np
 
 from core.data_stream import DataStream
