@@ -9,7 +9,7 @@ from core.data_transformer import (
     LookupTableTransformer,
 )
 from utils.tree_utils import BinaryNode
-from core.data_stream import BitsDataStream, UintDataStream
+from core.data_block import UintDataBlock
 from core.util import bitstring_to_uint, uint_to_bitstring
 from core.prob_dist import ProbabilityDist
 
@@ -37,12 +37,12 @@ class UniversalUintCompressor(DataCompressor):
         return len_bitstring + bitstring
 
     @staticmethod
-    def decoder_bits_parser(data_stream, start_ind):
+    def decoder_bits_parser(data_block, start_ind):
 
         # infer the length
         num_ones = 0
-        for ind in range(start_ind, data_stream.size):
-            bit = data_stream.data_list[ind]
+        for ind in range(start_ind, data_block.size):
+            bit = data_block.data_list[ind]
             if str(bit) == "0":
                 break
             num_ones += 1
@@ -51,14 +51,14 @@ class UniversalUintCompressor(DataCompressor):
         new_start_ind = 2 * num_ones + 1 + start_ind
 
         # decode the symbol
-        bitstring = "".join(data_stream.data_list[start_ind + num_ones + 1 : new_start_ind])
+        bitstring = "".join(data_block.data_list[start_ind + num_ones + 1 : new_start_ind])
         symbol = bitstring_to_uint(bitstring)
 
         return symbol, new_start_ind
 
-    def set_encoder_decoder_params(self, data_stream):
+    def set_encoder_decoder_params(self, data_block):
 
-        assert isinstance(data_stream, UintDataStream)
+        assert isinstance(data_block, UintDataBlock)
 
         # create encoder and decoder transforms
         self.encoder_transform = CascadeTransformer(

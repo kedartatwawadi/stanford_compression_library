@@ -1,5 +1,5 @@
 import numpy as np
-from core.data_stream import BitsDataStream, DataStream
+from core.data_block import BitsDataBlock, DataBlock
 from core.data_transformer import DataTransformer
 
 
@@ -14,31 +14,31 @@ class DataCompressor:
         self.encoder_transform = encoder_transform
         self.decoder_transform = decoder_transform
 
-    def set_encoder_decoder_params(self, data_stream: DataStream):
+    def set_encoder_decoder_params(self, data_block: DataBlock):
         """
         Usually we will set the self.encoder_transform and self.decoder_transform in this function
-        as most of time the parameters of the data_stream are necessary to create the transformers
+        as most of time the parameters of the data_block are necessary to create the transformers
         FIXME: This is a bit ugly
         """
         pass
 
-    def encode(self, data_stream: DataStream):
+    def encode(self, data_block: DataBlock):
         """
         The core encode function of the compressor
         """
 
-        # set the parameters of the encoder/decoder using the data_stream
-        self.set_encoder_decoder_params(data_stream)
+        # set the parameters of the encoder/decoder using the data_block
+        self.set_encoder_decoder_params(data_block)
 
         # perform the encoding
-        output_bits_stream = self.encoder_transform.transform(data_stream)
+        output_bits_block = self.encoder_transform.transform(data_block)
 
-        # the final output of encoder needs to be a stream of bits
-        assert isinstance(output_bits_stream, BitsDataStream)
-        return output_bits_stream
+        # the final output of encoder needs to be a block of bits
+        assert isinstance(output_bits_block, BitsDataBlock)
+        return output_bits_block
 
-    def decode(self, data_stream: BitsDataStream):
+    def decode(self, data_block: BitsDataBlock):
 
-        # input stream to the decoder needs to be a stream of bits
-        assert isinstance(data_stream, BitsDataStream)
-        return self.decoder_transform.transform(data_stream)
+        # input block to the decoder needs to be a block of bits
+        assert isinstance(data_block, BitsDataBlock)
+        return self.decoder_transform.transform(data_block)
