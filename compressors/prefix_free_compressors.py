@@ -9,7 +9,7 @@ from core.data_transformer import (
     LookupTableTransformer,
 )
 from utils.tree_utils import BinaryNode
-from core.data_block import UintDataBlock
+from core.data_block import UintDataBlock, BitsDataBlock
 from core.util import bitstring_to_uint, uint_to_bitstring
 from core.prob_dist import ProbabilityDist
 
@@ -123,7 +123,7 @@ class PrefixFreeTree(abc.ABC):
     def get_encoding_table(self):
         return self.root_node.get_encoding_table()
 
-    def decode_next_symbol(self, data_stream: BitsDataStream, start_ind: int):
+    def decode_next_symbol(self, data_block: BitsDataBlock, start_ind: int):
         """
         decode function (to be used with BitsParserTransformer)
         """
@@ -133,7 +133,7 @@ class PrefixFreeTree(abc.ABC):
 
         # continue decoding until we reach leaf node
         while not curr_node.is_leaf_node:
-            bit = data_stream.data_list[start_ind]
+            bit = data_block.data_list[start_ind]
             if str(bit) == "0":
                 curr_node = curr_node.left_child
             else:

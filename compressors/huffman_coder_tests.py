@@ -2,7 +2,7 @@ import unittest
 from compressors.huffman_coder import HuffmanCoder, HuffmanTree
 import numpy as np
 
-from core.data_stream import DataStream
+from core.data_block import DataBlock
 from core.prob_dist import ProbabilityDist
 from utils.test_utils import try_lossless_compression
 
@@ -14,16 +14,16 @@ class HuffmanCoderTest(unittest.TestCase):
         """
         1. Randomly generate data with the given distribution
         2. Construct Huffman coder using the given distribution
-        3. Encode/Decode the stream
+        3. Encode/Decode the block
         """
 
         # generate random data
         data = np.random.choice(prob_dist.alphabet, self.NUM_SAMPLES, p=prob_dist.prob_list)
 
         # perform compression
-        data_stream = DataStream(data)
+        data_block = DataBlock(data)
         compressor = HuffmanCoder(prob_dist)
-        is_lossless, output_len = try_lossless_compression(data_stream, compressor)
+        is_lossless, output_len = try_lossless_compression(data_block, compressor)
 
         avg_bits = output_len / self.NUM_SAMPLES
         return is_lossless, avg_bits

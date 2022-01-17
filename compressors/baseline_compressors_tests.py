@@ -1,6 +1,6 @@
 import unittest
 from compressors.baseline_compressors import FixedBitwidthCompressor
-from core.data_block import data_block
+from core.data_block import DataBlock
 from utils.test_utils import try_lossless_compression
 
 
