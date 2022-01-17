@@ -1,3 +1,9 @@
+"""
+DataTransformer -> takes in an input DataStream as input and outputs another DataStream.
+DataTransformers can be thought of as "stages" or "layers" which we can appropriately combine
+to form the data compression encoder/decoders.
+"""
+
 import abc
 from core.data_stream import (
     BitsDataStream,
@@ -19,14 +25,15 @@ class DataTransformer(abc.ABC):
     @abc.abstractmethod
     def transform(self, data_stream: DataStream) -> DataStream:
         """
-        NOTE: the transform function of every DataTransformer takes only the data_stream as input
+        NOTE: For any DataTransformer, the transform function needs to be implemented
+        the transform function of every DataTransformer takes only the data_stream as input
         """
         return None
 
 
 class IdentityTransformer(DataTransformer):
     """
-    returns the data stream
+    returns the input data stream as is
     """
 
     def transform(self, data_stream: DataStream) -> DataStream:
@@ -57,6 +64,7 @@ class SplitStringTransformer(DataTransformer):
 class BitstringToBitsTransformer(SplitStringTransformer):
     """
     splits the input bitstring List into a list of bits
+    eg: ["00", "001"] -> ["0","0","0","0","1"]
     """
 
     @staticmethod
@@ -70,10 +78,11 @@ class BitstringToBitsTransformer(SplitStringTransformer):
 
 class BitsToBitstringTransformer(DataTransformer):
     """
-    splits the input bitstring List into a list of bits
+    combines the bits into bitstrings
+    eg: bit_width=2, ["0","0","0","1"] -> ["00", "01"]
     """
 
-    def __init__(self, bit_width: int = None):
+    def __init__(self, bit_width: int):
         self.bit_width = bit_width
 
     def transform(self, bits_stream: BitsDataStream) -> BitstringDataStream:
@@ -96,7 +105,7 @@ class UintToBitstringTransformer(DataTransformer):
     """
     transforms uint8 data to bitstring.
     Each datapoint is represented using bit_width number of bits
-    Eg:
+    Eg: bit_width = 3, ["3", "5"] -> ["011", "101"]
     """
 
     def __init__(self, bit_width=None):
@@ -115,7 +124,7 @@ class UintToBitstringTransformer(DataTransformer):
 class BitstringToUintTransformer(DataTransformer):
     """
     transforms bitstring data (each symbol is a bitstring) to uint
-    Eg:
+    Eg: ["011", "101"] -> ["3", "5"]
     """
 
     def transform(self, data_stream: BitstringDataStream):
@@ -178,12 +187,13 @@ class CascadeTransformer(DataTransformer):
 class BitsParserTransformer(DataTransformer):
     """
     Transformer which operates on BitsDataStream and consumes bits.
-    TODO: add more details
+    TODO: @tpulkit add more details
     """
 
     def __init__(self, parse_bits_func: Callable):
 
-        # parse_bits_func needs to take in
+        # parse_bits_func needs to take in the data_stream and a starting index
+        # FIXME: @shubham this is ugly
         self.parse_bits_func = parse_bits_func
 
     def transform(self, data_stream: BitsDataStream):

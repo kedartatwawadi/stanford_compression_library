@@ -4,11 +4,6 @@ from core.data_transformer import IdentityTransformer, SplitStringTransformer
 
 
 class IdentityTransformerTest(unittest.TestCase):
-    """
-    checks basic operations for a DataStream
-    FIXME: improve these tests
-    """
-
     def test_identity(self):
         data_list = [0, "A", "B", 1]
         data_stream = DataStream(data_list)
@@ -20,11 +15,10 @@ class IdentityTransformerTest(unittest.TestCase):
 
 
 class SplitStringTransformerTest(unittest.TestCase):
-    """
-    checks the validation func of the StringDataStream class
-    """
-
     def test_validate_func_on_invalid_input(self):
+        """
+        checks the validation func of the StringDataStream class
+        """
         data_list = ["0", "A1", "BA1", "B1CD"]
         data_stream = StringDataStream(data_list)
         output_stream = SplitStringTransformer().transform(data_stream)

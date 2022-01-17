@@ -47,7 +47,7 @@ class FixedBitwidthCompressor(DataCompressor):
         # The encoder transformer is represented as a cascade:
         # Example:
         # data = [A,B,B,A,C]
-        # Transform-1: Lookuptable to get he alphabet index {A: 0, B: 1, C: 2}
+        # Transform-1: Lookuptable to get the alphabet index {A: 0, B: 1, C: 2}
         # Transform-2: Uint to bitstring with a fixed width (2 for example) [0 -> 00, 1 -> 01, 2 -> 10]
         # Transform-3: Bitstring to bits: [000 -> 0,0,0]
         self.encoder_transform = CascadeTransformer(

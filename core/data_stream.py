@@ -102,7 +102,7 @@ class UintDataStream(DataStream):
     @staticmethod
     def validate_data_symbol(symbol) -> bool:
         """
-        validates that the symbol is of type str
+        validates that the symbol is of type unsigned int
         """
         if not isinstance(symbol, int):
             return False

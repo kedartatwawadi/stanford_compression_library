@@ -6,7 +6,7 @@ from utils.test_utils import try_lossless_compression
 
 class UintUniversalCompressorTest(unittest.TestCase):
     """
-    FIXME: improve these tests
+    FIXME: @tpulkit -> improve these tests
     """
 
     def test_encode_decode(self):
