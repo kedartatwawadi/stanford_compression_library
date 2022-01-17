@@ -38,6 +38,7 @@ class HuffmanCoderTest(unittest.TestCase):
             ProbabilityDist({"A": 0.5, "B": 0.25, "C": 0.25}),
             ProbabilityDist({"A": 0.5, "B": 0.25, "C": 0.125, "D": 0.125}),
         ]
+        print()
         for prob_dist in distributions:
 
             is_lossless, avg_bits = self._test_huffman_coding(prob_dist)

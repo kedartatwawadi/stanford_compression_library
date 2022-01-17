@@ -122,5 +122,6 @@ class BinaryNode:
 
     def print_node(self):
         lines, _ = self._get_lines()
+        print() # add empty line to make sure we start on newline
         for line in lines:
             print(line)
