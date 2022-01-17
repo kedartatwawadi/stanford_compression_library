@@ -4,7 +4,7 @@ from core.util import compute_alphabet, compute_counts_dict
 from core.prob_dist import ProbabilityDist
 
 
-class DataStream:
+class DataBlock:
     """
     FIXME: for now data is only presented as a list of symbols
     """
@@ -56,9 +56,9 @@ class DataStream:
         return compute_alphabet(self.data_list)
 
 
-class StringDataStream(DataStream):
+class StringDataBlock(DataBlock):
     """
-    DataStream for which each element of the data_list is a str
+    DataBlock for which each element of the data_list is a str
     For eg: ["0", "1"], ["A", "AAB", "BCE"]
     """
 
@@ -70,9 +70,9 @@ class StringDataStream(DataStream):
         return isinstance(symbol, str)
 
 
-class BitstringDataStream(StringDataStream):
+class BitstringDataBlock(StringDataBlock):
     """
-    DataStream for which each element of the data_list is a str
+    DataBlock for which each element of the data_list is a str
     For eg: ["0", "1"], ["A", "AAB", "BCE"]
     """
 
@@ -94,9 +94,9 @@ class BitstringDataStream(StringDataStream):
             return False
 
 
-class UintDataStream(DataStream):
+class UintDataBlock(DataBlock):
     """
-    stream consisting of unsigned integers
+    block consisting of unsigned integers
     """
 
     @staticmethod
@@ -109,9 +109,9 @@ class UintDataStream(DataStream):
         return symbol >= 0
 
 
-class BitsDataStream(DataStream):
+class BitsDataBlock(DataBlock):
     """
-    stream consisting of bits. either ("0" or "1")
+    block consisting of bits. either ("0" or "1")
     or (0,1)
     """
 

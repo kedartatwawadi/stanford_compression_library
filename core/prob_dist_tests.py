@@ -1,5 +1,5 @@
 import unittest
-from core.data_stream import ProbabilityDist
+from core.data_block import ProbabilityDist
 
 
 class ProbabilityDistTest(unittest.TestCase):
