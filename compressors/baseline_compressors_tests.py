@@ -1,11 +1,11 @@
 import unittest
 from compressors.baseline_compressors import FixedBitwidthCompressor
-from core.data_stream import DataStream
+from core.data_block import DataBlock
 
 
 class FixedBitwidthCompressorTest(unittest.TestCase):
     """
-    checks basic operations for a DataStream
+    checks basic operations for a DataBlock
     FIXME: improve these tests
     """
 
@@ -14,17 +14,17 @@ class FixedBitwidthCompressorTest(unittest.TestCase):
 
         # create some sample data
         data_list = ["A", "B", "C", "C", "A", "C"]
-        data_stream = DataStream(data_list)
+        data_block = DataBlock(data_list)
 
         # test encode
-        output_bits_stream = compressor.encode(data_stream)
+        output_bits_block = compressor.encode(data_block)
 
         # test decode
-        decoded_stream = compressor.decode(output_bits_stream)
+        decoded_block = compressor.decode(output_bits_block)
 
         # check if the encoding/decoding was lossless
-        for inp_symbol, out_symbol in zip(data_stream.data_list, decoded_stream.data_list):
+        for inp_symbol, out_symbol in zip(data_block.data_list, decoded_block.data_list):
             assert inp_symbol == out_symbol
 
         # check if the length of the encoding was correct
-        assert output_bits_stream.size == 12
+        assert output_bits_block.size == 12

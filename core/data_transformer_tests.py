@@ -1,26 +1,26 @@
 import unittest
-from core.data_stream import DataStream, StringDataStream
+from core.data_block import DataBlock, StringDataBlock
 from core.data_transformer import IdentityTransformer, SplitStringTransformer
 
 
 class IdentityTransformerTest(unittest.TestCase):
     def test_identity(self):
         data_list = [0, "A", "B", 1]
-        data_stream = DataStream(data_list)
-        output_stream = IdentityTransformer().transform(data_stream)
+        data_block = DataBlock(data_list)
+        output_block = IdentityTransformer().transform(data_block)
 
-        assert output_stream.size == data_stream.size
-        for id in range(output_stream.size):
-            assert data_stream.data_list[id] == output_stream.data_list[id]
+        assert output_block.size == data_block.size
+        for id in range(output_block.size):
+            assert data_block.data_list[id] == output_block.data_list[id]
 
 
 class SplitStringTransformerTest(unittest.TestCase):
     def test_validate_func_on_invalid_input(self):
         """
-        checks the validation func of the StringDataStream class
+        checks the validation func of the StringDataBlock class
         """
         data_list = ["0", "A1", "BA1", "B1CD"]
-        data_stream = StringDataStream(data_list)
-        output_stream = SplitStringTransformer().transform(data_stream)
-        assert output_stream.size == 10
-        assert output_stream.data_list[-1] == "D"
+        data_block = StringDataBlock(data_list)
+        output_block = SplitStringTransformer().transform(data_block)
+        assert output_block.size == 10
+        assert output_block.data_list[-1] == "D"
