@@ -106,12 +106,12 @@ class GolombUintCompressor(DataCompressor):
 
         return quotient_bitstring + remainder_bitstring
 
-    def decoder_bits_parser(self, data_stream, start_ind):
+    def decoder_bits_parser(self, data_block, start_ind):
 
         # infer the quotient
         quotient = 0
-        for ind in range(start_ind, data_stream.size):
-            bit = data_stream.data_list[ind]
+        for ind in range(start_ind, data_block.size):
+            bit = data_block.data_list[ind]
             if str(bit) == "0":
                 break
             quotient += 1
@@ -120,22 +120,22 @@ class GolombUintCompressor(DataCompressor):
 
         # see if next bit is 0 or 1 to figure out if we encoded remainder with b or b+1 bits
         # For M power of 2 (Rice code, always go with b bits)
-        if self.rice_code or str(data_stream.data_list[current_ind]) == "0":
+        if self.rice_code or str(data_block.data_list[current_ind]) == "0":
             new_start_ind = current_ind + self.b
-            remainder_bitstring = "".join(data_stream.data_list[current_ind:new_start_ind])
+            remainder_bitstring = "".join(data_block.data_list[current_ind:new_start_ind])
             remainder = bitstring_to_uint(remainder_bitstring)
         else:
             new_start_ind = current_ind + self.b + 1
-            remainder_bitstring = "".join(data_stream.data_list[current_ind:new_start_ind])
+            remainder_bitstring = "".join(data_block.data_list[current_ind:new_start_ind])
             remainder = bitstring_to_uint(remainder_bitstring) - self.cutoff
 
         symbol = self.M * quotient + remainder
 
         return symbol, new_start_ind
 
-    def set_encoder_decoder_params(self, data_stream):
+    def set_encoder_decoder_params(self, data_block):
 
-        assert isinstance(data_stream, UintDataStream)
+        assert isinstance(data_block, UintDataBlock)
 
         # create encoder and decoder transforms
         self.encoder_transform = CascadeTransformer(
