@@ -3,7 +3,7 @@ from compressors.prefix_free_compressors import (
     GolombUintCompressor,
     UniversalUintCompressor,
 )
-from core.data_stream import UintDataStream
+from core.data_block import UintDataBlock
 
 
 class UintUniversalCompressorTest(unittest.TestCase):
@@ -16,16 +16,16 @@ class UintUniversalCompressorTest(unittest.TestCase):
 
         # create some sample data
         data_list = [0, 0, 1, 3, 4, 100]
-        data_stream = UintDataStream(data_list)
+        data_block = UintDataBlock(data_list)
 
         # test encode
-        output_bits_stream = compressor.encode(data_stream)
+        output_bits_block = compressor.encode(data_block)
 
         # test decode
-        decoded_stream = compressor.decode(output_bits_stream)
+        decoded_block = compressor.decode(output_bits_block)
 
         # check if the encoding/decoding was lossless
-        for inp_symbol, out_symbol in zip(data_stream.data_list, decoded_stream.data_list):
+        for inp_symbol, out_symbol in zip(data_block.data_list, decoded_block.data_list):
             assert inp_symbol == out_symbol
 
 

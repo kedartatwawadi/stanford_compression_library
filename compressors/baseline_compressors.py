@@ -23,7 +23,7 @@ class FixedBitwidthCompressor(DataCompressor):
     See baseline_compressors_tests.py for usage
     """
 
-    def set_encoder_decoder_params(self, data_stream):
+    def set_encoder_decoder_params(self, data_block):
         """
         Each compressor consists of encoder_transform + decoder_transform
         In this case we need to know the input alphabet size to define the transforms
@@ -32,7 +32,7 @@ class FixedBitwidthCompressor(DataCompressor):
         in this function
         """
         # set bit width
-        alphabet = data_stream.get_alphabet()
+        alphabet = data_block.get_alphabet()
         self.bit_width = self._get_bit_width(len(alphabet))
 
         # set encoder/decoder lookup tables
