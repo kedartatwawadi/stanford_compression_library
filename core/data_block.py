@@ -1,5 +1,4 @@
 from typing import List, Set
-from dataclasses import dataclass
 from core.util import compute_alphabet, compute_counts_dict
 from core.prob_dist import ProbabilityDist
 
@@ -18,7 +17,8 @@ class DataBlock:
 
     def get_counts(self, order=0):
         """
-        returns counts for each object
+        :param order: FIXME: I am assuming order here is the entropy order. Shouldn't it be defaulted to 1?
+        :return: counts for each object
         """
         if order != 0:
             raise NotImplementedError("[order != 0] counts not implemented")
@@ -27,7 +27,9 @@ class DataBlock:
 
     def get_empirical_distribution(self, order=0) -> ProbabilityDist:
         """
-        Computes the empirical distribution of the given order
+        :param order: FIXME
+        :return: Computes the empirical distribution of the given order
+
         """
         if order != 0:
             raise NotImplementedError("[order != 0] Entropy computation not implemented")
@@ -36,23 +38,28 @@ class DataBlock:
         counts_dict = self.get_counts()
 
         # compute the prob form the counts
-        prob_dict = {}
-        for symbol, count in counts_dict.items():
-            prob_dict[symbol] = count / self.size
+        prob_dict = {
+            symbol: count / self.size for symbol, count in counts_dict.items()
+        }
 
         return ProbabilityDist(prob_dict)
 
     def get_entropy(self, order=0):
         """
-        Computes the entropy of the given order
+        :param order: FIXME
+        :return: Computes the entropy of the given order
         """
+
         if order != 0:
             raise NotImplementedError("[order != 0] Entropy computation not implemented")
 
         prob_dist = self.get_empirical_distribution()
         return prob_dist.entropy
 
-    def get_alphabet(self):
+    def get_alphabet(self) -> Set:
+        """
+        :return: set of alphabets from a list of data
+        """
         return compute_alphabet(self.data_list)
 
 
@@ -72,20 +79,22 @@ class StringDataBlock(DataBlock):
 
 class BitstringDataBlock(StringDataBlock):
     """
-    DataBlock for which each element of the data_list is a str
-    For eg: ["0", "1"], ["A", "AAB", "BCE"]
+    DataBlock for which each element of the data_list is a string containing only binary "0" or "1" values
+    For eg: ["0", "1", "0"], but not ["A", "AAB", "BCE"]
     """
 
     @staticmethod
     def validate_data_symbol(bitstring) -> bool:
         """
-        validates that the symbol is of type str
+        validates that the symbol is either "0" or "1"
         """
         # validate if input symbol is a string
         is_str = isinstance(bitstring, str)
         if is_str:
             # validate if input symbol string contains only 0,1
-            bitstring_list = [c for c in bitstring]
+
+            # FIXME: Why do we need bitstring_list, since this is inherited class shoudn't it be list by default?
+            bitstring_list = list(bitstring)
             alphabet = compute_alphabet(bitstring_list)
 
             binary_alphabet = {"0", "1"}
@@ -104,9 +113,7 @@ class UintDataBlock(DataBlock):
         """
         validates that the symbol is of type unsigned int
         """
-        if not isinstance(symbol, int):
-            return False
-        return symbol >= 0
+        return False if not isinstance(symbol, int) else symbol >= 0
 
 
 class BitsDataBlock(DataBlock):
@@ -122,8 +129,8 @@ class BitsDataBlock(DataBlock):
         """
 
         if isinstance(symbol, str):
-            return (symbol == "0") or (symbol == "1")
+            return symbol in ["0", "1"]
         elif isinstance(symbol, int):
-            return (symbol == 0) or (symbol == 1)
+            return symbol in [0, 1]
         else:
             return False

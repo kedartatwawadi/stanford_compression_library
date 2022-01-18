@@ -47,7 +47,7 @@ class FixedBitwidthCompressor(DataCompressor):
         # The encoder transformer is represented as a cascade:
         # Example:
         # data = [A,B,B,A,C]
-        # Transform-1: Lookuptable to get the alphabet index {A: 0, B: 1, C: 2}
+        # Transform-1: Look-up table to get the alphabet index {A: 0, B: 1, C: 2}
         # Transform-2: Uint to bitstring with a fixed width (2 for example) [0 -> 00, 1 -> 01, 2 -> 10]
         # Transform-3: Bitstring to bits: [000 -> 0,0,0]
         self.encoder_transform = CascadeTransformer(
@@ -70,4 +70,8 @@ class FixedBitwidthCompressor(DataCompressor):
 
     @staticmethod
     def _get_bit_width(alphabet_size) -> int:
+        """
+        :param alphabet_size: number o unique symbols in datastream
+        :return: the number of bits required to contain alphabet size of alphabet_size
+        """
         return int(np.ceil(np.log2(alphabet_size)))

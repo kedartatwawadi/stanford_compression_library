@@ -1,4 +1,3 @@
-import numpy as np
 from core.data_block import BitsDataBlock, DataBlock
 from core.data_transformer import DataTransformer
 
@@ -6,6 +5,8 @@ from core.data_transformer import DataTransformer
 class DataCompressor:
     """
     Base Data Compressor
+
+    FIXME: Should we make it an abstract class requiring encode and decode methods.
     """
 
     def __init__(
@@ -24,7 +25,10 @@ class DataCompressor:
 
     def encode(self, data_block: DataBlock):
         """
-        The core encode function of the compressor
+        The core encode function of the compressor performing encoding.
+
+        :param data_block: works on a data_block input
+        :return: returns a bit array of encoded data
         """
 
         # set the parameters of the encoder/decoder using the data_block
@@ -38,6 +42,12 @@ class DataCompressor:
         return output_bits_block
 
     def decode(self, data_block: BitsDataBlock):
+        """
+        The core decode function of the compressor. Performs decoding on data as obtained from above encoding class.
+
+        :param data_block: needs to be a Bit Stream of data form BitsDataBlock
+        :return:
+        """
 
         # input block to the decoder needs to be a block of bits
         assert isinstance(data_block, BitsDataBlock)

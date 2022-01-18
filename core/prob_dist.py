@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class ProbabilityDist:
     """
     TODO: add description
@@ -12,10 +11,7 @@ class ProbabilityDist:
 
     @property
     def entropy(self):
-        entropy = 0
-        for _, prob in self.prob_dict.items():
-            entropy += -prob * np.log2(prob)
-        return entropy
+        return sum(-prob * np.log2(prob) for _, prob in self.prob_dict.items())
 
     @staticmethod
     def _validate_prob_dist(prob_dict):
@@ -29,5 +25,4 @@ class ProbabilityDist:
             assert prob >= 0, "probabilities cannot be negative"
             sum_of_probs += prob
 
-        # FIXME: check if this needs a tolerance range
-        assert sum_of_probs == 1.0, "probabilities should sum to 1.0"
+        np.testing.assert_almost_equal(sum_of_probs, 1, err_msg="probabilities should sum to 1.0")

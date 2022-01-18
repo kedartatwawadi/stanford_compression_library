@@ -20,15 +20,17 @@ from core.util import bitstring_to_uint, uint_to_bitstring
 class DataTransformer(abc.ABC):
     """
     a DataTransformer transform the input DataBlock into an output DataBlock
+
+    abstract class method: need to implement "transform" method inside each dervied subclass
     """
 
     @abc.abstractmethod
-    def transform(self, data_block: DataBlock) -> DataBlock:
+    def transform(self, data_block: DataBlock):
         """
         NOTE: For any DataTransformer, the transform function needs to be implemented
         the transform function of every DataTransformer takes only the data_block as input
         """
-        return None
+        pass
 
 
 class IdentityTransformer(DataTransformer):
@@ -46,6 +48,9 @@ class SplitStringTransformer(DataTransformer):
     For eg:
     ["aa", "aab"] -> ["a","a","a","a","b]
     """
+    @staticmethod
+    def is_symbol_valid(symbol) -> bool:
+        return StringDataBlock.validate_data_symbol(symbol)
 
     def transform(self, data_block: StringDataBlock) -> DataBlock:
         output_list = []
@@ -53,12 +58,8 @@ class SplitStringTransformer(DataTransformer):
             # check if the symbol is valid
             assert self.is_symbol_valid(symbol)
 
-            output_list += [c for c in symbol]
+            output_list += list(symbol)
         return StringDataBlock(output_list)
-
-    @staticmethod
-    def is_symbol_valid(symbol) -> bool:
-        return StringDataBlock.validate_data_symbol(symbol)
 
 
 class BitstringToBitsTransformer(SplitStringTransformer):
@@ -78,8 +79,12 @@ class BitstringToBitsTransformer(SplitStringTransformer):
 
 class BitsToBitstringTransformer(DataTransformer):
     """
-    combines the bits into bitstrings
-    eg: bit_width=2, ["0","0","0","1"] -> ["00", "01"]
+    combines the bits into bit-strings
+    eg:
+    bit_width=2, ["0","0","0","1"] -> ["00", "01"] or
+    bit_width=3, [0,0,0,1,0,1] -> ["000", "101"] or
+
+    Requires the number of symbols to be a multiple of bit_width.
     """
 
     def __init__(self, bit_width: int):
@@ -128,7 +133,6 @@ class BitstringToUintTransformer(DataTransformer):
     """
 
     def transform(self, data_block: BitstringDataBlock):
-
         output_list: List[str] = []
         for bitstring in data_block.data_list:
             assert BitstringDataBlock.validate_data_symbol(bitstring)
@@ -152,16 +156,13 @@ class LookupFuncTransformer(DataTransformer):
         self.lookup_func = lookup_func
 
     def transform(self, data_block: DataBlock):
-        output_list = []
-        for symbol in data_block.data_list:
-            output_list.append(self.lookup_func(symbol))
-
+        output_list = [self.lookup_func(symbol) for symbol in data_block.data_list]
         return DataBlock(output_list)
 
 
 class LookupTableTransformer(LookupFuncTransformer):
     """
-    returns value based on the lookup table.
+    returns value based on the lookup table. Allows initialization of LookUpTable transformer from a dictionary.
     Can be implemented as a subclass of LookupFuncTransformer
     """
 
@@ -188,10 +189,12 @@ class BitsParserTransformer(DataTransformer):
     """
     Transformer which operates on BitsDataBlock and consumes bits.
     TODO: @tpulkit add more details
+
+    FIXME: Do we need start index, or is the current implementation overfitted for UniversalUintCompressor
+    Need to understand the use case of this better
     """
 
     def __init__(self, parse_bits_func: Callable):
-
         # parse_bits_func needs to take in the data_block and a starting index
         # FIXME: @shubham this is ugly
         self.parse_bits_func = parse_bits_func
