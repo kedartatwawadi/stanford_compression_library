@@ -1,6 +1,7 @@
 import unittest
 from compressors.prefix_free_compressors import UniversalUintCompressor
 from core.data_block import UintDataBlock
+from utils.test_utils import try_lossless_compression
 
 
 class UintUniversalCompressorTest(unittest.TestCase):
@@ -15,12 +16,5 @@ class UintUniversalCompressorTest(unittest.TestCase):
         data_list = [0, 0, 1, 3, 4, 100]
         data_block = UintDataBlock(data_list)
 
-        # test encode
-        output_bits_block = compressor.encode(data_block)
-
-        # test decode
-        decoded_block = compressor.decode(output_bits_block)
-
-        # check if the encoding/decoding was lossless
-        for inp_symbol, out_symbol in zip(data_block.data_list, decoded_block.data_list):
-            assert inp_symbol == out_symbol
+        is_lossless, codelen = try_lossless_compression(data_block, compressor)
+        assert is_lossless
