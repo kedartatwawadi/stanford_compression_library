@@ -102,14 +102,15 @@ class HuffmanCoder2(DataCompressor):
             huff_coder = HuffmanCoder1(prob_dist)
             
             # encode using huff_coder
-            encoded_bits = huff_coder.encode(data_block)
+            encoded_bits = huff_coder.encode_block(data_block)
 
             # encode params
-            encoded_params = self.prob_dist_compressor.encode(prob_dist)
+            encoded_params = self.prob_dist_compressor.encode_block(prob_dist)
 
             # concat and return
             return concat_bit_streams(encoded_params, encoded_bits)
 
 
-
+        def decode_block(...)
+            ...
     
