@@ -24,6 +24,29 @@ class DataCompressor(abc.ABC):
                 assert isinstance(output, BitsDataBlock)
                 output_stream.write(output)
         
+        '''
+        Use like
+        ```
+        for compressed_block in my_compressor.encode_generator(data_stream, block_size):
+            Do something with compressed_block (e.g., write to file, just measure length etc.)
+        ```
+        '''
+        @final
+        def encode_generator(self, data_stream, block_size):
+            # combine bits together from block
+            while True:
+                # create blocks form data_input
+                data_block = data_stream.get_block(block_size)
+
+                # if data_block is None, we done, so break
+                if data_block is None:
+                    break
+
+                # encode and return state
+                output = self.encode_block(data_block)
+                assert isinstance(output, BitsDataBlock)
+                yield output
+
     class Decoder:
         def decode_block(self, bits_block):
             # update state, return decoded_data
@@ -45,6 +68,29 @@ class DataCompressor(abc.ABC):
                 output = self.decode_block(encoded_block)
                 output_stream.write(output)
     
+        '''
+        Use like
+        ```
+        for decompressed_block in my_decompressor.decode_generator(encoded_stream, block_size):
+            Do something with decompressed_block (e.g., write to file, perform computations)
+        ```
+        '''
+        @final
+        def decode_generator(self, encoded_stream):
+            # combine bits together from block
+            while True:
+                # create blocks form data_input
+                encoded_block = encoded_stream.get_block()
+
+                # if data_block is None, we done, so break
+                if encoded_block is None:
+                    break
+
+                # encode and return state
+                output = self.decode_block(encoded_block)
+                yield output
+
+
     @final
     def __init__(self, *args, **kwargs):
         # define encoder
