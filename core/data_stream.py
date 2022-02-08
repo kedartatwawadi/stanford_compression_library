@@ -1,11 +1,11 @@
-from ast import List
-import contextlib
 import abc
-
+import tempfile
+import os
 from core.data_block import DataBlock
+from typing import List
 
 
-class DataStream(contextlib.AbstractContextManager):
+class DataStream(abc.ABC):
     @abc.abstractmethod
     def reset(self):
         # resets the data stream
@@ -14,6 +14,12 @@ class DataStream(contextlib.AbstractContextManager):
     @abc.abstractmethod
     def get_next_data_block(self, block_size):
         # returns the next data block
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
         pass
 
 
@@ -40,7 +46,11 @@ class ListDataStream(DataStream):
         if block_size is None:
             return self.input_list
 
-        end = self.start_ind + block_size
+        # return None if you have reached the end of list
+        if self.start_ind >= (len(self.input_list)):
+            return None
+
+        end = min(self.start_ind + block_size, len(self.input_list))
         data = self.input_list[self.start_ind : end]
         self.start_ind += block_size
 
@@ -65,8 +75,9 @@ class FileDataStream(DataStream):
 
     def __enter__(self):
         self.file_reader = open(self.file_path, "r")
+        return self
 
-    def __exit__(self):
+    def __exit__(self, exc_type, exc_value, exc_traceback):
         self.file_reader.close()
 
     def reset(self):
@@ -82,5 +93,41 @@ class FileDataStream(DataStream):
 
         # format data appropriately based on what type of datablock we want
         data = [self.block_cls.char_to_symbol(c) for c in data_raw]
-
         return self.block_cls(data)
+
+
+def test_list_data_stream():
+    """
+    simple testing function to check if list data stream is getting generated correctly
+    """
+    input_list = list(range(10))
+    with ListDataStream(input_list) as ds:
+        for i in range(3):
+            block = ds.get_next_data_block(block_size=3)
+            assert block.size == 3
+
+        block = ds.get_next_data_block(block_size=2)
+        assert block.size == 1
+
+        block = ds.get_next_data_block(block_size=2)
+        assert block is None
+
+
+def test_file_data_stream():
+    """
+    function to test file data stream
+    """
+
+    # create a temporary file
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        temp_file_path = os.path.join(tmpdirname, "tmp_file.txt")
+
+        # write data to the file
+        data_gt = "This_is_a_test_file"
+        with open(temp_file_path, "w") as fp:
+            fp.write(data_gt)
+
+        # read data from the file
+        with FileDataStream(temp_file_path) as fds:
+            block = fds.get_next_data_block(block_size=4)
+            assert block.size == 4

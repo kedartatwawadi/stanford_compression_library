@@ -1,6 +1,7 @@
 import abc
-
+from typing import final
 from core.data_block import BitsDataBlock, DataBlock
+from core.data_stream import DataStream
 
 
 class DataEncoder(abc.ABC):
@@ -23,13 +24,13 @@ class DataEncoder(abc.ABC):
 
         while True:
             # create blocks form data_input
-            data_block = data_stream.get_block(block_size, pad=False)
+            data_block = data_stream.get_data_block(block_size)
 
-            # if data_block is None, we done, so break
+            # if data_block is None, we are done, so break
             if data_block is None:
                 break
 
-            # encode and return state
+            # encode the block
             output = self.encode_block(data_block)
             assert isinstance(output, BitsDataBlock)
             output_stream.write(output)
