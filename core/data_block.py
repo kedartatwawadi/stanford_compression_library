@@ -55,43 +55,9 @@ class DataBlock:
     def get_alphabet(self):
         return compute_alphabet(self.data_list)
 
-
-class StringDataBlock(DataBlock):
-    """
-    DataBlock for which each element of the data_list is a str
-    For eg: ["0", "1"], ["A", "AAB", "BCE"]
-    """
-
-    @staticmethod
-    def validate_data_symbol(symbol) -> bool:
-        """
-        validates that the symbol is of type str
-        """
-        return isinstance(symbol, str)
-
-
-class BitstringDataBlock(StringDataBlock):
-    """
-    DataBlock for which each element of the data_list is a str
-    For eg: ["0", "1"], ["A", "AAB", "BCE"]
-    """
-
-    @staticmethod
-    def validate_data_symbol(bitstring) -> bool:
-        """
-        validates that the symbol is of type str
-        """
-        # validate if input symbol is a string
-        is_str = isinstance(bitstring, str)
-        if is_str:
-            # validate if input symbol string contains only 0,1
-            bitstring_list = [c for c in bitstring]
-            alphabet = compute_alphabet(bitstring_list)
-
-            binary_alphabet = {"0", "1"}
-            return alphabet.issubset(binary_alphabet)
-        else:
-            return False
+    @classmethod
+    def char_to_symbol(cls, c):
+        return c
 
 
 class UintDataBlock(DataBlock):
@@ -107,6 +73,10 @@ class UintDataBlock(DataBlock):
         if not isinstance(symbol, int):
             return False
         return symbol >= 0
+
+    @classmethod
+    def char_to_symbol(cls, c):
+        return int(c)
 
 
 class BitsDataBlock(DataBlock):
