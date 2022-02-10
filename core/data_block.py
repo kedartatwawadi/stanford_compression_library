@@ -56,10 +56,6 @@ class DataBlock:
         return compute_alphabet(self.data_list)
 
 
-class BitsDataBlock(DataBlock):
-    pass
-
-
 class DataBlockTest(unittest.TestCase):
     """
     checks basic operations for a DataBlock

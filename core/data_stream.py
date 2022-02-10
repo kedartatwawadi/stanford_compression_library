@@ -19,7 +19,7 @@ class DataStream(abc.ABC):
     def get_symbol(self):
         pass  # returns None if the stream is finished
 
-    def get_data_block(self, block_size: int):
+    def get_block(self, block_size: int):
         # returns the next data block
         data_list = []
         for _ in range(block_size):
@@ -39,7 +39,7 @@ class DataStream(abc.ABC):
     def write_symbol(self, s):
         pass
 
-    def write_data_block(self, data_block: DataBlock):
+    def write_block(self, data_block: DataBlock):
         for s in data_block.data_list:
             self.write_symbol(s)
 
@@ -131,13 +131,13 @@ def test_list_data_stream():
     input_list = list(range(10))
     with ListDataStream(input_list) as ds:
         for i in range(3):
-            block = ds.get_data_block(block_size=3)
+            block = ds.get_block(block_size=3)
             assert block.size == 3
 
-        block = ds.get_data_block(block_size=2)
+        block = ds.get_block(block_size=2)
         assert block.size == 1
 
-        block = ds.get_data_block(block_size=2)
+        block = ds.get_block(block_size=2)
         assert block is None
 
 
@@ -153,9 +153,9 @@ def test_file_data_stream():
         # write data to the file
         data_gt = DataBlock(list("This_is_a_test_file"))
         with TextFileDataStream(temp_file_path, "w") as fds:
-            fds.write_data_block(data_gt)
+            fds.write_block(data_gt)
 
         # read data from the file
         with TextFileDataStream(temp_file_path, "r") as fds:
-            block = fds.get_data_block(block_size=4)
+            block = fds.get_block(block_size=4)
             assert block.size == 4

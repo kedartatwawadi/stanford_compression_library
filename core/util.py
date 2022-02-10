@@ -45,7 +45,8 @@ def bitstring_to_uint(bitstring):
 
 # remap bitarray.bitarray for now..
 # TODO: we could add more functions later
-BitArray = bitarray.bitarray
+class BitArray(bitarray.bitarray):
+    pass
 
 
 def uint_to_bitarray(x: int, bit_width=None) -> BitArray:

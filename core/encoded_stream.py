@@ -133,7 +133,7 @@ class EncodedBlockReader:
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.file_reader.close()
 
-    def get_next_block(self):
+    def get_block(self):
         # read header
         header_bytes = self.file_reader.read(HeaderHandler.NUM_HEADER_BYTES)
         if len(header_bytes) == 0:
@@ -181,7 +181,7 @@ def test_encoded_block_reader_writer():
         encoded_blocks = []
         with EncodedBlockReader(temp_file_path) as encode_reader:
             while True:
-                block = encode_reader.get_next_block()
+                block = encode_reader.get_block()
                 if block is None:
                     break
                 encoded_blocks.append(block)
