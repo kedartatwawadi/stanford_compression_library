@@ -16,15 +16,15 @@ class DataStream(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_next_symbol(self):
+    def get_symbol(self):
         pass  # returns None if the stream is finished
 
-    def get_next_data_block(self, block_size: int):
+    def get_data_block(self, block_size: int):
         # returns the next data block
         data_list = []
         for _ in range(block_size):
             # get next symbol
-            s = self.get_next_symbol()
+            s = self.get_symbol()
             if s is None:
                 break
             data_list.append(s)
@@ -34,6 +34,14 @@ class DataStream(abc.ABC):
             return None
 
         return DataBlock(data_list)
+
+    @abc.abstractmethod
+    def write_symbol(self, s):
+        pass
+
+    def write_data_block(self, data_block: DataBlock):
+        for s in data_block.data_list:
+            self.write_symbol(s)
 
     def __enter__(self):
         return self
@@ -58,12 +66,15 @@ class ListDataStream(DataStream):
     def reset(self):
         self.current_ind = 0
 
-    def get_next_symbol(self):
+    def get_symbol(self):
         if self.current_ind >= len(self.input_list):
             return None
         s = self.input_list[self.current_ind]
         self.current_ind += 1
         return s
+
+    def write_symbol(self, s):
+        self.input_list.append(s)
 
 
 class FileDataStream(DataStream):
@@ -71,22 +82,23 @@ class FileDataStream(DataStream):
     create a data stream object from a file
     """
 
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str, permissions="r"):
         """
         block class -> specifies what type of block to return
         Also, every DataBlock has a char_to_symbol function which is used to convert data appropriately before passing
         """
         self.file_path = file_path
+        self.permissions = permissions
 
     def __enter__(self):
-        self.file_reader = open(self.file_path, "r")
+        self.file_obj = open(self.file_path, self.permissions)
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        self.file_reader.close()
+        self.file_obj.close()
 
     def reset(self):
-        self.file_reader.seek(0)
+        self.file_obj.seek(0)
 
 
 class TextFileDataStream(FileDataStream):
@@ -94,11 +106,14 @@ class TextFileDataStream(FileDataStream):
     reads one symbol at a time
     """
 
-    def get_next_symbol(self):
-        s = self.file_reader.read(1)
+    def get_symbol(self):
+        s = self.file_obj.read(1)
         if not s:
             return None
         return s
+
+    def write_symbol(self, s):
+        self.file_obj.write(s)
 
 
 class Uint8FileDataStream(FileDataStream):
@@ -116,13 +131,13 @@ def test_list_data_stream():
     input_list = list(range(10))
     with ListDataStream(input_list) as ds:
         for i in range(3):
-            block = ds.get_next_data_block(block_size=3)
+            block = ds.get_data_block(block_size=3)
             assert block.size == 3
 
-        block = ds.get_next_data_block(block_size=2)
+        block = ds.get_data_block(block_size=2)
         assert block.size == 1
 
-        block = ds.get_next_data_block(block_size=2)
+        block = ds.get_data_block(block_size=2)
         assert block is None
 
 
@@ -133,14 +148,14 @@ def test_file_data_stream():
 
     # create a temporary file
     with tempfile.TemporaryDirectory() as tmpdirname:
-        orig_file_path = os.path.join(tmpdirname, "orig.txt")
+        temp_file_path = os.path.join(tmpdirname, "tmp_file.txt")
 
         # write data to the file
-        data_gt = "This_is_a_test_file"
-        with open(temp_file_path, "w") as fp:
-            fp.write(data_gt)
+        data_gt = DataBlock(list("This_is_a_test_file"))
+        with TextFileDataStream(temp_file_path, "w") as fds:
+            fds.write_data_block(data_gt)
 
         # read data from the file
-        with TextFileDataStream(temp_file_path) as fds:
-            block = fds.get_next_data_block(block_size=4)
+        with TextFileDataStream(temp_file_path, "r") as fds:
+            block = fds.get_data_block(block_size=4)
             assert block.size == 4
