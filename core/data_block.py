@@ -1,12 +1,12 @@
-from typing import List, Set
-from dataclasses import dataclass
+from typing import List
 from core.util import compute_alphabet, compute_counts_dict
 from core.prob_dist import ProbabilityDist
+import unittest
 
 
 class DataBlock:
     """
-    FIXME: for now data is only presented as a list of symbols
+    wrapper around a list of symbols
     """
 
     def __init__(self, data_list: List):
@@ -55,45 +55,34 @@ class DataBlock:
     def get_alphabet(self):
         return compute_alphabet(self.data_list)
 
-    @classmethod
-    def char_to_symbol(cls, c):
-        return c
-
-
-class UintDataBlock(DataBlock):
-    """
-    block consisting of unsigned integers
-    """
-
-    @staticmethod
-    def validate_data_symbol(symbol) -> bool:
-        """
-        validates that the symbol is of type unsigned int
-        """
-        if not isinstance(symbol, int):
-            return False
-        return symbol >= 0
-
-    @classmethod
-    def char_to_symbol(cls, c):
-        return int(c)
-
 
 class BitsDataBlock(DataBlock):
+    pass
+
+
+class DataBlockTest(unittest.TestCase):
     """
-    block consisting of bits. either ("0" or "1")
-    or (0,1)
+    checks basic operations for a DataBlock
+    FIXME: improve these tests
     """
 
-    @staticmethod
-    def validate_data_symbol(symbol) -> bool:
-        """
-        validates that the symbol is of type str
-        """
+    def test_data_block_basic_ops(self):
+        data_list = [0, 1, 0, 0, 1, 1]
 
-        if isinstance(symbol, str):
-            return (symbol == "0") or (symbol == "1")
-        elif isinstance(symbol, int):
-            return (symbol == 0) or (symbol == 1)
-        else:
-            return False
+        # create data block object
+        data_block = DataBlock(data_list)
+
+        # check size
+        assert data_block.size == 6
+
+        # check counts
+        counts_dict = data_block.get_counts(order=0)
+        assert counts_dict[0] == 3
+
+        # check empirical dist
+        prob_dist = data_block.get_empirical_distribution(order=0)
+        assert prob_dist.prob_dict[0] == 0.5
+
+        # check entropy
+        entropy = data_block.get_entropy(order=0)
+        assert entropy == 1.0
