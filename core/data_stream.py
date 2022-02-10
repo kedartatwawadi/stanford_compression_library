@@ -133,7 +133,7 @@ def test_file_data_stream():
 
     # create a temporary file
     with tempfile.TemporaryDirectory() as tmpdirname:
-        temp_file_path = os.path.join(tmpdirname, "tmp_file.txt")
+        orig_file_path = os.path.join(tmpdirname, "orig.txt")
 
         # write data to the file
         data_gt = "This_is_a_test_file"

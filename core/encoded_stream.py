@@ -1,28 +1,6 @@
-import abc
-from core.util import bitstring_to_uint, uint_to_bitstring
-import numpy as np
-import bitarray
-
-# data block
-# bits_block + pad
-
-# remap bitarray.bitarray for now..
-# TODO: we could add more functions later
-BitArray = bitarray.bitarray
-
-
-def uint_to_bitarray(x: int, bit_width=None) -> BitArray:
-    assert x >= 0
-    if bit_width is None:
-        return BitArray(x)
-    ret = BitArray(x)
-    pad = BitArray("0") * (bit_width - len(ret))
-    return pad + ret
-
-
-def bitarray_to_uint(bit_array: BitArray) -> int:
-    return int(bit_array.to01(), 2)
-
+from core.util import BitArray, uint_to_bitarray, bitarray_to_uint
+import tempfile
+import os
 
 #################
 
@@ -36,8 +14,9 @@ class Padder:
         payload_size = len(payload_bitarray)
         num_pad = (8 - (payload_size + cls.NUM_PAD_BITS) % 8) % 8
 
-        padding = uint_to_bitstring(num_pad, bit_width=cls.NUM_PAD_BITS) + "0" * num_pad
-        padding_bitarray = BitArray(padding)
+        padding_bitarray = uint_to_bitarray(num_pad, bit_width=cls.NUM_PAD_BITS) + BitArray(
+            "0" * num_pad
+        )
         return padding_bitarray + payload_bitarray
 
     @classmethod
@@ -72,135 +51,142 @@ def test_padder():
 
 class HeaderHandler:
     NUM_HEADER_BYTES = 4
+    NUM_HEADER_BITS = NUM_HEADER_BYTES * 8
+    MAX_PAYLOAD_SIZE = 1 << NUM_HEADER_BITS
 
+    @classmethod
+    def add_header(cls, payload_bitarray: BitArray):
+        # check if bitarray is byte aligned
+        assert len(payload_bitarray) % 8 == 0
 
-def bits_to_bytes(bits_list):
-    assert len(bits_list) % 8 == 0
-    return np.packbits(bits_list)
+        # add header
+        arr_size = len(payload_bitarray) // 8
+        assert arr_size < cls.MAX_PAYLOAD_SIZE  # maximum size of the  block
+        header_bitarray = uint_to_bitarray(arr_size, bit_width=cls.NUM_HEADER_BITS)
+        return header_bitarray + payload_bitarray
 
-
-def bytes_to_bits(bytes_list):
-    return np.unpackbits(bytes_list)
-
-
-def test_bits_bytes_conversion():
-    payload = np.array([23, 78], dtype=np.uint8)
-
-    # bytes to bits
-    bits = bytes_to_bits(payload)
-    assert len(bits) == len(payload) * 8
-
-    # bits to bytes
-    bytes_arr = bits_to_bytes(bits)
-    np.testing.assert_array_equal(bytes_arr, payload)
-
-
-################
-
-
-def add_header(bytes_arr):
-    arr_size = len(bytes_arr)
-    size_bytes = list(np.frombuffer(arr_size.to_bytes(4, "big"), dtype=np.uint8))
-    return size_bytes + bytes_arr
+    @classmethod
+    def get_payload_size(cls, header_bytes: bytes):
+        assert isinstance(header_bytes, bytes)
+        header_bitarray = BitArray()
+        header_bitarray.frombytes(header_bytes)
+        assert len(header_bitarray) == cls.NUM_HEADER_BITS
+        return bitarray_to_uint(header_bitarray)  # in bytes
 
 
 def test_header():
-    payload = np.array([23, 78], dtype=np.uint8)
-    bytes = add_header(payload)
+    payload_bitarray = BitArray("1" * 23)
+    padded_payload_bitarray = Padder.add_byte_padding(payload_bitarray)
+
+    # get true size of the padded payload
+    size_payload = len(padded_payload_bitarray) // 8
+
+    # add header
+    payload_header_bitarray = HeaderHandler.add_header(padded_payload_bitarray)
+    data_bytes = payload_header_bitarray.tobytes()
+
+    # decode size
+    size_payload_decoded = HeaderHandler.get_payload_size(
+        data_bytes[: HeaderHandler.NUM_HEADER_BYTES]
+    )
+    assert size_payload == size_payload_decoded
 
 
-# def get_block_header(payload_size: int):
-#     assert isinstance(payload_size, int)
-
-#     # add a limit on payload_size, which helps simplify the header decoding
-#     assert payload_size <= MAX_PAYLOAD_SIZE
-#     bitstring = uint_to_bitstring(payload_size)
-#     len_bitstring = len(bitstring) * "0" + "1"
-#     header = (len_bitstring + bitstring).split()
-#     return header
-
-# def get_byte_padding(payload_header_size: int):
-#     num_pad = (payload_header_size + NUM_PAD_BITS)%8
-#     padding = uint_to_bitstring(num_pad, bit_width=NUM_PAD_BITS) + "0"*num_pad
-#     padding_bits = uint_to_bitstring(padding)
-#     return padding_bits
-
-# def add_header_and_padding(payload_bits_list):
-#     header = get_block_header(len(payload_bits_list))
-#     header_and_payload = header + payload_bits_list
-#     padding = get_byte_padding(len(header_and_payload))
-#     return (padding + header_and_payload)
-
-# def get_bytes_from_bitlist(bits_list):
-#     assert len(bits_list)%8 == 0
-#     return np.packbits(bits_list)
-#     #return bytes([int("".join(map(str, bits_list[i:i+8])), 2) for i in range(0, len(bits_list), 8)])
+######################################
 
 
-# def get_payload_and_header_size(bytes_list):
-#     bits_list = np.unpackbits(bytes_list)
+class EncodedBlockWriter:
+    def __init__(self, file_path: str):
+        self.file_path = file_path
 
-#     # get padding
-#     pad_bitstring = ''.join(bits_list[:NUM_PAD_BITS])
-#     num_pad = bitstring_to_uint(pad_bitstring)
+    def __enter__(self):
+        self.file_reader = open(self.file_path, "wb")  # open binary file
+        return self
 
-#     # header
-#     header_bits = bits_list[NUM_PAD_BITS+num_pad:]
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.file_reader.close()
 
+    def write_block(self, encoded_block: BitArray):
+        assert isinstance(encoded_block, BitArray)
 
-# def decoder_bits_parser(data_block, start_ind):
+        # add padding
+        padded_encoded_block = Padder.add_byte_padding(encoded_block)
 
-#     # infer the length
-#     num_ones = 0
-#     for ind in range(start_ind, data_block.size):
-#         bit = data_block.data_list[ind]
-#         if str(bit) == "0":
-#             break
-#         num_ones += 1
+        # add header
+        payload_header_block = HeaderHandler.add_header(padded_encoded_block)
 
-#     # compute the new start_ind
-#     new_start_ind = 2 * num_ones + 1 + start_ind
+        # get bytes
+        payload_bytes = payload_header_block.tobytes()
 
-#     # decode the symbol
-#     bitstring = "".join(data_block.data_list[start_ind + num_ones + 1 : new_start_ind])
-#     symbol = bitstring_to_uint(bitstring)
-
-#     return symbol, new_start_ind
-# class EncodeFileWriter:
-#     def __init__(self, file_path: str):
-#         self.file_path = file_path
-
-#     def __enter__(self):
-#         self.file_reader = open(self.file_path, "wb")
-#         return self
-
-#     def __exit__(self, exc_type, exc_value, exc_traceback):
-#         self.file_reader.close()
-
-#     def generate_header(self, data_size):
+        # write to file
+        self.file_reader.write(payload_bytes)
 
 
-#     @abc.abstractmethod
-#     def reset(self):
-#         # resets the data stream
-#         pass
+class EncodedBlockReader:
+    def __init__(self, file_path: str):
+        self.file_path = file_path
 
-#     @abc.abstractmethod
-#     def get_next_symbol(self):
-#         pass # returns None if the stream is finished
+    def __enter__(self):
+        self.file_reader = open(self.file_path, "rb")  # open binary file
+        return self
 
-#     def get_next_data_block(self, block_size: int):
-#         # returns the next data block
-#         data_list = []
-#         for _ in range(block_size):
-#             # get next symbol
-#             s = self.get_next_symbol()
-#             if s is None:
-#                 break
-#             data_list.append(s)
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.file_reader.close()
 
-#         # if data_list is empty, return None to signal the stream is over
-#         if not data_list:
-#             return None
+    def get_next_block(self):
+        # read header
+        header_bytes = self.file_reader.read(HeaderHandler.NUM_HEADER_BYTES)
+        if len(header_bytes) == 0:
+            # reached end of file
+            return None
 
-#         return DataBlock(data_list)
+        # header size should be correct
+        assert len(header_bytes) == HeaderHandler.NUM_HEADER_BYTES
+
+        # get block size (in bytes)
+        payload_size = HeaderHandler.get_payload_size(header_bytes)
+
+        # read the payload
+        payload_bytes = self.file_reader.read(payload_size)
+        assert len(payload_bytes) == payload_size
+
+        # construct payload bitarray and remove padding
+        payload_pad_bitarray = BitArray()
+        payload_pad_bitarray.frombytes(payload_bytes)
+
+        # remove padding
+        payload_bitarray = Padder.remove_byte_padding(payload_pad_bitarray)
+        return payload_bitarray
+
+
+###################################
+
+
+def test_encoded_block_reader_writer():
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        temp_file_path = os.path.join(tmpdirname, "tmp_file.txt")
+
+        # create 3 blocks
+        payload_bitarray_blocks = [
+            BitArray("101000101010111"),
+            BitArray("1" * 24),
+            BitArray("0" * 20),
+        ]
+        with EncodedBlockWriter(temp_file_path) as encode_writer:
+            for block in payload_bitarray_blocks:
+                encode_writer.write_block(block)
+
+        # read in data
+        encoded_blocks = []
+        with EncodedBlockReader(temp_file_path) as encode_reader:
+            while True:
+                block = encode_reader.get_next_block()
+                if block is None:
+                    break
+                encoded_blocks.append(block)
+
+        # check if the read data is equal to the data written
+        assert len(payload_bitarray_blocks) == len(encoded_blocks)
+        for written_block, read_block in zip(payload_bitarray_blocks, encoded_blocks):
+            assert written_block == read_block

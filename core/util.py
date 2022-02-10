@@ -1,4 +1,5 @@
 from typing import Set, List
+import bitarray
 
 
 def compute_alphabet(data_list: List) -> Set:
@@ -40,3 +41,17 @@ def uint_to_bitstring(uint_data, bit_width=None):
 
 def bitstring_to_uint(bitstring):
     return int(bitstring, 2)
+
+
+# remap bitarray.bitarray for now..
+# TODO: we could add more functions later
+BitArray = bitarray.bitarray
+
+
+def uint_to_bitarray(x: int, bit_width=None) -> BitArray:
+    return BitArray(uint_to_bitstring(x, bit_width=bit_width))
+
+
+def bitarray_to_uint(bit_array: BitArray) -> int:
+    bitstring = bit_array.to01()
+    return bitstring_to_uint(bitstring)
