@@ -48,6 +48,7 @@ class DataDecoder(abc.ABC):
     def decode_block(self, bitarray: BitArray):
         # update state, return decoded_data
         # self.state = ...
+        # return decoded_block, num_bits_consumed
         raise NotImplementedError
 
     @final
@@ -65,5 +66,7 @@ class DataDecoder(abc.ABC):
                 break
 
             # encode and return state
-            output = self.decode_block(encoded_block)
-            output_stream.write_block(output)
+            output_block, num_bits_consumed = self.decode_block(encoded_block)
+            assert num_bits_consumed == len(encoded_block)
+
+            output_stream.write_block(output_block)

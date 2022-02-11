@@ -1,5 +1,6 @@
 from typing import Set, List
 import bitarray
+import numpy as np
 
 
 def compute_alphabet(data_list: List) -> Set:
@@ -7,6 +8,10 @@ def compute_alphabet(data_list: List) -> Set:
     for d in data_list:
         alphabet.add(d)
     return alphabet
+
+
+def get_bit_width(size) -> int:
+    return int(np.ceil(np.log2(size)))
 
 
 def compute_counts_dict(data_list: List) -> dict:
