@@ -4,9 +4,14 @@ Contains some elementary baseline compressors
 """
 
 from core.data_block import DataBlock
+from core.encoded_stream import EncodedBlockReader, EncodedBlockWriter
 from core.framework import DataEncoder, DataDecoder
 from core.util import BitArray, bitarray_to_uint, uint_to_bitarray, get_bit_width
 from utils.test_utils import try_lossless_compression
+import tempfile
+import os
+from core.data_stream import TextFileDataStream
+import filecmp
 
 
 class AlphabetEncoder(DataEncoder):
@@ -124,3 +129,36 @@ def test_fixed_bitwidth_encode_decode():
     # check if the length of the encoding was correct
     alphabet_bits = (1 + len(data_block.get_alphabet())) * 8
     assert codelen == len(data_list) * 2 + alphabet_bits
+
+
+def test_fixed_bitwidth_file_write():
+    # define encoder, decoder
+    encoder = FixedBitwidthEncoder()
+    decoder = FixedBitwidthDecoder()
+
+    # write data to file
+    # create a temporary file
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        input_file_path = os.path.join(tmpdirname, "inp_file.txt")
+        encoded_file_path = os.path.join(tmpdirname, "encoded_file.bin")
+        reconst_file_path = os.path.join(tmpdirname, "reconst_file.txt")
+
+        # create some sample data
+        data_gt = [DataBlock(["AB"] * 1000), DataBlock(["CDE"] * 500)]
+
+        # write data to the file
+        with TextFileDataStream(input_file_path, "w") as fds:
+            fds.write_block(data_gt[0])
+            fds.write_block(data_gt[1])
+
+        # read data from the file
+        with TextFileDataStream(input_file_path, "r") as fds:
+            with EncodedBlockWriter(encoded_file_path) as writer:
+                encoder.encode(fds, block_size=500, encode_writer=writer)
+
+        # decode data from the file
+        with TextFileDataStream(reconst_file_path, "w") as fds:
+            with EncodedBlockReader(encoded_file_path) as reader:
+                decoder.decode(reader, fds)
+
+        assert filecmp(input_file_path, reconst_file_path)
