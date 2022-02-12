@@ -15,14 +15,31 @@ import os
 
 
 class Padder:
+    """Class to byte pad a bitarray"""
+
     NUM_PAD_BITS = 3
 
     @classmethod
     def add_byte_padding(cls, payload_bitarray: BitArray) -> BitArray:
+        """add byte padding to payload_bitarray
+
+        - the padding size is represented using the first 3 bits (0-7)
+        - the structure of the returned bitarray is:
+          (num_pad_bits + padding + payload)
+        - as we are essentially adding 3 bits to the payload, the padding computation needs to take that into account
+            Args:
+                payload_bitarray (BitArray): input bitarray
+
+        Returns:
+            BitArray: padded bitarray
+        """
         assert isinstance(payload_bitarray, BitArray)
+
+        # compute how much padding to add
         payload_size = len(payload_bitarray)
         num_pad = (8 - (payload_size + cls.NUM_PAD_BITS) % 8) % 8
 
+        # add padding
         padding_bitarray = uint_to_bitarray(num_pad, bit_width=cls.NUM_PAD_BITS) + BitArray(
             "0" * num_pad
         )
@@ -30,6 +47,7 @@ class Padder:
 
     @classmethod
     def remove_byte_padding(cls, payload_pad_bitarray: BitArray) -> BitArray:
+        """remove added byte padding"""
         assert isinstance(payload_pad_bitarray, BitArray)
         # get padding
         pad_bitarray = payload_pad_bitarray[: cls.NUM_PAD_BITS]
@@ -41,6 +59,8 @@ class Padder:
 
 
 def test_padder():
+    """test adding/removing byte padding to payload"""
+
     def _test(bits_gt):
         # add padding
         padded_bits_gt = Padder.add_byte_padding(bits_gt)
@@ -59,12 +79,20 @@ def test_padder():
 
 
 class HeaderHandler:
+    """Add block header to an encoded bitarray
+
+    The header communicates the size of the encoded bitarray
+    - the header itself is a fixed 4 bytes in size, and communicates the length in bytes of the payload
+    - returned bitarray -> header (32 bits) + payload
+    """
+
     NUM_HEADER_BYTES = 4
     NUM_HEADER_BITS = NUM_HEADER_BYTES * 8
     MAX_PAYLOAD_SIZE = 1 << NUM_HEADER_BITS
 
     @classmethod
     def add_header(cls, payload_bitarray: BitArray):
+        """add header to the byte aligned payload bitarray"""
         # check if bitarray is byte aligned
         assert len(payload_bitarray) % 8 == 0
 
@@ -76,6 +104,7 @@ class HeaderHandler:
 
     @classmethod
     def get_payload_size(cls, header_bytes: bytes):
+        """returns the size of the payload by reading in the header"""
         assert isinstance(header_bytes, bytes)
         header_bitarray = BitArray()
         header_bitarray.frombytes(header_bytes)
@@ -84,6 +113,7 @@ class HeaderHandler:
 
 
 def test_header():
+    """tests the header"""
     payload_bitarray = BitArray("1" * 23)
     padded_payload_bitarray = Padder.add_byte_padding(payload_bitarray)
 
