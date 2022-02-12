@@ -4,7 +4,7 @@ Utility functions useful for testing
 
 from typing import Tuple
 from core.data_block import DataBlock
-from core.framework import DataDecoder, DataEncoder
+from core.data_encoder_decoder import DataDecoder, DataEncoder
 
 
 def are_blocks_equal(data_block_1: DataBlock, data_block_2: DataBlock):
