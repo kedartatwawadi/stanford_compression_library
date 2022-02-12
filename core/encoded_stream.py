@@ -1,3 +1,12 @@
+"""encoded stream writers and readers
+
+All the encoders and decoders in the SCL process data in blocks.
+The encoder can encode data_block to a differently sized encoded_bitarray. To allow the decoder to retrieve the encoded_bitarray
+correcponding to a data_block, we have to include some block header before each encoded_bitarray
+The EncodedBlockWriter and EncodedBlockReader handle adding/removing these block headers and providing an interface to just
+care about the encoded_bitarray. More information in the respective docstrings.
+"""
+
 from utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
 import tempfile
 import os
@@ -96,33 +105,49 @@ def test_header():
 
 
 class EncodedBlockWriter:
+    """writer to write bitarrays to the encoded file"""
+
     def __init__(self, file_path: str):
         self.file_path = file_path
 
     def __enter__(self):
-        self.file_reader = open(self.file_path, "wb")  # open binary file
+        self.file_writer = open(self.file_path, "wb")  # open binary file
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        self.file_reader.close()
+        self.file_writer.close()
 
     def write_block(self, encoded_block: BitArray):
+        """writes the encoded_block to the file
+
+        Lets say we have two encoded bitarrays of variable length: enc_block1, enc_block2
+        the EncodedBlockWriter does the following things to each enc_block
+        - input -> (enc_block)
+        - Padding -> byte align enc_block (padding + enc_block)
+        - Header -> add a block header. The block header communicates the size of the enc_block
+        (header + padding + enc_block)
+
+        Args:
+            encoded_block (BitArray): encoded bitarray to be written to the file
+        """
+
+        # check if the encoded_block is indeed a BitArray
         assert isinstance(encoded_block, BitArray)
 
-        # add padding
+        # add byte padding
         padded_encoded_block = Padder.add_byte_padding(encoded_block)
 
-        # add header
+        # add block header
         payload_header_block = HeaderHandler.add_header(padded_encoded_block)
 
-        # get bytes
-        payload_bytes = payload_header_block.tobytes()
-
         # write to file
-        self.file_reader.write(payload_bytes)
+        payload_bytes = payload_header_block.tobytes()
+        self.file_writer.write(payload_bytes)
 
 
 class EncodedBlockReader:
+    """Reader to read encoded_blocks from a compressed binary file"""
+
     def __init__(self, file_path: str):
         self.file_path = file_path
 
@@ -134,6 +159,17 @@ class EncodedBlockReader:
         self.file_reader.close()
 
     def get_block(self):
+        """read the next encoded_block from the encoded file
+
+        The encoded file contains bits written in blocks such as:
+        (header + padding + enc_block1), (header + padding + enc_block2)
+        The reader needs to infer where the blocks end:
+        - header -> header size is fixed, so read the header and infer the (padding + enc_block) size
+        - padding -> remove byte padding from the payload (enc_block) and return the payload
+
+        Returns:
+            payload_bitarray (BitArray): the encoded bitarray block
+        """
         # read header
         header_bytes = self.file_reader.read(HeaderHandler.NUM_HEADER_BYTES)
         if len(header_bytes) == 0:
@@ -154,7 +190,7 @@ class EncodedBlockReader:
         payload_pad_bitarray = BitArray()
         payload_pad_bitarray.frombytes(payload_bytes)
 
-        # remove padding
+        # remove byte padding
         payload_bitarray = Padder.remove_byte_padding(payload_pad_bitarray)
         return payload_bitarray
 
@@ -163,21 +199,29 @@ class EncodedBlockReader:
 
 
 def test_encoded_block_reader_writer():
+    """tests EncodedBlockReader and EncodedBlockWriter
+
+    Testing procedure:
+    - create some dummy encoded_blocks
+    - write the encoded blocks to a binary file using EncodedBlockWriter
+    - read the binary file back using EncodedBlockReader and assert if the data is the same
+    """
 
     with tempfile.TemporaryDirectory() as tmpdirname:
-        temp_file_path = os.path.join(tmpdirname, "tmp_file.txt")
-
-        # create 3 blocks
+        # create 3 dummy encoded blocks
         payload_bitarray_blocks = [
             BitArray("101000101010111"),
             BitArray("1" * 24),
             BitArray("0" * 20),
         ]
+
+        # write the encoded blocks to a binary file
+        temp_file_path = os.path.join(tmpdirname, "encoded.bin")
         with EncodedBlockWriter(temp_file_path) as encode_writer:
             for block in payload_bitarray_blocks:
                 encode_writer.write_block(block)
 
-        # read in data
+        # read back the encoded blocks
         encoded_blocks = []
         with EncodedBlockReader(temp_file_path) as encode_reader:
             while True:
