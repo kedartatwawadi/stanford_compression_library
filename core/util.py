@@ -10,10 +10,6 @@ def compute_alphabet(data_list: List) -> Set:
     return alphabet
 
 
-def get_bit_width(size) -> int:
-    return int(np.ceil(np.log2(size)))
-
-
 def compute_counts_dict(data_list: List) -> dict:
     """
     returns a dict of the counts of each symbol in the data_list
@@ -31,6 +27,10 @@ def compute_counts_dict(data_list: List) -> dict:
         count_dict[d] += 1
 
     return count_dict
+
+
+def get_bit_width(size) -> int:
+    return int(np.ceil(np.log2(size)))
 
 
 def uint_to_bitstring(uint_data, bit_width=None):

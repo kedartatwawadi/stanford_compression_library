@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Set
 from core.util import compute_alphabet, compute_counts_dict
 from core.prob_dist import ProbabilityDist
 import unittest
@@ -16,6 +16,12 @@ class DataBlock:
     def size(self):
         return len(self.data_list)
 
+    def get_alphabet(self) -> Set:
+        alphabet = set()
+        for d in self.data_list:
+            alphabet.add(d)
+        return alphabet
+
     def get_counts(self, order=0):
         """
         returns counts for each object
@@ -23,7 +29,17 @@ class DataBlock:
         if order != 0:
             raise NotImplementedError("[order != 0] counts not implemented")
 
-        return compute_counts_dict(self.data_list)
+        # get the alphabet
+        alphabet = self.get_alphabet()
+
+        # initialize the count dict
+        count_dict = {a: 0 for a in alphabet}
+
+        # populate the count dict
+        for d in self.data_list:
+            count_dict[d] += 1
+
+        return count_dict
 
     def get_empirical_distribution(self, order=0) -> ProbabilityDist:
         """
@@ -51,9 +67,6 @@ class DataBlock:
 
         prob_dist = self.get_empirical_distribution()
         return prob_dist.entropy
-
-    def get_alphabet(self):
-        return compute_alphabet(self.data_list)
 
 
 class DataBlockTest(unittest.TestCase):

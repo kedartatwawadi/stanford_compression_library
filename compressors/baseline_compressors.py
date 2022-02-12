@@ -164,4 +164,4 @@ def test_fixed_bitwidth_file_write():
             with EncodedBlockReader(encoded_file_path) as reader:
                 decoder.decode(reader, fds)
 
-        assert filecmp(input_file_path, reconst_file_path)
+        assert filecmp.cmp(input_file_path, reconst_file_path)

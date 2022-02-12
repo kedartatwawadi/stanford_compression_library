@@ -2,13 +2,22 @@ from dataclasses import dataclass
 from typing import Any
 import heapq
 from functools import total_ordering
-from compressors.prefix_free_compressors import PrefixFreeCoder, PrefixFreeNode, PrefixFreeTree
+from compressors.prefix_free_compressors import (
+    PrefixFreeTree,
+    PrefixFreeTreeDecoder,
+    PrefixFreeTreeEncoder,
+    PrefixFreeTreeNode,
+)
 from core.prob_dist import ProbabilityDist
+import unittest
+import numpy as np
+from core.data_block import DataBlock
+from utils.test_utils import try_lossless_compression
 
 
 @dataclass
 @total_ordering  # decorator which adds other compare ops give one
-class HuffmanNode(PrefixFreeNode):
+class HuffmanNode(PrefixFreeTreeNode):
     """
     NOTE: PrefixFreeNode class already has left_child, right_child, id, code fields
     here by subclassing we add a couple of more fields: prob
@@ -26,12 +35,8 @@ class HuffmanNode(PrefixFreeNode):
 
 
 class HuffmanTree(PrefixFreeTree):
-    def build_tree(self):
-        # builds the huffman tree and returns the root_node
-        return self.build_huffman_tree(self.prob_dist)
-
     @staticmethod
-    def build_huffman_tree(prob_dist: ProbabilityDist) -> HuffmanNode:
+    def build_tree(prob_dist: ProbabilityDist) -> HuffmanNode:
         """
         Build the huffman coding tree
 
@@ -76,14 +81,57 @@ class HuffmanTree(PrefixFreeTree):
         return root_node
 
 
-class HuffmanCoder(PrefixFreeCoder):
-    """
-    Huffman Coder implementation
-    """
-
+class HuffmanEncoder(PrefixFreeTreeEncoder):
     def __init__(self, prob_dist: ProbabilityDist):
-        # build the huffman tree
-        self.huffman_tree = HuffmanTree(prob_dist)
+        """
+        create the prefix free tree
+        """
+        self.tree = HuffmanTree(prob_dist)
 
-        # initialize the params of the super class (PrefixFreeCoder)
-        super().__init__(self.huffman_tree)
+
+class HuffmanDecoder(PrefixFreeTreeDecoder):
+    def __init__(self, prob_dist: ProbabilityDist):
+        """
+        create the prefix free tree
+        """
+        self.tree = HuffmanTree(prob_dist)
+
+
+class HuffmanCoderTest(unittest.TestCase):
+    NUM_SAMPLES = 10000
+
+    def test_huffman_coding_dyadic(self):
+        """
+        On dyadic distributions Huffman coding should be perfectly equal to entropy
+        1. Randomly generate data with the given distribution
+        2. Construct Huffman coder using the given distribution
+        3. Encode/Decode the block
+        """
+
+        distributions = [
+            ProbabilityDist({"A": 0.5, "B": 0.5}),
+            ProbabilityDist({"A": 0.5, "B": 0.25, "C": 0.25}),
+            ProbabilityDist({"A": 0.5, "B": 0.25, "C": 0.125, "D": 0.125}),
+        ]
+        print()
+        for prob_dist in distributions:
+            # generate random data
+            data = np.random.choice(prob_dist.alphabet, self.NUM_SAMPLES, p=prob_dist.prob_list)
+            data_block = DataBlock(data)
+
+            # create encoder decoder
+            encoder = HuffmanEncoder(prob_dist)
+            decoder = HuffmanDecoder(prob_dist)
+
+            # perform compression
+            is_lossless, output_len = try_lossless_compression(data_block, encoder, decoder)
+            avg_bits = output_len / self.NUM_SAMPLES
+
+            assert is_lossless, "Lossless compression failed"
+            np.testing.assert_almost_equal(
+                avg_bits,
+                prob_dist.entropy,
+                decimal=2,
+                err_msg="Huffman coding is not close to entropy",
+            )
+            print(f"Avg Bits: {avg_bits}, Entropy: {prob_dist.entropy}")
