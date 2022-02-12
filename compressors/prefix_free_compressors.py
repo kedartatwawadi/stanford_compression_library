@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Mapping
-from core.util import BitArray
+from utils.bitarray_utils import BitArray
 from utils.tree_utils import BinaryNode
 from core.prob_dist import ProbabilityDist
 from core.framework import DataEncoder, DataDecoder

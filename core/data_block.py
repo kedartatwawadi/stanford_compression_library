@@ -1,5 +1,5 @@
 from typing import List, Set
-from core.util import compute_alphabet, compute_counts_dict
+from utils.bitarray_utils import compute_alphabet, compute_counts_dict
 from core.prob_dist import ProbabilityDist
 import unittest
 

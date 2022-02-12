@@ -3,7 +3,7 @@ from typing import final
 from core.data_block import DataBlock
 from core.data_stream import DataStream
 from core.encoded_stream import EncodedBlockReader, EncodedBlockWriter
-from core.util import BitArray
+from utils.bitarray_utils import BitArray
 
 
 class DataEncoder(abc.ABC):

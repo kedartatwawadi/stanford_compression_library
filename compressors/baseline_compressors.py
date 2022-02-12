@@ -6,7 +6,7 @@ Contains some elementary baseline compressors
 from core.data_block import DataBlock
 from core.encoded_stream import EncodedBlockReader, EncodedBlockWriter
 from core.framework import DataEncoder, DataDecoder
-from core.util import BitArray, bitarray_to_uint, uint_to_bitarray, get_bit_width
+from utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray, get_bit_width
 from utils.test_utils import try_lossless_compression
 import tempfile
 import os

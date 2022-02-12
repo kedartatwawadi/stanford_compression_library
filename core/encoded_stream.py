@@ -1,4 +1,4 @@
-from core.util import BitArray, uint_to_bitarray, bitarray_to_uint
+from utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
 import tempfile
 import os
 

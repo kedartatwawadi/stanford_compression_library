@@ -1,6 +1,6 @@
 from core.data_block import DataBlock
 from core.framework import DataEncoder, DataDecoder
-from core.util import uint_to_bitarray, bitarray_to_uint, BitArray
+from utils.bitarray_utils import uint_to_bitarray, bitarray_to_uint, BitArray
 from utils.test_utils import try_lossless_compression
 
 
