@@ -101,6 +101,9 @@ class FixedBitwidthDecoder(DataDecoder):
         return DataBlock(data_list), num_bits_consumed
 
 
+#########################################
+
+
 def test_alphabet_encode_decode():
     # define encoder, decoder
     encoder = AlphabetEncoder()

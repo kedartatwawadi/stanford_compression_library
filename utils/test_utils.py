@@ -29,17 +29,11 @@ def try_lossless_compression(
     Encodes the data_block using data_compressor and returns True if the compression was lossless
     returns (True/False, size of the output block)
     """
-    try:
-        # test encode
-        output_bits_block = encoder.encode_block(data_block)
+    # test encode
+    output_bits_block = encoder.encode_block(data_block)
 
-        # test decode
-        decoded_block, _ = decoder.decode_block(output_bits_block)
+    # test decode
+    decoded_block, _ = decoder.decode_block(output_bits_block)
 
-        # compare blocks
-        return are_blocks_equal(data_block, decoded_block), len(output_bits_block)
-
-    except Exception as e:
-        print(e)
-        print("Error during Encoding/Decoding")
-        return False, 0
+    # compare blocks
+    return are_blocks_equal(data_block, decoded_block), len(output_bits_block)
