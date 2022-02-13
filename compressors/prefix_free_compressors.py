@@ -9,6 +9,13 @@ from core.data_block import DataBlock
 
 @dataclass
 class PrefixFreeTreeNode(BinaryNode):
+    """PrefixFreeTreeNode is sublass of BinaryNode, as we need to add the "code" attribute
+
+    The code attribute is used to get an encoding table.
+    FIXME: not sure if we really need the code field, although it does make the algorithm to get the
+    encoding table quite simple
+    """
+
     code: str = BitArray("")  # FIXME: is this field needed?
 
     def get_encoding_table(self) -> Mapping[str, BitArray]:
@@ -62,6 +69,7 @@ class PrefixFreeTreeEncoder(DataEncoder):
         self.tree = PrefixFreeTree(prob_dist)
 
     def encode_symbol(self, s):
+        """encode each symbol based on the lookup table"""
         # initialize the encoding table once, if it has not been created
         if not hasattr(self, "encoding_table"):
             self.encoding_table = self.tree.get_encoding_table()
@@ -69,6 +77,11 @@ class PrefixFreeTreeEncoder(DataEncoder):
         return self.encoding_table[s]
 
     def encode_block(self, data_block: DataBlock):
+        """encode the data_block using the PrefixFreeTree
+
+        as prefix free codes have specific code for each symbol, we implement encode_block
+        function as a simple loop over encode_symbol function.
+        """
         encoded_bitarray = BitArray("")
         for s in data_block.data_list:
             encoded_bitarray += self.encode_symbol(s)
@@ -83,6 +96,12 @@ class PrefixFreeTreeDecoder(DataDecoder):
         self.tree = PrefixFreeTree(prob_dist)
 
     def decode_symbol(self, encoded_bitarray):
+        """decode each symbol by parsing through the prefix free tree
+
+        - start from the root node
+        - if the next bit is 0, go left, else right
+        - once you reach a leaf node, output the symbol corresponding the node
+        """
         # initialize num_bits_consumed
         num_bits_consumed = 0
 
@@ -101,6 +120,12 @@ class PrefixFreeTreeDecoder(DataDecoder):
         return decoded_symbol, num_bits_consumed
 
     def decode_block(self, bitarray: BitArray):
+        """decode the data_block using the PrefixFreeTree
+
+        as prefix free codes have specific code for each symbol, and due to the prefix free nature, allow for
+        decoding each symbol from the stream, we implement decode_block function as a simple loop over
+        decode_symbol function.
+        """
         data_list = []
         num_bits_consumed = 0
         while num_bits_consumed < len(bitarray):

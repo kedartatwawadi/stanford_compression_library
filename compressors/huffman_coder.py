@@ -83,17 +83,11 @@ class HuffmanTree(PrefixFreeTree):
 
 class HuffmanEncoder(PrefixFreeTreeEncoder):
     def __init__(self, prob_dist: ProbabilityDist):
-        """
-        create the prefix free tree
-        """
         self.tree = HuffmanTree(prob_dist)
 
 
 class HuffmanDecoder(PrefixFreeTreeDecoder):
     def __init__(self, prob_dist: ProbabilityDist):
-        """
-        create the prefix free tree
-        """
         self.tree = HuffmanTree(prob_dist)
 
 
