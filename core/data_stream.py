@@ -36,8 +36,11 @@ class DataStream(abc.ABC):
     def get_block(self, block_size: int) -> DataBlock:
         """returns a block of data (of the given max size) from the stream
 
+        get_block function tries to return a block of size `block_size`.
+        In case the remaining stream is shorter, a smaller block will be returned
+
         Args:
-            block_size (int): the size of the block of data to be returned.
+            block_size (int): the (max) size of the block of data to be returned.
 
         Returns:
             DataBlock:
@@ -79,7 +82,10 @@ class DataStream(abc.ABC):
             self.write_symbol(s)
 
     def __enter__(self):
-        """function executed while opening the context"""
+        """function executed while opening the context
+
+        See: https://realpython.com/python-with-statement/. More details in FileDataStream.__enter__ docstring
+        """
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
@@ -163,6 +169,13 @@ class FileDataStream(DataStream):
 
     def __enter__(self):
         """open the file object context based on the permissions specified
+
+        NOTE: One way of cleanly managing resources in python is using the with statement
+        as shown in the example below. This ensures the resource is released when exiting the context.
+
+        One way to support allow using with statement is defining __enter__ and __exit__ statements,
+        which allow for executing functions while entering or exiting the context.
+        Reference: https://realpython.com/python-with-statement/
 
         Example:
         with TextFileDataStream(path, "w") as fds:
