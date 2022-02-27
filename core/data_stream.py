@@ -203,9 +203,9 @@ class FileDataStream(DataStream):
         """
         self.file_obj.close()
 
-    def reset(self):
+    def seek(self, pos: int):
         """resets the file object to the beginning"""
-        self.file_obj.seek(0)
+        self.file_obj.seek(pos)
 
 
 class TextFileDataStream(FileDataStream):
