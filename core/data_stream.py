@@ -21,8 +21,8 @@ class DataStream(abc.ABC):
     """
 
     @abc.abstractmethod
-    def reset(self):
-        """resets the data stream"""
+    def seek(self, pos: int):
+        """seek a particular position in the data stream"""
         pass
 
     @abc.abstractmethod
@@ -122,12 +122,14 @@ class ListDataStream(DataStream):
         assert isinstance(input_list, list)
         self.input_list = input_list
 
-        # reset counter
-        self.reset()
-
-    def reset(self):
-        """resets the current_ind counter"""
+        # set the position counter
         self.current_ind = 0
+
+    def seek(self, pos: int):
+        """set the current_ind to a particular pos"""
+
+        assert pos <= len(self.input_list)
+        self.current_ind = pos
 
     def get_symbol(self) -> Symbol:
         """returns the next symbol from the self.input_list"""
@@ -142,8 +144,15 @@ class ListDataStream(DataStream):
         return s
 
     def write_symbol(self, s: Symbol):
-        """adds a symbol to the stream"""
-        self.input_list.append(s)
+        """write a symbol to the stream"""
+        assert self.current_ind <= len(self.input_list)
+
+        # the case where we modify a symbol
+        if self.current_ind < len(self.input_list):
+            self.input_list[self.current_ind] = s
+        else:
+            # case where we append a symbol
+            self.input_list.append(s)
 
 
 class FileDataStream(DataStream):
@@ -187,7 +196,11 @@ class FileDataStream(DataStream):
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        """close the file object at the end of context"""
+        """close the file object at the end of context
+
+        please take a look __enter__ docstring for more info.
+        Reference: https://realpython.com/python-with-statement/
+        """
         self.file_obj.close()
 
     def reset(self):
