@@ -278,9 +278,13 @@ def test_file_data_stream():
         temp_file_path = os.path.join(tmpdirname, "tmp_file.txt")
 
         # write data to the file
-        data_gt = DataBlock(list("This_is_a_test_file"))
+        data_gt = DataBlock(list("This-is_a_test_file"))
         with TextFileDataStream(temp_file_path, "w") as fds:
             fds.write_block(data_gt)
+
+            # try seeking to correct symbol at pos 4
+            fds.seek(4)
+            fds.write_symbol("_")
 
         # read data from the file
         with TextFileDataStream(temp_file_path, "r") as fds:
