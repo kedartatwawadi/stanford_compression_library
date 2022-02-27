@@ -256,6 +256,19 @@ def test_list_data_stream():
         block = ds.get_block(block_size=2)
         assert block is None
 
+        # try seeking and reading
+        ds.seek(7)
+        block = ds.get_block(block_size=5)
+        assert block.size == 3
+        assert block.data_list[0] == 7
+
+        # try seeking and writing
+        ds.seek(5)
+        ds.write_symbol(-1)
+        block = ds.get_block(block_size=5)
+        assert block.size == 5
+        assert block.data_list[0] == -1
+
 
 def test_file_data_stream():
     """function to test file data stream"""
@@ -273,3 +286,8 @@ def test_file_data_stream():
         with TextFileDataStream(temp_file_path, "r") as fds:
             block = fds.get_block(block_size=4)
             assert block.size == 4
+
+            # try seeking and reading
+            fds.seek(4)
+            block = fds.get_block(block_size=4)
+            assert block.data_list[0] == "_"
