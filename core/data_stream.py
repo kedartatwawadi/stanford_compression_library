@@ -45,7 +45,9 @@ class DataStream(abc.ABC):
         Returns:
             DataBlock:
         """
-        # returns the next data block
+        # NOTE: we implement get_block as a loop over get_symbol function
+        # this is not the most optimal way of imeplemting get_block (as reading a block of data at once might be faster)
+        # TODO: investigate faster ways of directly reading a block
         data_list = []
         for _ in range(block_size):
             # get next symbol
@@ -78,6 +80,9 @@ class DataStream(abc.ABC):
         Args:
             data_block (DataBlock): block to be written to the stream
         """
+        # NOTE: we implement write_block as a loop over write_symbol function
+        # this is not the most optimal way of imeplemting write_block (as writing a block of data at once might be faster)
+        # TODO: investigate faster ways of directly writing a block
         for s in data_block.data_list:
             self.write_symbol(s)
 
