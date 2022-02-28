@@ -6,8 +6,13 @@ Contains some elementary baseline compressors
 from core.data_block import DataBlock
 from core.encoded_stream import EncodedBlockReader, EncodedBlockWriter
 from core.data_encoder_decoder import DataEncoder, DataDecoder
+from core.prob_dist import ProbabilityDist
 from utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray, get_bit_width
-from utils.test_utils import try_lossless_compression
+from utils.test_utils import (
+    create_random_text_file,
+    try_file_lossless_compression,
+    try_lossless_compression,
+)
 import tempfile
 import os
 from core.data_stream import TextFileDataStream
@@ -160,42 +165,27 @@ def test_fixed_bitwidth_encode_decode():
     assert codelen == len(data_list) * 2 + alphabet_bits
 
 
-def test_fixed_bitwidth_file_write():
+def test_fixed_bitwidth_file_encode_decode():
     """full test for FixedBitWidthEncoder and FixedBitWidthDecoder
 
     - create a sample file
     - encode the file usnig FixedBitWidthEncoder
     - perform decoding and check if the compression was lossless
 
-    TODO: Abstract out this test to test_utils.py
     """
     # define encoder, decoder
     encoder = FixedBitwidthEncoder()
     decoder = FixedBitwidthDecoder()
 
-    # write data to file
     with tempfile.TemporaryDirectory() as tmpdirname:
+
+        # create a file with some random data
         input_file_path = os.path.join(tmpdirname, "inp_file.txt")
-        encoded_file_path = os.path.join(tmpdirname, "encoded_file.bin")
-        reconst_file_path = os.path.join(tmpdirname, "reconst_file.txt")
+        create_random_text_file(
+            input_file_path,
+            file_size=2000,
+            prob_dist=ProbabilityDist({"A": 0.5, "B": 0.25, "C": 0.25}),
+        )
 
-        # create some sample data
-        data_gt = [DataBlock(["AB"] * 1000), DataBlock(["CDE"] * 500)]
-
-        # write data to the input file
-        with TextFileDataStream(input_file_path, "w") as fds:
-            fds.write_block(data_gt[0])
-            fds.write_block(data_gt[1])
-
-        # encode data using the FixedBitWidthEncoder and write to the binary file
-        with TextFileDataStream(input_file_path, "r") as fds:
-            with EncodedBlockWriter(encoded_file_path) as writer:
-                encoder.encode(fds, block_size=500, encode_writer=writer)
-
-        # decode data using th eFixedBitWidthDecoder and write output to a text file
-        with TextFileDataStream(reconst_file_path, "w") as fds:
-            with EncodedBlockReader(encoded_file_path) as reader:
-                decoder.decode(reader, fds)
-
-        # assert if the reconst file and input match
-        assert filecmp.cmp(input_file_path, reconst_file_path)
+        # test lossless compression
+        assert try_file_lossless_compression(input_file_path, encoder, decoder)
