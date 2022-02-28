@@ -164,6 +164,10 @@ def test_fixed_bitwidth_file_write():
     """full test for FixedBitWidthEncoder and FixedBitWidthDecoder
 
     - create a sample file
+    - encode the file usnig FixedBitWidthEncoder
+    - perform decoding and check if the compression was lossless
+
+    TODO: Abstract out this test to test_utils.py
     """
     # define encoder, decoder
     encoder = FixedBitwidthEncoder()
