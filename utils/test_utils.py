@@ -13,15 +13,18 @@ import os
 import numpy as np
 
 
-def get_random_data_block(prob_dist: ProbabilityDist, size: int):
+def get_random_data_block(prob_dist: ProbabilityDist, size: int, seed: int = None):
     """generates i.i.d random data from the given prob distribution
 
     Args:
         prob_dist (ProbabilityDist): input probability distribution
         size (int): size of the block to be returned
+        seed (int): random seed used to generate the data
     """
-    data = np.random.choice(prob_dist.alphabet, size=size, p=prob_dist.prob_list)
-    return DataBlock(list(data))
+
+    rng = np.random.default_rng(seed)
+    data = rng.choice(prob_dist.alphabet, size=size, p=prob_dist.prob_list)
+    return DataBlock(data)
 
 
 def create_random_text_file(file_path: str, file_size: int, prob_dist: ProbabilityDist):

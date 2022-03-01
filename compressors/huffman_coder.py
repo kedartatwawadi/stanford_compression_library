@@ -12,7 +12,7 @@ from core.prob_dist import ProbabilityDist
 import unittest
 import numpy as np
 from core.data_block import DataBlock
-from utils.test_utils import try_lossless_compression
+from utils.test_utils import get_random_data_block, try_lossless_compression
 
 
 @dataclass
@@ -109,9 +109,7 @@ def test_huffman_coding_dyadic():
     print()
     for prob_dist in distributions:
         # generate random data
-        rng = np.random.default_rng(0)
-        data = rng.choice(prob_dist.alphabet, NUM_SAMPLES, p=prob_dist.prob_list)
-        data_block = DataBlock(data)
+        data_block = get_random_data_block(prob_dist, NUM_SAMPLES, seed=0)
 
         # create encoder decoder
         encoder = HuffmanEncoder(prob_dist)
