@@ -170,6 +170,6 @@ class DataDecoder(abc.ABC):
         """
 
         # decode data and write output to a text file
-        with TextFileDataStream(output_file_path, "w") as fds:
-            with EncodedBlockReader(encoded_file_path) as reader:
+        with EncodedBlockReader(encoded_file_path) as reader:
+            with TextFileDataStream(output_file_path, "w") as fds:
                 self.decode(reader, fds)
