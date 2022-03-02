@@ -14,6 +14,11 @@ jobs:
         fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
     - name: Build and Commit
       uses: sphinx-notes/pages@v2
+      with:
+        - docs-folder: "docs/"
+            pre-build-command: "pip install sphinx-rtd-theme && sphinx-apidoc -o docs/source/module_name module_name"
+            build-command: "make html"
+        -
     - name: Push changes
       uses: ad-m/github-push-action@master
       with:
