@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>baseline_compressors module &mdash; SCL  documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="huffman_coder module" href="huffman_coder.html" />
+    <link rel="prev" title="compressors" href="modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> SCL
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../core/modules.html">core</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">compressors</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">baseline_compressors module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="huffman_coder.html">huffman_coder module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="integer_coders.html">integer_coders module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prefix_free_compressors.html">prefix_free_compressors module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/modules.html">utils</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SCL</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="modules.html">compressors</a> &raquo;</li>
+      <li>baseline_compressors module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/compressors/baseline_compressors.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-baseline_compressors">
+<span id="baseline-compressors-module"></span><h1>baseline_compressors module<a class="headerlink" href="#module-baseline_compressors" title="Permalink to this headline"></a></h1>
+<p>Contains some elementary baseline compressors
+1. Fixed bit width compressor</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="baseline_compressors.AlphabetDecoder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">baseline_compressors.</span></span><span class="sig-name descname"><span class="pre">AlphabetDecoder</span></span><a class="headerlink" href="#baseline_compressors.AlphabetDecoder" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">core.data_encoder_decoder.DataDecoder</span></code></p>
+<p>decode the encoded alphabet set</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="baseline_compressors.AlphabetDecoder.decode_block">
+<span class="sig-name descname"><span class="pre">decode_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params_data_bitarray</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bitarray.bitarray</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baseline_compressors.AlphabetDecoder.decode_block" title="Permalink to this definition"></a></dt>
+<dd><p>abstract function to decode one encoded_bitarray</p>
+<p>subclassing decoders mainly need to only implement this function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>bitarray</strong> (<em>BitArray</em>) – input encoded bitarray</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>returns the decoded data and how many bits were used
+the num_bits_consumed can be used appropriately if the encoded bitarray contains encoded bits from more than one encoders</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>decoded_block (<a class="reference internal" href="../core/data_block.html#data_block.DataBlock" title="data_block.DataBlock">DataBlock</a>), num_bits_consumed (int)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="baseline_compressors.AlphabetEncoder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">baseline_compressors.</span></span><span class="sig-name descname"><span class="pre">AlphabetEncoder</span></span><a class="headerlink" href="#baseline_compressors.AlphabetEncoder" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">core.data_encoder_decoder.DataEncoder</span></code></p>
+<p>encode the alphabet set for a block</p>
+<p>Technically, the input to the encode_block is a set and not a DataBlock,
+but we don’t plan on using the “encode” function for this class anyway</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="baseline_compressors.AlphabetEncoder.encode_block">
+<span class="sig-name descname"><span class="pre">encode_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alphabet</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baseline_compressors.AlphabetEncoder.encode_block" title="Permalink to this definition"></a></dt>
+<dd><p>encode the alphabet set</p>
+<ul class="simple">
+<li><p>Encodes the size of the alphabet set using 8 bits</p></li>
+<li><p>The ascii value corresponding to each alphabet is then encoded using 8 bits</p></li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="baseline_compressors.FixedBitwidthDecoder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">baseline_compressors.</span></span><span class="sig-name descname"><span class="pre">FixedBitwidthDecoder</span></span><a class="headerlink" href="#baseline_compressors.FixedBitwidthDecoder" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">core.data_encoder_decoder.DataDecoder</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="baseline_compressors.FixedBitwidthDecoder.decode_block">
+<span class="sig-name descname"><span class="pre">decode_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bitarray</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bitarray.bitarray</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baseline_compressors.FixedBitwidthDecoder.decode_block" title="Permalink to this definition"></a></dt>
+<dd><p>Decode data encoded by FixedBitwidthDecoder</p>
+<ul class="simple">
+<li><p>retrieve the alphabet</p></li>
+<li><p>the size of the alphabet implies the bit width used for encoding the symbols</p></li>
+<li><p>decode data</p></li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="baseline_compressors.FixedBitwidthEncoder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">baseline_compressors.</span></span><span class="sig-name descname"><span class="pre">FixedBitwidthEncoder</span></span><a class="headerlink" href="#baseline_compressors.FixedBitwidthEncoder" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">core.data_encoder_decoder.DataEncoder</span></code></p>
+<p>Encode each symbol using a fixed number of bits</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="baseline_compressors.FixedBitwidthEncoder.encode_block">
+<span class="sig-name descname"><span class="pre">encode_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_block</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">core.data_block.DataBlock</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#baseline_compressors.FixedBitwidthEncoder.encode_block" title="Permalink to this definition"></a></dt>
+<dd><p>first encode the alphabet and then each data symbol using fixed number of bits</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="baseline_compressors.test_alphabet_encode_decode">
+<span class="sig-prename descclassname"><span class="pre">baseline_compressors.</span></span><span class="sig-name descname"><span class="pre">test_alphabet_encode_decode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#baseline_compressors.test_alphabet_encode_decode" title="Permalink to this definition"></a></dt>
+<dd><p>test the alphabet compression</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="baseline_compressors.test_fixed_bitwidth_encode_decode">
+<span class="sig-prename descclassname"><span class="pre">baseline_compressors.</span></span><span class="sig-name descname"><span class="pre">test_fixed_bitwidth_encode_decode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#baseline_compressors.test_fixed_bitwidth_encode_decode" title="Permalink to this definition"></a></dt>
+<dd><p>test the encode_block and decode_block functions of FixedBitWidthEncoder and FixedBitWidthDecoder</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="baseline_compressors.test_fixed_bitwidth_file_encode_decode">
+<span class="sig-prename descclassname"><span class="pre">baseline_compressors.</span></span><span class="sig-name descname"><span class="pre">test_fixed_bitwidth_file_encode_decode</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#baseline_compressors.test_fixed_bitwidth_file_encode_decode" title="Permalink to this definition"></a></dt>
+<dd><p>full test for FixedBitWidthEncoder and FixedBitWidthDecoder</p>
+<ul class="simple">
+<li><p>create a sample file</p></li>
+<li><p>encode the file usnig FixedBitWidthEncoder</p></li>
+<li><p>perform decoding and check if the compression was lossless</p></li>
+</ul>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="modules.html" class="btn btn-neutral float-left" title="compressors" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="huffman_coder.html" class="btn btn-neutral float-right" title="huffman_coder module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Kedar Tatwawadi, Shubham Chandak, Pulkit Tandon.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

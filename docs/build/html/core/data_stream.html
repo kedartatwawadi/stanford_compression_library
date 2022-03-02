@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>data_stream module &mdash; SCL  documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="encoded_stream module" href="encoded_stream.html" />
+    <link rel="prev" title="data_encoder_decoder module" href="data_encoder_decoder.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> SCL
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">core</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="data_block.html">data_block module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_encoder_decoder.html">data_encoder_decoder module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">data_stream module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="encoded_stream.html">encoded_stream module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prob_dist.html">prob_dist module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../compressors/modules.html">compressors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/modules.html">utils</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SCL</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="modules.html">core</a> &raquo;</li>
+      <li>data_stream module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/core/data_stream.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-data_stream">
+<span id="data-stream-module"></span><h1>data_stream module<a class="headerlink" href="#module-data_stream" title="Permalink to this headline"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="data_stream.DataStream">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">data_stream.</span></span><span class="sig-name descname"><span class="pre">DataStream</span></span><a class="headerlink" href="#data_stream.DataStream" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>abstract class to represent a Data Stream</p>
+<p>The DataStream facilitates the block interface.
+From the interface standpoint, the two functions which are useful are:
+- get_block(block_size) -&gt; returns a DataBlock of the given block_size from the stream
+- write_block(block) -&gt; writes the block of data to the stream</p>
+<p>The DataStream can act as a stream object for both writing and reading blocks
+The two more useful sub-classes of the abstract class are FileDataStream and ListDataStream.
+(see their description for more details)</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="data_stream.DataStream.get_block">
+<span class="sig-name descname"><span class="pre">get_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">core.data_block.DataBlock</span></span></span><a class="headerlink" href="#data_stream.DataStream.get_block" title="Permalink to this definition"></a></dt>
+<dd><p>returns a block of data (of the given max size) from the stream</p>
+<p>get_block function tries to return a block of size <cite>block_size</cite>.
+In case the remaining stream is shorter, a smaller block will be returned</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>block_size</strong> (<em>int</em>) – the (max) size of the block of data to be returned.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="data_block.html#data_block.DataBlock" title="data_block.DataBlock">DataBlock</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="data_stream.DataStream.get_symbol">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_symbol</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#data_stream.DataStream.get_symbol" title="Permalink to this definition"></a></dt>
+<dd><p>returns a symbol from the data stream, returns None if the stream is finished</p>
+<p>This is an abstract method, and hence needs to be implemented by the subclasses</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="data_stream.DataStream.seek">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">seek</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_stream.DataStream.seek" title="Permalink to this definition"></a></dt>
+<dd><p>seek a particular position in the data stream</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="data_stream.DataStream.write_block">
+<span class="sig-name descname"><span class="pre">write_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_block</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">core.data_block.DataBlock</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_stream.DataStream.write_block" title="Permalink to this definition"></a></dt>
+<dd><p>write the input block to the stream</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data_block</strong> (<a class="reference internal" href="data_block.html#data_block.DataBlock" title="data_block.DataBlock"><em>DataBlock</em></a>) – block to be written to the stream</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="data_stream.DataStream.write_symbol">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">write_symbol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_stream.DataStream.write_symbol" title="Permalink to this definition"></a></dt>
+<dd><p>writes the given symbol to the stream</p>
+<p>The symbol can be appropriately converted to a particular format before writing.
+This is an abstract method and so, the subclass will have to implement it</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>s</strong> (<em>Any</em>) – symbol to be written to the stream</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="data_stream.FileDataStream">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">data_stream.</span></span><span class="sig-name descname"><span class="pre">FileDataStream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permissions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'r'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_stream.FileDataStream" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#data_stream.DataStream" title="data_stream.DataStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">data_stream.DataStream</span></code></a></p>
+<p>Abstract class to create a data stream from a File</p>
+<p>The FileDataStream defines __exit__, __enter__ methods on top of DataStream.
+These methods handle file obj opening/closing</p>
+<p>Subclasses (eg: TextDataStream) need to imeplement methods get_symbol, write_symbol
+to get a functional object.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="data_stream.FileDataStream.seek">
+<span class="sig-name descname"><span class="pre">seek</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_stream.FileDataStream.seek" title="Permalink to this definition"></a></dt>
+<dd><p>resets the file object to the beginning</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="data_stream.ListDataStream">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">data_stream.</span></span><span class="sig-name descname"><span class="pre">ListDataStream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_stream.ListDataStream" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#data_stream.DataStream" title="data_stream.DataStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">data_stream.DataStream</span></code></a></p>
+<p>ListDataStream is a wrapper around a list of symbols.
+It is useful to:
+- extract data from the list block by block
+- write data to the list block by block</p>
+<p>In practice, this class might be used mainly for testing
+(as usually you would read data from a file.. see FileDataStream for that)</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="data_stream.ListDataStream.get_symbol">
+<span class="sig-name descname"><span class="pre">get_symbol</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="headerlink" href="#data_stream.ListDataStream.get_symbol" title="Permalink to this definition"></a></dt>
+<dd><p>returns the next symbol from the self.input_list</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="data_stream.ListDataStream.seek">
+<span class="sig-name descname"><span class="pre">seek</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_stream.ListDataStream.seek" title="Permalink to this definition"></a></dt>
+<dd><p>set the current_ind to a particular pos</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="data_stream.ListDataStream.write_symbol">
+<span class="sig-name descname"><span class="pre">write_symbol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_stream.ListDataStream.write_symbol" title="Permalink to this definition"></a></dt>
+<dd><p>write a symbol to the stream</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="data_stream.TextFileDataStream">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">data_stream.</span></span><span class="sig-name descname"><span class="pre">TextFileDataStream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permissions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'r'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_stream.TextFileDataStream" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#data_stream.FileDataStream" title="data_stream.FileDataStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">data_stream.FileDataStream</span></code></a></p>
+<p>FileDataStream to read/write text data</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="data_stream.TextFileDataStream.get_symbol">
+<span class="sig-name descname"><span class="pre">get_symbol</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#data_stream.TextFileDataStream.get_symbol" title="Permalink to this definition"></a></dt>
+<dd><p>get the next character from the text file</p>
+<p>as we read character data from file by default, the get_symbol function does not need to do anything special
+conversions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the next character, None if we reached the end of stream</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>(str, None)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="data_stream.TextFileDataStream.write_symbol">
+<span class="sig-name descname"><span class="pre">write_symbol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_stream.TextFileDataStream.write_symbol" title="Permalink to this definition"></a></dt>
+<dd><p>write a character to the text file</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="data_stream.Uint8FileDataStream">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">data_stream.</span></span><span class="sig-name descname"><span class="pre">Uint8FileDataStream</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permissions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'r'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_stream.Uint8FileDataStream" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#data_stream.FileDataStream" title="data_stream.FileDataStream"><code class="xref py py-class docutils literal notranslate"><span class="pre">data_stream.FileDataStream</span></code></a></p>
+<p>reads Uint8 numbers written to a file</p>
+<p>FIXME: need to immplement</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="data_stream.test_file_data_stream">
+<span class="sig-prename descclassname"><span class="pre">data_stream.</span></span><span class="sig-name descname"><span class="pre">test_file_data_stream</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#data_stream.test_file_data_stream" title="Permalink to this definition"></a></dt>
+<dd><p>function to test file data stream</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="data_stream.test_list_data_stream">
+<span class="sig-prename descclassname"><span class="pre">data_stream.</span></span><span class="sig-name descname"><span class="pre">test_list_data_stream</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#data_stream.test_list_data_stream" title="Permalink to this definition"></a></dt>
+<dd><p>simple testing function to check if list data stream is getting generated correctly</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="data_encoder_decoder.html" class="btn btn-neutral float-left" title="data_encoder_decoder module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="encoded_stream.html" class="btn btn-neutral float-right" title="encoded_stream module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Kedar Tatwawadi, Shubham Chandak, Pulkit Tandon.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
