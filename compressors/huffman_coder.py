@@ -12,13 +12,14 @@ from core.prob_dist import ProbabilityDist
 import unittest
 import numpy as np
 from core.data_block import DataBlock
-from utils.test_utils import try_lossless_compression
+from utils.test_utils import get_random_data_block, try_lossless_compression
 
 
 @dataclass
 @total_ordering  # decorator which adds other compare ops give one
 class HuffmanNode(PrefixFreeTreeNode):
-    """
+    """represents a node of the huffman tree
+
     NOTE: PrefixFreeNode class already has left_child, right_child, id, code fields
     here by subclassing we add a couple of more fields: prob
     """
@@ -37,8 +38,7 @@ class HuffmanNode(PrefixFreeTreeNode):
 class HuffmanTree(PrefixFreeTree):
     @staticmethod
     def build_tree(prob_dist: ProbabilityDist) -> HuffmanNode:
-        """
-        Build the huffman coding tree
+        """Build the huffman coding tree
 
         1. Sort the prob distribution, combine last two symbols into a single symbol
         2. Continue until a single symbol is left
@@ -91,41 +91,39 @@ class HuffmanDecoder(PrefixFreeTreeDecoder):
         self.tree = HuffmanTree(prob_dist)
 
 
-class HuffmanCoderTest(unittest.TestCase):
+def test_huffman_coding_dyadic():
+    """test huffman coding on dyadic distributions
+
+    On dyadic distributions Huffman coding should be perfectly equal to entropy
+    1. Randomly generate data with the given distribution
+    2. Construct Huffman coder using the given distribution
+    3. Encode/Decode the block
+    """
     NUM_SAMPLES = 10000
 
-    def test_huffman_coding_dyadic(self):
-        """
-        On dyadic distributions Huffman coding should be perfectly equal to entropy
-        1. Randomly generate data with the given distribution
-        2. Construct Huffman coder using the given distribution
-        3. Encode/Decode the block
-        """
+    distributions = [
+        ProbabilityDist({"A": 0.5, "B": 0.5}),
+        ProbabilityDist({"A": 0.5, "B": 0.25, "C": 0.25}),
+        ProbabilityDist({"A": 0.5, "B": 0.25, "C": 0.125, "D": 0.125}),
+    ]
+    print()
+    for prob_dist in distributions:
+        # generate random data
+        data_block = get_random_data_block(prob_dist, NUM_SAMPLES, seed=0)
 
-        distributions = [
-            ProbabilityDist({"A": 0.5, "B": 0.5}),
-            ProbabilityDist({"A": 0.5, "B": 0.25, "C": 0.25}),
-            ProbabilityDist({"A": 0.5, "B": 0.25, "C": 0.125, "D": 0.125}),
-        ]
-        print()
-        for prob_dist in distributions:
-            # generate random data
-            data = np.random.choice(prob_dist.alphabet, self.NUM_SAMPLES, p=prob_dist.prob_list)
-            data_block = DataBlock(data)
+        # create encoder decoder
+        encoder = HuffmanEncoder(prob_dist)
+        decoder = HuffmanDecoder(prob_dist)
 
-            # create encoder decoder
-            encoder = HuffmanEncoder(prob_dist)
-            decoder = HuffmanDecoder(prob_dist)
+        # perform compression
+        is_lossless, output_len = try_lossless_compression(data_block, encoder, decoder)
+        avg_bits = output_len / NUM_SAMPLES
 
-            # perform compression
-            is_lossless, output_len = try_lossless_compression(data_block, encoder, decoder)
-            avg_bits = output_len / self.NUM_SAMPLES
-
-            assert is_lossless, "Lossless compression failed"
-            np.testing.assert_almost_equal(
-                avg_bits,
-                prob_dist.entropy,
-                decimal=2,
-                err_msg="Huffman coding is not close to entropy",
-            )
-            print(f"Avg Bits: {avg_bits}, Entropy: {prob_dist.entropy}")
+        assert is_lossless, "Lossless compression failed"
+        np.testing.assert_almost_equal(
+            avg_bits,
+            prob_dist.entropy,
+            decimal=2,
+            err_msg="Huffman coding is not close to entropy",
+        )
+        print(f"Avg Bits: {avg_bits}, Entropy: {prob_dist.entropy}")

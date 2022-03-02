@@ -8,7 +8,7 @@ More info in respective docstrings
 import abc
 from typing import final
 from core.data_block import DataBlock
-from core.data_stream import DataStream
+from core.data_stream import DataStream, TextFileDataStream
 from core.encoded_stream import EncodedBlockReader, EncodedBlockWriter
 from utils.bitarray_utils import BitArray
 
@@ -76,6 +76,23 @@ class DataEncoder(abc.ABC):
             # write encoded bitarrays
             encode_writer.write_block(output)
 
+    def encode_file(self, input_file_path: str, encoded_file_path: str, block_size: int = 10000):
+        """utility wrapper around the encode function
+
+        NOTE: This function assumes the input_file_path is a text file, as is to be aprsed using the
+        TextFileDataStream. This is the most common behavior; but certain compressors can overwrite this method to
+        support other files as input (for example files containing numerical data)
+
+        Args:
+            input_file_path (str): path of the input file
+            encoded_file_path (str): path of the encoded binary file
+            block_size (int): choose the block size to be used to call the encode function
+        """
+        # call the encode function and write to the binary file
+        with TextFileDataStream(input_file_path, "r") as fds:
+            with EncodedBlockWriter(encoded_file_path) as writer:
+                self.encode(fds, block_size=block_size, encode_writer=writer)
+
 
 class DataDecoder(abc.ABC):
     """abstract class used to define a decoder
@@ -140,3 +157,19 @@ class DataDecoder(abc.ABC):
 
             # write decoded blocks to DataStream
             output_stream.write_block(output_block)
+
+    def decode_file(self, encoded_file_path: str, output_file_path: str):
+        """utility wrapper around the decode function
+
+        NOTE: this utility function assumes that the output DataStream is of type TextFileDataStream.
+        This is the most common behavior; but certain compressors can overwrite this method to
+        support other files as input (for example files containing numerical data)
+        Args:
+            encoded_file_path (str): input binary file
+            output_file_path (str): output (text) file to which decoded data is written
+        """
+
+        # decode data and write output to a text file
+        with EncodedBlockReader(encoded_file_path) as reader:
+            with TextFileDataStream(output_file_path, "w") as fds:
+                self.decode(reader, fds)
