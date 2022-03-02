@@ -21,7 +21,7 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)
 
 To run all tests:
 ```
-find . -name "*_tests.py" -exec py.test -s -v {} +
+find . -name "*.py" -exec py.test -s -v {} +
 ```
 
 To run a single test
