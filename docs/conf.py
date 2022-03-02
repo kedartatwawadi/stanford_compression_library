@@ -61,7 +61,6 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-
 # The URL which points to the root of the HTML documentation.
 # It is used to indicate the location of document like canonical_url
 html_baseurl = 'https://kedartatwawadi.github.io/stanford-compression-library'
