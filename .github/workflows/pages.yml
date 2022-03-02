@@ -3,6 +3,7 @@ on:
   push:
     branches:
     - kedar/docs
+    - tpulkit/docs
 jobs:
   build:
     runs-on: ubuntu-latest
