@@ -1,21 +1,18 @@
 # Stanford Compression Library
-The goal of the library is to help with research in the area of data compression. This is not meant to be fast or efficient implementation, but rather for educational purpose
+The goal of the library is to help with research in the area of data compression.
+This is not meant to be fast or efficient implementation, but rather for educational purpose.
 
 ## Getting started
-- Create a virtualenv [TODO] (tested with python ver:`3.8.2`)
-- Install required packages [TODO]
-```
-pip install -r requirements.txt
-```
-- Add path to the repo to `PYTHONPATH`
-For example:
-```
-export PYTHONPATH=$PYTHONPATH:/Users/kedar/code/stanford_compression_library
-```
-or more generally,
-```
-export PYTHONPATH=$PYTHONPATH:$(pwd)
-```
+- Create conda environment and install required packages:
+    ```
+    conda create --name myenv python=3.8.2
+    conda activate myenv
+    python -m pip install -r requirements.txt
+    ```
+- Add path to the repo to `PYTHONPATH`:
+    ```
+    export PYTHONPATH=$PYTHONPATH:$(pwd)
+    ``` 
 
 - Run unit tests
 
@@ -26,7 +23,7 @@ find . -name "*.py" -exec py.test -s -v {} +
 
 To run a single test
 ```
-py.test -s -v core/data_block_tests.py
+py.test -s -v core/data_block.py
 ```
 
 ## Getting started with understanding the library

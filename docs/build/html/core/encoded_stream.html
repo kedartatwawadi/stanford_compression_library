@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>encoded_stream module &mdash; SCL  documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="prob_dist module" href="prob_dist.html" />
+    <link rel="prev" title="data_stream module" href="data_stream.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> SCL
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">core</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="data_block.html">data_block module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_encoder_decoder.html">data_encoder_decoder module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data_stream.html">data_stream module</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">encoded_stream module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prob_dist.html">prob_dist module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../compressors/modules.html">compressors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils/modules.html">utils</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SCL</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="modules.html">core</a> &raquo;</li>
+      <li>encoded_stream module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/core/encoded_stream.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-encoded_stream">
+<span id="encoded-stream-module"></span><h1>encoded_stream module<a class="headerlink" href="#module-encoded_stream" title="Permalink to this headline"></a></h1>
+<p>encoded stream writers and readers</p>
+<p>All the encoders and decoders in the SCL process data in blocks.
+The encoder can encode data_block to a differently sized encoded_bitarray. To allow the decoder to retrieve the encoded_bitarray
+correcponding to a data_block, we have to include some block header before each encoded_bitarray
+The EncodedBlockWriter and EncodedBlockReader handle adding/removing these block headers and providing an interface to just
+care about the encoded_bitarray. More information in the respective docstrings.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="encoded_stream.EncodedBlockReader">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">encoded_stream.</span></span><span class="sig-name descname"><span class="pre">EncodedBlockReader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#encoded_stream.EncodedBlockReader" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Reader to read encoded_blocks from a compressed binary file</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="encoded_stream.EncodedBlockReader.get_block">
+<span class="sig-name descname"><span class="pre">get_block</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#encoded_stream.EncodedBlockReader.get_block" title="Permalink to this definition"></a></dt>
+<dd><p>read the next encoded_block from the encoded file</p>
+<p>The encoded file contains bits written in blocks such as:
+(header + padding + enc_block1), (header + padding + enc_block2)
+The reader needs to infer where the blocks end:
+- header -&gt; header size is fixed, so read the header and infer the (padding + enc_block) size
+- padding -&gt; remove byte padding from the payload (enc_block) and return the payload</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the encoded bitarray block</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>payload_bitarray (<a class="reference internal" href="../utils/bitarray_utils.html#bitarray_utils.BitArray" title="bitarray_utils.BitArray">BitArray</a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="encoded_stream.EncodedBlockWriter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">encoded_stream.</span></span><span class="sig-name descname"><span class="pre">EncodedBlockWriter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#encoded_stream.EncodedBlockWriter" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>writer to write bitarrays to the encoded file</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="encoded_stream.EncodedBlockWriter.write_block">
+<span class="sig-name descname"><span class="pre">write_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">encoded_block</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">utils.bitarray_utils.BitArray</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#encoded_stream.EncodedBlockWriter.write_block" title="Permalink to this definition"></a></dt>
+<dd><p>writes the encoded_block to the file</p>
+<p>Lets say we have two encoded bitarrays of variable length: enc_block1, enc_block2
+the EncodedBlockWriter does the following things to each enc_block
+- input -&gt; (enc_block)
+- Padding -&gt; byte align enc_block (padding + enc_block)
+- Header -&gt; add a block header. The block header communicates the size of the enc_block
+(header + padding + enc_block)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>encoded_block</strong> (<a class="reference internal" href="../utils/bitarray_utils.html#bitarray_utils.BitArray" title="bitarray_utils.BitArray"><em>BitArray</em></a>) – encoded bitarray to be written to the file</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="encoded_stream.HeaderHandler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">encoded_stream.</span></span><span class="sig-name descname"><span class="pre">HeaderHandler</span></span><a class="headerlink" href="#encoded_stream.HeaderHandler" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Add block header to an encoded bitarray</p>
+<p>The header communicates the size of the encoded bitarray
+- the header itself is a fixed 4 bytes in size, and communicates the length in bytes of the payload
+- returned bitarray -&gt; header (32 bits) + payload</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="encoded_stream.HeaderHandler.MAX_PAYLOAD_SIZE">
+<span class="sig-name descname"><span class="pre">MAX_PAYLOAD_SIZE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4294967296</span></em><a class="headerlink" href="#encoded_stream.HeaderHandler.MAX_PAYLOAD_SIZE" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="encoded_stream.HeaderHandler.NUM_HEADER_BITS">
+<span class="sig-name descname"><span class="pre">NUM_HEADER_BITS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">32</span></em><a class="headerlink" href="#encoded_stream.HeaderHandler.NUM_HEADER_BITS" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="encoded_stream.HeaderHandler.NUM_HEADER_BYTES">
+<span class="sig-name descname"><span class="pre">NUM_HEADER_BYTES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4</span></em><a class="headerlink" href="#encoded_stream.HeaderHandler.NUM_HEADER_BYTES" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="encoded_stream.HeaderHandler.add_header">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">payload_bitarray</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">utils.bitarray_utils.BitArray</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#encoded_stream.HeaderHandler.add_header" title="Permalink to this definition"></a></dt>
+<dd><p>add header to the byte aligned payload bitarray</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="encoded_stream.HeaderHandler.get_payload_size">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_payload_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">header_bytes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bytes</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#encoded_stream.HeaderHandler.get_payload_size" title="Permalink to this definition"></a></dt>
+<dd><p>returns the size of the payload by reading in the header</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="encoded_stream.Padder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">encoded_stream.</span></span><span class="sig-name descname"><span class="pre">Padder</span></span><a class="headerlink" href="#encoded_stream.Padder" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class to byte pad a bitarray</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="encoded_stream.Padder.NUM_PAD_BITS">
+<span class="sig-name descname"><span class="pre">NUM_PAD_BITS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></em><a class="headerlink" href="#encoded_stream.Padder.NUM_PAD_BITS" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="encoded_stream.Padder.add_byte_padding">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">add_byte_padding</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">payload_bitarray</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">utils.bitarray_utils.BitArray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">utils.bitarray_utils.BitArray</span></span></span><a class="headerlink" href="#encoded_stream.Padder.add_byte_padding" title="Permalink to this definition"></a></dt>
+<dd><p>add byte padding to payload_bitarray</p>
+<ul class="simple">
+<li><p>the padding size is represented using the first 3 bits (0-7)</p></li>
+<li><p>the structure of the returned bitarray is:
+(num_pad_bits + padding + payload)</p></li>
+<li><dl class="simple">
+<dt>as we are essentially adding 3 bits to the payload, the padding computation needs to take that into account</dt><dd><dl class="simple">
+<dt>Args:</dt><dd><p>payload_bitarray (BitArray): input bitarray</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>padded bitarray</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="../utils/bitarray_utils.html#bitarray_utils.BitArray" title="bitarray_utils.BitArray">BitArray</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="encoded_stream.Padder.remove_byte_padding">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">remove_byte_padding</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">payload_pad_bitarray</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">utils.bitarray_utils.BitArray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">utils.bitarray_utils.BitArray</span></span></span><a class="headerlink" href="#encoded_stream.Padder.remove_byte_padding" title="Permalink to this definition"></a></dt>
+<dd><p>remove added byte padding</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="encoded_stream.test_encoded_block_reader_writer">
+<span class="sig-prename descclassname"><span class="pre">encoded_stream.</span></span><span class="sig-name descname"><span class="pre">test_encoded_block_reader_writer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#encoded_stream.test_encoded_block_reader_writer" title="Permalink to this definition"></a></dt>
+<dd><p>tests EncodedBlockReader and EncodedBlockWriter</p>
+<p>Testing procedure:
+- create some dummy encoded_blocks
+- write the encoded blocks to a binary file using EncodedBlockWriter
+- read the binary file back using EncodedBlockReader and assert if the data is the same</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="encoded_stream.test_header">
+<span class="sig-prename descclassname"><span class="pre">encoded_stream.</span></span><span class="sig-name descname"><span class="pre">test_header</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#encoded_stream.test_header" title="Permalink to this definition"></a></dt>
+<dd><p>tests the header</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="encoded_stream.test_padder">
+<span class="sig-prename descclassname"><span class="pre">encoded_stream.</span></span><span class="sig-name descname"><span class="pre">test_padder</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#encoded_stream.test_padder" title="Permalink to this definition"></a></dt>
+<dd><p>test adding/removing byte padding to payload</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="data_stream.html" class="btn btn-neutral float-left" title="data_stream module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="prob_dist.html" class="btn btn-neutral float-right" title="prob_dist module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Kedar Tatwawadi, Shubham Chandak, Pulkit Tandon.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
