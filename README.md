@@ -28,10 +28,20 @@ To run a single test
 ```
 py.test -s -v core/data_block_tests.py
 ```
+## Code Fomatting + commenting
+We use the google python docstring style to add comments. This allows auto-generating the documentation. 
+The documentation style can be seen here: https://gist.github.com/redlotus/3bc387c2591e3e908c9b63b97b11d24e FYI
+
+You can use the VSCode add-on (simila add-ons available for other editors), to make it more convenient
+```
+Name: autoDocstring - Python Docstring Generator
+VS Marketplace Link: https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring
+```
 
 ## Getting started with understanding the library
 In-depth information about the library will be in the comments. Tutorials/articles etc will be posted on the wiki page: 
 https://github.com/kedartatwawadi/stanford_compression_library/wiki/Introduction-to-the-Stanford-Compression-Library
+
 
 ## How to submit code
 
