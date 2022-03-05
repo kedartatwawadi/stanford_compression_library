@@ -2,9 +2,9 @@
 Contains some elementary baseline compressors
 1. Fixed bit width compressor 
 """
-
+import tempfile
+import os
 from core.data_block import DataBlock
-from core.encoded_stream import EncodedBlockReader, EncodedBlockWriter
 from core.data_encoder_decoder import DataEncoder, DataDecoder
 from core.prob_dist import ProbabilityDist
 from utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray, get_bit_width
@@ -13,10 +13,6 @@ from utils.test_utils import (
     try_file_lossless_compression,
     try_lossless_compression,
 )
-import tempfile
-import os
-from core.data_stream import TextFileDataStream
-import filecmp
 
 
 class AlphabetEncoder(DataEncoder):

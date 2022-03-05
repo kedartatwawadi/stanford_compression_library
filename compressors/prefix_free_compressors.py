@@ -1,10 +1,75 @@
+"""File imeplemting utility abstract classes for prefix free compressors
+
+NOTE: prefix free codes are codes which allow convenient per-symbol encoding/decoding.
+
+We implement PrefixFreeEncoder, PrefixFreeDecoder
+and PrefixFreeTreeEncoder, PrefixFreeTreeDecoder which are utility abstract classes
+useful for implementing any prefix free code
+"""
+
+import abc
 from dataclasses import dataclass
-from typing import Mapping
+from typing import Mapping, Tuple, Any
 from utils.bitarray_utils import BitArray
 from utils.tree_utils import BinaryNode
 from core.prob_dist import ProbabilityDist
 from core.data_encoder_decoder import DataEncoder, DataDecoder
 from core.data_block import DataBlock
+
+
+class PrefixFreeEncoder(DataEncoder):
+    @abc.abstractmethod
+    def encode_symbol(self, s) -> BitArray:
+        """encode one symbol
+
+        Args:
+            s (Any): symbol to encode
+
+        Returns:
+            BitArray: the encoding for one particular symbol
+        """
+
+    def encode_block(self, data_block: DataBlock) -> BitArray:
+        """encode the block of data one symbol at a time
+
+        prefix free codes have specific code for each symbol, we implement encode_block
+        function as a simple loop over encode_symbol function.
+        This class can also be used by certain non-prefix free codes which support symbol-wise encoding
+        """
+        encoded_bitarray = BitArray("")
+        for s in data_block.data_list:
+            encoded_bitarray += self.encode_symbol(s)
+        return encoded_bitarray
+
+
+class PrefixFreeDecoder(DataDecoder):
+    @abc.abstractmethod
+    def decode_symbol(self, encoded_bitarray: BitArray) -> Tuple[Any, BitArray]:
+        """decode the next symbol
+
+        Args:
+            encoded_bitarray (BitArray): _description_
+
+        Returns:
+            Tuple[Any, BitArray]: returns the tuple (symbol, bitarray)
+        """
+        pass
+
+    def decode_block(self, bitarray: BitArray):
+        """decode the bitarray one symbol at a time using the decode_symbol
+
+        as prefix free codes have specific code for each symbol, and due to the prefix free nature, allow for
+        decoding each symbol from the stream, we implement decode_block function as a simple loop over
+        decode_symbol function.
+        """
+        data_list = []
+        num_bits_consumed = 0
+        while num_bits_consumed < len(bitarray):
+            s, num_bits = self.decode_symbol(bitarray[num_bits_consumed:])
+            num_bits_consumed += num_bits
+            data_list.append(s)
+
+        return DataBlock(data_list), num_bits_consumed
 
 
 @dataclass
@@ -61,7 +126,7 @@ class PrefixFreeTree:
         raise NotImplementedError
 
 
-class PrefixFreeTreeEncoder(DataEncoder):
+class PrefixFreeTreeEncoder(PrefixFreeEncoder):
     def __init__(self, prob_dist: ProbabilityDist):
         """
         create the prefix free tree
@@ -76,19 +141,8 @@ class PrefixFreeTreeEncoder(DataEncoder):
 
         return self.encoding_table[s]
 
-    def encode_block(self, data_block: DataBlock):
-        """encode the data_block using the PrefixFreeTree
 
-        as prefix free codes have specific code for each symbol, we implement encode_block
-        function as a simple loop over encode_symbol function.
-        """
-        encoded_bitarray = BitArray("")
-        for s in data_block.data_list:
-            encoded_bitarray += self.encode_symbol(s)
-        return encoded_bitarray
-
-
-class PrefixFreeTreeDecoder(DataDecoder):
+class PrefixFreeTreeDecoder(PrefixFreeDecoder):
     def __init__(self, prob_dist: ProbabilityDist):
         """
         create the prefix free tree
@@ -118,19 +172,3 @@ class PrefixFreeTreeDecoder(DataDecoder):
         # as we reach the leaf node, the decoded symbol is the id of the node
         decoded_symbol = curr_node.id
         return decoded_symbol, num_bits_consumed
-
-    def decode_block(self, bitarray: BitArray):
-        """decode the data_block using the PrefixFreeTree
-
-        as prefix free codes have specific code for each symbol, and due to the prefix free nature, allow for
-        decoding each symbol from the stream, we implement decode_block function as a simple loop over
-        decode_symbol function.
-        """
-        data_list = []
-        num_bits_consumed = 0
-        while num_bits_consumed < len(bitarray):
-            s, num_bits = self.decode_symbol(bitarray[num_bits_consumed:])
-            num_bits_consumed += num_bits
-            data_list.append(s)
-
-        return DataBlock(data_list), num_bits_consumed
