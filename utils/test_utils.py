@@ -8,6 +8,7 @@ from core.data_block import DataBlock
 from core.data_stream import TextFileDataStream
 from core.data_encoder_decoder import DataDecoder, DataEncoder
 from core.prob_dist import ProbabilityDist
+from utils.bitarray_utils import BitArray
 import tempfile
 import os
 import numpy as np
@@ -57,10 +58,12 @@ def are_blocks_equal(data_block_1: DataBlock, data_block_2: DataBlock):
 
 def try_lossless_compression(
     data_block: DataBlock, encoder: DataEncoder, decoder: DataDecoder
-) -> Tuple[bool, int]:
+) -> Tuple[bool, int, BitArray]:
     """
     Encodes the data_block using data_compressor and returns True if the compression was lossless
-    returns (True/False, size of the output block)
+
+    Returns:
+        Tuple[bool,Int,BitArray]: whether encoding is lossless, size of the output block, encoded bitarray
     """
     # test encode
     output_bits_block = encoder.encode_block(data_block)
@@ -69,7 +72,7 @@ def try_lossless_compression(
     decoded_block, _ = decoder.decode_block(output_bits_block)
 
     # compare blocks
-    return are_blocks_equal(data_block, decoded_block), len(output_bits_block)
+    return are_blocks_equal(data_block, decoded_block), len(output_bits_block), output_bits_block
 
 
 def try_file_lossless_compression(

@@ -157,7 +157,7 @@ def test_fixed_bitwidth_encode_decode():
     data_list = ["A", "B", "C", "C", "A", "C"]
     data_block = DataBlock(data_list)
 
-    is_lossless, codelen = try_lossless_compression(data_block, encoder, decoder)
+    is_lossless, codelen, _ = try_lossless_compression(data_block, encoder, decoder)
     assert is_lossless
 
     # check if the length of the encoding was correct

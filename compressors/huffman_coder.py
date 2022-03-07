@@ -116,7 +116,7 @@ def test_huffman_coding_dyadic():
         decoder = HuffmanDecoder(prob_dist)
 
         # perform compression
-        is_lossless, output_len = try_lossless_compression(data_block, encoder, decoder)
+        is_lossless, output_len, _ = try_lossless_compression(data_block, encoder, decoder)
         avg_bits = output_len / NUM_SAMPLES
 
         assert is_lossless, "Lossless compression failed"
