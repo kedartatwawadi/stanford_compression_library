@@ -49,7 +49,8 @@ class ProbabilityDist:
             sum_of_probs += prob
 
         # FIXME: check if this needs a tolerance range
-        assert sum_of_probs == 1.0, "probabilities should sum to 1.0"
+        if abs(sum_of_probs - 1.0) > 1e-8:
+            raise ValueError("probabilities do not sum to 1")
 
 
 class ProbabilityDistTest(unittest.TestCase):
@@ -72,3 +73,14 @@ class ProbabilityDistTest(unittest.TestCase):
         """
 
         dist_1 = ProbabilityDist({"H": 0.5, "T": 0.4})
+
+    def test_prob_creation_and_validation(self):
+        """Test if validation works fine
+
+        NOTE: Test added to check if issue #21 was resolved
+        """
+        alphabet = list(range(10))
+        dist = {i: 1 / 10 for i in alphabet}
+
+        # check if this works
+        _ = ProbabilityDist(dist)
