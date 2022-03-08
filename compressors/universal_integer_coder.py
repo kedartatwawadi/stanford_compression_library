@@ -83,5 +83,5 @@ def test_universal_uint_encode_decode():
     data_list = [0, 0, 1, 3, 4, 100]
     data_block = DataBlock(data_list)
 
-    is_lossless, _ = try_lossless_compression(data_block, encoder, decoder)
+    is_lossless, _, _ = try_lossless_compression(data_block, encoder, decoder)
     assert is_lossless
