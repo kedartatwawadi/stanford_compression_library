@@ -35,7 +35,13 @@ class PrefixFreeEncoder(DataEncoder):
         prefix free codes have specific code for each symbol, we implement encode_block
         function as a simple loop over encode_symbol function.
         This class can also be used by certain non-prefix free codes which support symbol-wise encoding
+
+        Args:
+            data_block (DataBlock): input block to encoded
+        Returns:
+            BitArray: encoded bitarray
         """
+
         encoded_bitarray = BitArray("")
         for s in data_block.data_list:
             encoded_bitarray += self.encode_symbol(s)
@@ -61,6 +67,12 @@ class PrefixFreeDecoder(DataDecoder):
         as prefix free codes have specific code for each symbol, and due to the prefix free nature, allow for
         decoding each symbol from the stream, we implement decode_block function as a simple loop over
         decode_symbol function.
+
+        Args:
+            bitarray (BitArray): input bitarray with encoding of >=1 integers
+
+        Returns:
+            Tuple[DataBlock, Int]: return decoded integers in data block, number of bits read from input
         """
         data_list = []
         num_bits_consumed = 0
