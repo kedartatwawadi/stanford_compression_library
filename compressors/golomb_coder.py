@@ -25,6 +25,7 @@ from core.data_encoder_decoder import DataEncoder, DataDecoder
 from utils.bitarray_utils import uint_to_bitarray, bitarray_to_uint, BitArray
 from utils.test_utils import try_lossless_compression
 import math
+from compressors.prefix_free_compressors import PrefixFreeEncoder, PrefixFreeDecoder
 
 
 class GolombCodeParams:
@@ -47,7 +48,7 @@ class GolombCodeParams:
         self.rice_code = self.cutoff == self.M
 
 
-class GolombUintEncoder(DataEncoder):
+class GolombUintEncoder(PrefixFreeEncoder):
     """Golomb encoder"""
 
     def __init__(self, M: int):
@@ -88,22 +89,8 @@ class GolombUintEncoder(DataEncoder):
 
         return quotient_bitarray + remainder_bitarray
 
-    def encode_block(self, data_block: DataBlock):
-        """Encode block of integers using Golomb code
 
-        Args:
-            data_block (DataBlock): input block to encoded
-
-        Returns:
-            BitArray: encoded bitarray
-        """
-        encoded_bitarray = BitArray("")
-        for s in data_block.data_list:
-            encoded_bitarray += self.encode_symbol(s)
-        return encoded_bitarray
-
-
-class GolombUintDecoder(DataDecoder):
+class GolombUintDecoder(PrefixFreeDecoder):
     """Golomb decoder"""
 
     def __init__(self, M: int):
@@ -153,25 +140,6 @@ class GolombUintDecoder(DataDecoder):
         symbol = self.params.M * quotient + remainder
 
         return symbol, num_bits_consumed
-
-    def decode_block(self, bitarray: BitArray):
-        """Decode integers from bitarray with Golomb decoding
-
-        Args:
-            bitarray (BitArray): input bitarray with encoding of >=1 integers
-
-        Returns:
-            Tuple[DataBlock, Int]: return decoded integers in data block, number of bits read from input
-        """
-
-        data_list = []
-        num_bits_consumed = 0
-        while num_bits_consumed < len(bitarray):
-            s, num_bits = self.decode_symbol(bitarray[num_bits_consumed:])
-            num_bits_consumed += num_bits
-            data_list.append(s)
-
-        return DataBlock(data_list), num_bits_consumed
 
 
 def test_golomb_encode_decode():

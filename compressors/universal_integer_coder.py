@@ -1,3 +1,22 @@
+"""Simple Universal uint encoder
+
+We implement a very simple universal uint encoder.
+Sample encodings:
+    0 -> 100
+    1 -> 101
+    2 -> 11010
+    3 -> 11011
+    4 -> 1110100 (1110 + 100)
+    ...
+
+Encoding: 
+1. for encoding x -> get binary code of x, lets call it B[x] (For example: 5 = 101)
+2. Encode len(B[x]) as unary ( eg: 4 -> 1110). 
+3. The final encode is Unary(len(B[x])) + B[x]
+
+The decoding is straightforward, as the unary code indicates how many bits further to read and decode
+"""
+
 from core.data_block import DataBlock
 from utils.bitarray_utils import uint_to_bitarray, bitarray_to_uint, BitArray
 from utils.test_utils import try_lossless_compression
@@ -5,8 +24,8 @@ from compressors.prefix_free_compressors import PrefixFreeEncoder, PrefixFreeDec
 
 
 class UniversalUintEncoder(PrefixFreeEncoder):
-    """
-    Universal Encoding:
+    """Universal uint encoding:
+
     0 -> 100
     1 -> 101
     2 -> 11010
@@ -27,8 +46,7 @@ class UniversalUintEncoder(PrefixFreeEncoder):
 
 
 class UniversalUintDecoder(PrefixFreeDecoder):
-    """
-    Universal Encoding:
+    """Universal uint Decoder
     0 -> 100
     1 -> 101
     2 -> 11010
@@ -36,7 +54,6 @@ class UniversalUintDecoder(PrefixFreeDecoder):
     4 -> 1110100 (1110 + 100)
     ...
 
-    NOTE: not the most efficient but still "universal"
     """
 
     def decode_symbol(self, encoded_bitarray):
