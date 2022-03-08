@@ -7,11 +7,13 @@ change in logic.
 
 The main idea of Golomb code is to divide the input into quotient by M
 and the remainder. The quotient is written out in unary, and remained in
-binary. Let b = floor(log_2(M)). If M is a power of two, we can use exactly 
-b bits to represent the remainder (Rice code). Otherwise, we use either 
-b bits to represent r or b+1 bits to represent r+2^(b+1)-M. We define a 
-parameter cutoff = 2^(b+1)-M to determine which of the cases we fall into.
-During decoding, we can distinguish between these cases based on reading the first b 
+binary. The encoding and decoding of the remainder is as described below.
+
+- Let b = floor(log_2(M)). 
+- If M is a power of two, we can use exactly b bits to represent the remainder (Rice code). 
+- Otherwise, we use either b bits to represent r or b+1 bits to represent r+2^(b+1)-M. 
+- We define a parameter cutoff = 2^(b+1)-M to determine which of the cases we fall into (depending on r < cutoff or not).
+- During decoding, we can distinguish between these cases based on reading the first b 
 bits of remainder encoding and checking if they are < or >= cutoff. Note that if r >= cutoff,
 r+cutoff >= 2*cutoff and hence the first b bits are >= cutoff. 
 
