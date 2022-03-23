@@ -18,7 +18,7 @@ def uint_to_bitarray(x: int, bit_width=None) -> BitArray:
     converts an unsigned into to bits.
     if bit_width is provided then data is converted accordingly
     """
-    return int2ba(x, length=bit_width)
+    return int2ba(int(x), length=bit_width)
 
 
 def bitarray_to_uint(bit_array: BitArray) -> int:
