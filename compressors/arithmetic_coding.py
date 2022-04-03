@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Tuple
+from typing import Tuple, Any
 from core.data_encoder_decoder import DataDecoder, DataEncoder
 from utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
 from core.data_block import DataBlock
@@ -8,6 +8,15 @@ from utils.test_utils import get_random_data_block, try_lossless_compression
 
 
 class ArithmeticEncoder(DataEncoder):
+    """Finite precision Arithmetic encoder
+
+    The encoder are decoders are based on the following sources:
+    - https://youtu.be/ouYV3rBtrTI: This series of videos on Arithmetic coding are a very gradual but a great
+    way to understand them
+    - Charles Bloom's blog: https://www.cbloom.com/algs/statisti.html#A5
+    - There is of course the original paper: ADD LINK
+    """
+
     def __init__(self, precision, freqs):
         super().__init__()
         self.freqs = freqs
@@ -19,18 +28,29 @@ class ArithmeticEncoder(DataEncoder):
         self.HALF = 1 << (precision - 1)
         self.QTR = 1 << (precision - 2)
 
-    def shrink_range(self, s, low, high) -> Tuple[int, int]:
-        # rng, c, d
+    def shrink_range(self, s: Any, low: int, high: int) -> Tuple[int, int]:
+        """shrinks the range (low, high) based on the symbol s
+
+        Args:
+            s (Any): symbol to encode
+
+        Returns:
+            Tuple[int, int]: (low, high) ranges returned after shrinking
+        """
+        # compute some intermediate variables: rng, c, d
         rng = high - low
         c = self.freqs.cumulative_freq_dict[s]
         d = c + self.freqs.frequency(s)
 
-        # perform shrinking
+        # perform shrinking of low, high
+        # NOTE: this is the basic Arithmetic coding step implemented using integers
         high = low + (rng * d) // self.freqs.total_freq
         low = low + (rng * c) // self.freqs.total_freq
         return (low, high)
 
     def encode_block(self, data_block: DataBlock):
+        """Encode block function for arithmetic coding"""
+
         # initialize the low and high states
         low = 0
         high = self.FULL
@@ -39,6 +59,10 @@ class ArithmeticEncoder(DataEncoder):
         encoded_bitarray = BitArray("")
 
         # add the data_block size at the beginning
+        # NOTE: Arithmetic decoding needs a way to indicate where to stop the decoding
+        # One way is to add a character at the end which signals EOF. This requires us to
+        # change the probabilities of the other symbols. Another way is to just signal the size of the
+        # block. These two approaches add a bit of overhead.. the approach we use is much more transparent
         encoded_bitarray = uint_to_bitarray(data_block.size, self.DATA_BLOCK_SIZE_BITS)
 
         # initialize counter for mid-range re-adjustments
@@ -48,8 +72,15 @@ class ArithmeticEncoder(DataEncoder):
         for s in data_block.data_list:
 
             # shrink range
+            # i.e. the core Arithmetic encoding step
             low, high = self.shrink_range(s, low, high)
 
+            # perform re-normalizing range
+            # NOTE: the low, high values need to be re-normalized as else they will keep shrinking
+            # and after a few iterations things will be infeasible.
+            # The goal of re-normalizing is to not let the range (high - low) get smaller than self.QTR
+
+            # CASE I, II -> simple cases where low, high are both in the same half
             while (high < self.HALF) or (low > self.HALF):
                 if high < self.HALF:
                     # output 1's corresponding to prior mid-range readjustments
@@ -69,13 +100,14 @@ class ArithmeticEncoder(DataEncoder):
                     high = (high - self.HALF) << 1
                     num_mid_range_readjust = 0  # reset the mid-range readjustment counter
 
+            # CASE III -> the more complex case where low, high straddle the midpoint
             while (low > self.QTR) and (high < 3 * self.QTR):
                 # increment the mid-range adjustment counter
                 num_mid_range_readjust += 1
                 low = (low - self.QTR) << 1
                 high = (high - self.QTR) << 1
 
-        # final flush
+        # Finally output a few bits to signal the final range + any remaining mid range readjustments
         num_mid_range_readjust += 1  # this increment is mainly to output either 01, 10
         if low <= self.QTR:
             # output 0's corresponding to prior mid-range readjustments
@@ -88,6 +120,15 @@ class ArithmeticEncoder(DataEncoder):
 
 
 class ArithmeticDecoder(DataDecoder):
+    """Finite precision Arithmetic decoder
+
+    The encoder are decoders are based on the following sources:
+    - https://youtu.be/ouYV3rBtrTI: This series of videos on Arithmetic coding are a very gradual but a great
+    way to understand them
+    - Charles Bloom's blog: https://www.cbloom.com/algs/statisti.html#A5
+    - There is of course the original paper: ADD LINK
+    """
+
     def __init__(self, precision, freqs):
         super().__init__()
         self.freqs = freqs
@@ -99,18 +140,44 @@ class ArithmeticDecoder(DataDecoder):
         self.HALF = 1 << (precision - 1)
         self.QTR = 1 << (precision - 2)
 
-    def shrink_range(self, s, low, high) -> Tuple[int, int]:
-        # rng, c, d
+    def shrink_range(self, s: Any, low: int, high: int) -> Tuple[int, int]:
+        """shrinks the range (low, high) based on the symbol s
+
+        Args:
+            s (Any): symbol to encode
+
+        Returns:
+            Tuple[int, int]: (low, high) ranges returned after shrinking
+        """
+        # compute some intermediate variables: rng, c, d
         rng = high - low
         c = self.freqs.cumulative_freq_dict[s]
         d = c + self.freqs.frequency(s)
 
-        # perform shrinking
+        # perform shrinking of low, high
+        # NOTE: this is the basic Arithmetic coding step implemented using integers
         high = low + (rng * d) // self.freqs.total_freq
         low = low + (rng * c) // self.freqs.total_freq
         return (low, high)
 
-    def decode_symbol(self, low, high, state):
+    def decode_symbol(self, low: int, high: int, state: int):
+        """Core Arithmetic decoding function
+
+        We cut the [low, high) range bits proportional to the cumulative probability of each symbol
+        the function locates the bin in which the state lies
+        NOTE: This is exactly same as the decoding function of the theoretical arithmetic decoder,
+        except implemented using integers
+
+        Args:
+            low (int): range low point
+            high (int): range high point
+            state (int): the arithmetic decoder state
+
+        Returns:
+            s : the decoded symbol
+        """
+
+        # FIXME: simplify this search.
         rng = high - low
         search_list = (
             low
@@ -190,15 +257,17 @@ class ArithmeticDecoder(DataDecoder):
 
 
 def test_arithmetic_coding():
-    freq = Frequencies({"A": 6, "B": 4, "C": 34})
+    freq = Frequencies({"A": 1, "B": 1, "C": 2})
     prob_dist = freq.get_prob_dist()
 
     # generate random data
-    data_block = get_random_data_block(prob_dist, 100, seed=0)
+    data_block = get_random_data_block(prob_dist, 2000, seed=0)
 
     # create encoder decoder
-    encoder = ArithmeticEncoder(32, freq)
-    decoder = ArithmeticDecoder(32, freq)
+    data_size_bits = 32
+    encoder = ArithmeticEncoder(data_size_bits, freq)
+    decoder = ArithmeticDecoder(data_size_bits, freq)
 
-    is_lossless, _, _ = try_lossless_compression(data_block, encoder, decoder)
+    is_lossless, encode_len, _ = try_lossless_compression(data_block, encoder, decoder)
+    print((encode_len - data_size_bits) / data_block.size, prob_dist.entropy)
     assert is_lossless
