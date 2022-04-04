@@ -34,4 +34,4 @@ jobs:
     - name: unit tests
       run: |
         export PYTHONPATH=$PYTHONPATH:.
-        find . -name "*_tests.py" -exec py.test -s -v {} +
+        find . -name "*.py" -exec py.test -s -v {} +

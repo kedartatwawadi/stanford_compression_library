@@ -17,7 +17,7 @@ The goal of the library is to help with research in the area of data compression
 
   To run all tests:
     ```
-    find . -name "*_tests.py" -exec py.test -s -v {} +
+    find . -name "*.py" -exec py.test -s -v {} +
     ```
 
   To run a single test
@@ -25,6 +25,9 @@ The goal of the library is to help with research in the area of data compression
   py.test -s -v core/data_stream_tests.py
   ```
 
+## Getting started with understanding the library
+In-depth information about the library will be in the comments. Tutorials/articles etc will be posted on the wiki page: 
+https://github.com/kedartatwawadi/stanford_compression_library/wiki/Introduction-to-the-Stanford-Compression-Library
 
 ## How to submit code
 
