@@ -30,6 +30,11 @@ class ProbabilityDist:
         return [self.prob_dict[s] for s in self.alphabet]
 
     @property
+    def sorted_prob_list(self):
+        self.sorted_prob_dict = ProbabilityDist(dict(sorted(self.prob_dict.items(), key=lambda x: x[1], reverse=True)))
+        return self.sorted_prob_dict
+
+    @property
     def cumulative_prob_dict(self):
         """return a list of sum of probabilities of symbols preceeding symbol"""
         cum_prob_dict = {}
