@@ -10,7 +10,7 @@ The goal of the library is to help with research in the area of data compression
     ```
 - Add path to the repo to `PYTHONPATH`:
     ```
-    export PYTHONPATH=$PYTHONPATH:$(pwd)
+    export PYTHONPATH=$PYTHONPATH:<path_to_repo>
     ``` 
 
 - Run unit tests
