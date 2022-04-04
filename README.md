@@ -13,17 +13,17 @@ The goal of the library is to help with research in the area of data compression
     export PYTHONPATH=$PYTHONPATH:<path_to_repo>
     ``` 
 
-- Run unit tests
+- **Run unit tests**
 
-To run all tests:
-```
-find . -name "*_tests.py" -exec py.test -s -v {} +
-```
+  To run all tests:
+    ```
+    find . -name "*_tests.py" -exec py.test -s -v {} +
+    ```
 
-To run a single test
-```
-py.test -s -v core/data_stream_tests.py
-```
+  To run a single test
+  ```
+  py.test -s -v core/data_stream_tests.py
+  ```
 
 
 ## How to submit code
