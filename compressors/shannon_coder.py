@@ -4,17 +4,21 @@ Shannon-Fano codes, e.g. see Naming section of https://en.wikipedia.org/wiki/Sha
 
 This document uses cumulative probability based method for shannon coding as described in the wiki article above.
 """
+from abc import ABC
 
 from bitarray import bitarray
 from utils.bitarray_utils import float_to_bitarrays, BitArray, uint_to_bitarray
 from utils.test_utils import get_random_data_block, try_lossless_compression
-from compressors.prefix_free_compressors import PrefixFreeEncoder, PrefixFreeDecoder
+from compressors.prefix_free_compressors import PrefixFreeEncoder, PrefixFreeDecoder, PrefixFreeTree, \
+    PrefixFreeTreeDecoder
 from core.prob_dist import ProbabilityDist
 import math
-import numpy as np
 
 
 class ShannonEncoder(PrefixFreeEncoder):
+    """
+    Outputs codewords
+    """
     def __init__(self, prob_dist: ProbabilityDist):
         self.prob_dist = prob_dist
 
@@ -35,14 +39,18 @@ class ShannonEncoder(PrefixFreeEncoder):
         # truncated to expected code-word length
         _, code = float_to_bitarrays(cum_prob, encode_len)
 
+        print(f"Encoder: symbol = {symbol}, code = {code}")
         return code
 
 
-class ShannonDecoder(PrefixFreeDecoder):
+class ShannonDecoder(PrefixFreeTreeDecoder):
     def __init__(self, prob_dist: ProbabilityDist):
         self.prob_dist = prob_dist
         self.sorted_prob_dist = prob_dist.sorted_prob_list
         self.cumulative_prob_dict = self.sorted_prob_dist.cumulative_prob_dict
+        self.tree = PrefixFreeTree(prob_dist)
+
+        self.create_shannon_tree(prob_dist)
 
     def get_codeword(self, symbol) -> BitArray:
         # compute the mid-point corresponding to the range of the given symbol
@@ -54,26 +62,14 @@ class ShannonDecoder(PrefixFreeDecoder):
         _, code = float_to_bitarrays(cum_prob, encode_len)
         return code
 
-    def prefix_free_codes(self, prob_dist):
-        return {a: self.get_codeword(a) for a in prob_dist.prob_dict.keys()}
+    def create_shannon_tree(self, prob_dist):
+        encoding_table = {}
+        for s in prob_dist.prob_dict.keys():
+            encoding_table.update({s: self.get_codeword(s)})
 
-    def decode_symbol(self, encoded_bitarray):
-        prefix_free_code_dict = self.prefix_free_codes(self.prob_dist)
+        print(f"Decoder: Encoding Table = {encoding_table}")
 
-        # start decoding, stop when the range is fully inside two cumulative intervals
-        num_bits_consumed = 0
-        undecoded_bits = bitarray()
-
-        while True:
-            bit = uint_to_bitarray(encoded_bitarray[num_bits_consumed])
-            num_bits_consumed += 1
-
-            undecoded_bits += bit
-
-            for a, c in prefix_free_code_dict.items():
-                if undecoded_bits == c:
-                    decoded_symbol = a
-                    return decoded_symbol, num_bits_consumed
+        self.tree.build_tree_from_encoding_table(encoding_table)
 
 
 def test_shannon_coding():
@@ -83,6 +79,7 @@ def test_shannon_coding():
         ProbabilityDist({"A": 0.5, "B": 0.5}),
         ProbabilityDist({"A": 0.3, "B": 0.3, "C": 0.4}),
         ProbabilityDist({"A": 0.5, "B": 0.25, "C": 0.12, "D": 0.13}),
+        ProbabilityDist({"A": 0.9, "B": 0.1})
     ]
     for prob_dist in distributions:
         # generate random data

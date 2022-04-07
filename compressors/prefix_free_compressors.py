@@ -122,7 +122,8 @@ class PrefixFreeTree:
         """
         create the prefix free tree
         """
-        self.root_node = self.build_tree(prob_dist)
+        self.prob_dist = prob_dist
+        self.root_node = PrefixFreeTreeNode(id=None, code=None)
 
     def get_encoding_table(self):
         return self.root_node.get_encoding_table()
@@ -134,8 +135,53 @@ class PrefixFreeTree:
     def build_tree(prob_dist) -> PrefixFreeTreeNode:
         """
         abstract function -> needs to be implemented by the subclassing class
+
+        needs to build the whole tree and return the pointer to root node
         """
         raise NotImplementedError
+
+    def build_tree_from_code(self, symbol, code) -> PrefixFreeTreeNode:
+        """
+        Args:
+            symbol: the symbol
+            code: the
+        """
+        code_so_far = BitArray()
+        code_len = len(code)
+
+        for i, bit in enumerate(code):
+            code_so_far.append(bit)
+
+            if i == 0:
+                curr_node = self.root_node
+                right_child = curr_node.right_child
+                left_child = curr_node.left_child
+
+            if i == (code_len - 1):
+                next_node = PrefixFreeTreeNode(id=symbol, code=code_so_far)
+            else:
+                next_node = PrefixFreeTreeNode(id=None, code=code_so_far)
+
+            if bit:
+                if right_child is None:
+                    curr_node.right_child = next_node
+                else:
+                    next_node = right_child
+                    curr_node.right_child = next_node
+            else:
+                if left_child is None:
+                    curr_node.left_child = next_node
+                else:
+                    next_node = left_child
+                    curr_node.left_child = next_node
+
+            curr_node = next_node
+            right_child = curr_node.right_child
+            left_child = curr_node.left_child
+
+    def build_tree_from_encoding_table(self, encoding_table):
+        for s, code in encoding_table.items():
+            self.build_tree_from_code(s, code)
 
 
 class PrefixFreeTreeEncoder(PrefixFreeEncoder):
@@ -143,7 +189,8 @@ class PrefixFreeTreeEncoder(PrefixFreeEncoder):
         """
         create the prefix free tree
         """
-        self.tree = PrefixFreeTree(prob_dist)
+        self.encoding_table = None
+        self.tree = None
 
     def encode_symbol(self, s):
         """encode each symbol based on the lookup table"""
@@ -159,7 +206,7 @@ class PrefixFreeTreeDecoder(PrefixFreeDecoder):
         """
         create the prefix free tree
         """
-        self.tree = PrefixFreeTree(prob_dist)
+        self.tree = None
 
     def decode_symbol(self, encoded_bitarray):
         """decode each symbol by parsing through the prefix free tree
