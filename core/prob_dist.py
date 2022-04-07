@@ -9,6 +9,9 @@ class ProbabilityDist:
 
     def __init__(self, prob_dict=None):
         self._validate_prob_dist(prob_dict)
+
+        # NOTE: We use the fact that since python 3.6, dictionaries in python are
+        # also OrderedDicts. https://realpython.com/python-ordereddict/
         self.prob_dict = prob_dict
 
     def __repr__(self):
@@ -27,14 +30,27 @@ class ProbabilityDist:
         return [self.prob_dict[s] for s in self.alphabet]
 
     @property
+    def cumulative_prob_dict(self):
+        """return a list of sum of probabilities of symbols preceeding symbol"""
+        cum_prob_dict = {}
+        _sum = 0
+        for a, p in self.prob_dict.items():
+            cum_prob_dict[a] = _sum
+            _sum += p
+        return cum_prob_dict
+
+    @property
     def entropy(self):
         entropy = 0
         for _, prob in self.prob_dict.items():
             entropy += -prob * np.log2(prob)
         return entropy
 
-    def probability(self, alphabet):
-        return self.prob_dict[alphabet]
+    def probability(self, symbol):
+        return self.prob_dict[symbol]
+
+    def log_probability(self, symbol):
+        return -np.log2(self.probability(symbol))
 
     @staticmethod
     def _validate_prob_dist(prob_dict):
@@ -45,7 +61,7 @@ class ProbabilityDist:
 
         sum_of_probs = 0
         for _, prob in prob_dict.items():
-            assert prob >= 0, "probabilities cannot be negative"
+            assert prob >= 1e-6, "probabilities negative or too small cause stability issues"
             sum_of_probs += prob
 
         # FIXME: check if this needs a tolerance range
