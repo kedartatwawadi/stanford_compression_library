@@ -18,6 +18,9 @@ import numpy as np
 
 class ShannonFanoEliasEncoder(PrefixFreeEncoder):
     def __init__(self, prob_dist: ProbabilityDist):
+
+        # FIXME: note that there could be issues in computing the
+        # if the probability values are too small. We add a check
         self.prob_dist = prob_dist
 
         # compute a dictionary holding cumulative probabilities
@@ -68,7 +71,8 @@ class ShannonFanoEliasDecoder(PrefixFreeDecoder):
             if start_bin == end_bin:
                 decoded_symbol = self.prob_dist.alphabet[start_bin - 1]
 
-                # FIXME: The recomputing of num_bits_consumed seems necessary
+                # FIXME: The recomputing of num_bits_consumed seems necessary, as there is a possibility
+                # that the decoder is able to infer the correct symbol by reading less than ceil(-log(prob)) + 1 bits
                 num_bits_consumed = math.ceil(self.prob_dist.log_probability(decoded_symbol)) + 1
                 return decoded_symbol, num_bits_consumed
 
