@@ -36,8 +36,12 @@ class HuffmanNode(PrefixFreeTreeNode):
 
 
 class HuffmanTree(PrefixFreeTree):
-    @staticmethod
-    def build_tree(prob_dist: ProbabilityDist) -> HuffmanNode:
+    def __init__(self, prob_dist):
+        super().__init__(prob_dist)
+        # build tree returns the root node
+        self.root_node = self.build_tree()
+
+    def build_tree(self) -> HuffmanNode:
         """Build the huffman coding tree
 
         1. Sort the prob distribution, combine last two symbols into a single symbol
@@ -48,8 +52,8 @@ class HuffmanTree(PrefixFreeTree):
         # [ HuffmanNode(id=3, prob=p3), (HuffmanTree(id=6, prob=p6),  ]
 
         node_list = []
-        for a in prob_dist.alphabet:
-            node = HuffmanNode(id=a, prob=prob_dist.probability(a))
+        for a in self.prob_dist.alphabet:
+            node = HuffmanNode(id=a, prob=self.prob_dist.probability(a))
             node_list.append(node)
 
         # create a node_heap from the node_list (in place)
