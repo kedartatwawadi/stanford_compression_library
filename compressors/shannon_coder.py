@@ -4,13 +4,9 @@ Shannon-Fano codes, e.g. see Naming section of https://en.wikipedia.org/wiki/Sha
 
 This document uses cumulative probability based method for shannon coding as described in the wiki article above.
 """
-from abc import ABC
-
-from bitarray import bitarray
-from utils.bitarray_utils import float_to_bitarrays, BitArray, uint_to_bitarray
+from utils.bitarray_utils import float_to_bitarrays, BitArray
 from utils.test_utils import get_random_data_block, try_lossless_compression
-from compressors.prefix_free_compressors import PrefixFreeEncoder, PrefixFreeDecoder, PrefixFreeTree, \
-    PrefixFreeTreeDecoder
+from compressors.prefix_free_compressors import PrefixFreeEncoder, PrefixFreeTree, PrefixFreeTreeDecoder
 from core.prob_dist import ProbabilityDist
 import math
 
