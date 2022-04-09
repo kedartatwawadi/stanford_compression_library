@@ -1,4 +1,4 @@
-"""File imeplemting utility abstract classes for prefix free compressors
+"""File implementing utility abstract classes for prefix free compressors
 
 NOTE: prefix free codes are codes which allow convenient per-symbol encoding/decoding.
 
@@ -84,82 +84,51 @@ class PrefixFreeDecoder(DataDecoder):
         return DataBlock(data_list), num_bits_consumed
 
 
-@dataclass
-class PrefixFreeTreeNode(BinaryNode):
-    """PrefixFreeTreeNode is sublass of BinaryNode, as we need to add the "code" attribute
-
-    The code attribute is used to get an encoding table.
-    FIXME: not sure if we really need the code field, although it does make the algorithm to get the
-    encoding table quite simple
-    """
-
-    code: str = BitArray("")  # FIXME: is this field needed?
-
-    def get_encoding_table(self) -> Mapping[str, BitArray]:
-        """
-        parse the node and get the encoding table
-        """
-
-        if self.is_leaf_node:
-            return {self.id: self.code}
-
-        encoding_table = dict()
-        if self.left_child is not None:
-            self.left_child.code = self.code + BitArray("0")
-            left_table_dict = self.left_child.get_encoding_table()
-            encoding_table.update(left_table_dict)
-
-        if self.right_child is not None:
-            self.right_child.code = self.code + BitArray("1")
-            right_table_dict = self.right_child.get_encoding_table()
-            encoding_table.update(right_table_dict)
-
-        return encoding_table
-
-
 class PrefixFreeTree:
     def __init__(self, prob_dist: ProbabilityDist):
         """
         create the prefix free tree
         """
-        self.root_node = self.build_tree(prob_dist)
+        self.prob_dist = prob_dist
+        self.root_node = self.build_tree()
 
     def get_encoding_table(self):
-        return self.root_node.get_encoding_table()
+        """
+        parse the root node and get the encoding table
+        """
+        encoding_table = {}
+
+        # define the BFS function
+        def _parse_node(node: BinaryNode, code: BitArray):
+            """parse the node in DFS fashion, and get the code corresponding to
+            all the leaf nodes
+
+            Args:
+                node (BinaryNode): the current node being parsed
+                code (BitArray): the code corresponding to the current node
+            """
+            # if node is leaf add it to the table
+            if node.is_leaf_node:
+                encoding_table[node.id] = code
+
+            if node.left_child is not None:
+                _parse_node(node.left_child, code + BitArray("0"))
+
+            if node.right_child is not None:
+                _parse_node(node.right_child, code + BitArray("1"))
+
+        # call the parsing function on the root node
+        _parse_node(self.root_node, BitArray(""))
+        return encoding_table
 
     def print_tree(self):
         self.root_node.print_node()
 
-    @staticmethod
-    def build_tree(prob_dist) -> PrefixFreeTreeNode:
+    def build_tree(self) -> BinaryNode:
         """
         abstract function -> needs to be implemented by the subclassing class
         """
         raise NotImplementedError
-
-
-class PrefixFreeTreeEncoder(PrefixFreeEncoder):
-    def __init__(self, prob_dist: ProbabilityDist):
-        """
-        create the prefix free tree
-        """
-        self.tree = PrefixFreeTree(prob_dist)
-
-    def encode_symbol(self, s):
-        """encode each symbol based on the lookup table"""
-        # initialize the encoding table once, if it has not been created
-        if not hasattr(self, "encoding_table"):
-            self.encoding_table = self.tree.get_encoding_table()
-
-        return self.encoding_table[s]
-
-
-class PrefixFreeTreeDecoder(PrefixFreeDecoder):
-    def __init__(self, prob_dist: ProbabilityDist):
-        """
-        create the prefix free tree
-        """
-        self.tree = PrefixFreeTree(prob_dist)
 
     def decode_symbol(self, encoded_bitarray):
         """decode each symbol by parsing through the prefix free tree
@@ -172,7 +141,7 @@ class PrefixFreeTreeDecoder(PrefixFreeDecoder):
         num_bits_consumed = 0
 
         # continue decoding until we reach leaf node
-        curr_node = self.tree.root_node
+        curr_node = self.root_node
         while not curr_node.is_leaf_node:
             bit = encoded_bitarray[num_bits_consumed]
             if bit == 0:

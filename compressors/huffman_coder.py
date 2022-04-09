@@ -1,23 +1,20 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Tuple
 import heapq
 from functools import total_ordering
-from compressors.prefix_free_compressors import (
-    PrefixFreeTree,
-    PrefixFreeTreeDecoder,
-    PrefixFreeTreeEncoder,
-    PrefixFreeTreeNode,
-)
+from compressors.prefix_free_compressors import PrefixFreeTree, PrefixFreeEncoder, PrefixFreeDecoder
 from core.prob_dist import ProbabilityDist
 import unittest
 import numpy as np
 from core.data_block import DataBlock
+from utils.bitarray_utils import BitArray
 from utils.test_utils import get_random_data_block, try_lossless_compression
+from utils.tree_utils import BinaryNode
 
 
 @dataclass
 @total_ordering  # decorator which adds other compare ops give one
-class HuffmanNode(PrefixFreeTreeNode):
+class HuffmanNode(BinaryNode):
     """represents a node of the huffman tree
 
     NOTE: PrefixFreeNode class already has left_child, right_child, id, code fields
@@ -36,8 +33,7 @@ class HuffmanNode(PrefixFreeTreeNode):
 
 
 class HuffmanTree(PrefixFreeTree):
-    @staticmethod
-    def build_tree(prob_dist: ProbabilityDist) -> HuffmanNode:
+    def build_tree(self) -> HuffmanNode:
         """Build the huffman coding tree
 
         1. Sort the prob distribution, combine last two symbols into a single symbol
@@ -48,8 +44,8 @@ class HuffmanTree(PrefixFreeTree):
         # [ HuffmanNode(id=3, prob=p3), (HuffmanTree(id=6, prob=p6),  ]
 
         node_list = []
-        for a in prob_dist.alphabet:
-            node = HuffmanNode(id=a, prob=prob_dist.probability(a))
+        for a in self.prob_dist.alphabet:
+            node = HuffmanNode(id=a, prob=self.prob_dist.probability(a))
             node_list.append(node)
 
         # create a node_heap from the node_list (in place)
@@ -81,14 +77,22 @@ class HuffmanTree(PrefixFreeTree):
         return root_node
 
 
-class HuffmanEncoder(PrefixFreeTreeEncoder):
+class HuffmanEncoder(PrefixFreeEncoder):
+    def __init__(self, prob_dist: ProbabilityDist):
+        tree = HuffmanTree(prob_dist)
+        self.encoding_table = tree.get_encoding_table()
+
+    def encode_symbol(self, s):
+        return self.encoding_table[s]
+
+
+class HuffmanDecoder(PrefixFreeDecoder):
     def __init__(self, prob_dist: ProbabilityDist):
         self.tree = HuffmanTree(prob_dist)
 
-
-class HuffmanDecoder(PrefixFreeTreeDecoder):
-    def __init__(self, prob_dist: ProbabilityDist):
-        self.tree = HuffmanTree(prob_dist)
+    def decode_symbol(self, encoded_bitarray: BitArray) -> Tuple[Any, BitArray]:
+        decoded_symbol, num_bits_consumed = self.tree.decode_symbol(encoded_bitarray)
+        return decoded_symbol, num_bits_consumed
 
 
 def test_huffman_coding_dyadic():
