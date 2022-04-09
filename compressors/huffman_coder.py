@@ -4,9 +4,7 @@ import heapq
 from functools import total_ordering
 from compressors.prefix_free_compressors import PrefixFreeTree, PrefixFreeEncoder, PrefixFreeDecoder
 from core.prob_dist import ProbabilityDist
-import unittest
 import numpy as np
-from core.data_block import DataBlock
 from utils.bitarray_utils import BitArray
 from utils.test_utils import get_random_data_block, try_lossless_compression
 from utils.tree_utils import BinaryNode
@@ -17,8 +15,8 @@ from utils.tree_utils import BinaryNode
 class HuffmanNode(BinaryNode):
     """represents a node of the huffman tree
 
-    NOTE: PrefixFreeNode class already has left_child, right_child, id, code fields
-    here by subclassing we add a couple of more fields: prob
+    NOTE: BinaryNode class already has left_child, right_child, id fields
+    here by subclassing we add the field: prob
     """
 
     prob: float = None
@@ -33,7 +31,13 @@ class HuffmanNode(BinaryNode):
 
 
 class HuffmanTree(PrefixFreeTree):
-    def build_tree(self) -> HuffmanNode:
+    def __init__(self, prob_dist: ProbabilityDist):
+        self.prob_dist = prob_dist
+
+        # construct the tree and set the root_node of PrefixFreeTree base class
+        super().__init__(root_node=self.build_huffman_tree())
+
+    def build_huffman_tree(self) -> HuffmanNode:
         """Build the huffman coding tree
 
         1. Sort the prob distribution, combine last two symbols into a single symbol

@@ -8,11 +8,9 @@ useful for implementing any prefix free code
 """
 
 import abc
-from dataclasses import dataclass
 from typing import Mapping, Tuple, Any
 from utils.bitarray_utils import BitArray
 from utils.tree_utils import BinaryNode
-from core.prob_dist import ProbabilityDist
 from core.data_encoder_decoder import DataEncoder, DataDecoder
 from core.data_block import DataBlock
 
@@ -85,16 +83,22 @@ class PrefixFreeDecoder(DataDecoder):
 
 
 class PrefixFreeTree:
-    def __init__(self, prob_dist: ProbabilityDist):
-        """
-        create the prefix free tree
-        """
-        self.prob_dist = prob_dist
-        self.root_node = self.build_tree()
+    """Class representing a Prefix Free Tree
 
-    def get_encoding_table(self):
-        """
-        parse the root node and get the encoding table
+    Any subclassing class needs to set the root_node appropriately
+    """
+
+    def __init__(self, root_node: BinaryNode):
+        self.root_node = root_node
+
+    def print_tree(self):
+        self.root_node.print_node()
+
+    def get_encoding_table(self) -> Mapping[Any, BitArray]:
+        """utility func to get the encoding table based on the prefix-free tree
+
+        Returns:
+            Mapping[Any,BitArray]: the encoding_array dict
         """
         encoding_table = {}
 
@@ -120,15 +124,6 @@ class PrefixFreeTree:
         # call the parsing function on the root node
         _parse_node(self.root_node, BitArray(""))
         return encoding_table
-
-    def print_tree(self):
-        self.root_node.print_node()
-
-    def build_tree(self) -> BinaryNode:
-        """
-        abstract function -> needs to be implemented by the subclassing class
-        """
-        raise NotImplementedError
 
     def decode_symbol(self, encoded_bitarray):
         """decode each symbol by parsing through the prefix free tree
