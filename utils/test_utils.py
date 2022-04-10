@@ -69,7 +69,8 @@ def try_lossless_compression(
     output_bits_block = encoder.encode_block(data_block)
 
     # test decode
-    decoded_block, _ = decoder.decode_block(output_bits_block)
+    decoded_block, num_bits_consumed = decoder.decode_block(output_bits_block)
+    assert num_bits_consumed == len(output_bits_block)
 
     # compare blocks
     return are_blocks_equal(data_block, decoded_block), len(output_bits_block), output_bits_block

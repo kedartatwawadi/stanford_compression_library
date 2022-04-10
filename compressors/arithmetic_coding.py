@@ -28,7 +28,8 @@ class ArithmeticEncoder(DataEncoder):
         self.HALF = 1 << (precision - 1)
         self.QTR = 1 << (precision - 2)
 
-    def shrink_range(self, s: Any, low: int, high: int) -> Tuple[int, int]:
+    @classmethod
+    def shrink_range(cls, freqs: Frequencies, s: Any, low: int, high: int) -> Tuple[int, int]:
         """shrinks the range (low, high) based on the symbol s
 
         Args:
@@ -39,13 +40,13 @@ class ArithmeticEncoder(DataEncoder):
         """
         # compute some intermediate variables: rng, c, d
         rng = high - low
-        c = self.freqs.cumulative_freq_dict[s]
-        d = c + self.freqs.frequency(s)
+        c = freqs.cumulative_freq_dict[s]
+        d = c + freqs.frequency(s)
 
         # perform shrinking of low, high
         # NOTE: this is the basic Arithmetic coding step implemented using integers
-        high = low + (rng * d) // self.freqs.total_freq
-        low = low + (rng * c) // self.freqs.total_freq
+        high = low + (rng * d) // freqs.total_freq
+        low = low + (rng * c) // freqs.total_freq
         return (low, high)
 
     def encode_block(self, data_block: DataBlock):
@@ -73,7 +74,7 @@ class ArithmeticEncoder(DataEncoder):
 
             # shrink range
             # i.e. the core Arithmetic encoding step
-            low, high = self.shrink_range(s, low, high)
+            low, high = ArithmeticEncoder.shrink_range(self.freqs, s, low, high)
 
             # perform re-normalizing range
             # NOTE: the low, high values need to be re-normalized as else they will keep shrinking
@@ -140,26 +141,6 @@ class ArithmeticDecoder(DataDecoder):
         self.HALF = 1 << (precision - 1)
         self.QTR = 1 << (precision - 2)
 
-    def shrink_range(self, s: Any, low: int, high: int) -> Tuple[int, int]:
-        """shrinks the range (low, high) based on the symbol s
-
-        Args:
-            s (Any): symbol to encode
-
-        Returns:
-            Tuple[int, int]: (low, high) ranges returned after shrinking
-        """
-        # compute some intermediate variables: rng, c, d
-        rng = high - low
-        c = self.freqs.cumulative_freq_dict[s]
-        d = c + self.freqs.frequency(s)
-
-        # perform shrinking of low, high
-        # NOTE: this is the basic Arithmetic coding step implemented using integers
-        high = low + (rng * d) // self.freqs.total_freq
-        low = low + (rng * c) // self.freqs.total_freq
-        return (low, high)
-
     def decode_symbol(self, low: int, high: int, state: int):
         """Core Arithmetic decoding function
 
@@ -196,14 +177,15 @@ class ArithmeticDecoder(DataDecoder):
         # get data size
         input_data_block_size = bitarray_to_uint(data_block_size_bitarray)
 
-        arith_bitarray_size = len(encoded_bitarray)
-
         # initialize return variables
         decoded_data_list = []
         num_bits_consumed = 0
+
+        # initialize intermediate state vars etc.
         low = 0
         high = self.FULL
         state = 0
+        arith_bitarray_size = len(encoded_bitarray)
 
         # initialize the state
         while (num_bits_consumed < self.PRECISION) and (num_bits_consumed < arith_bitarray_size):
@@ -211,12 +193,13 @@ class ArithmeticDecoder(DataDecoder):
             if bit:
                 state += 1 << (self.PRECISION - num_bits_consumed - 1)
             num_bits_consumed += 1
+        num_bits_consumed = self.PRECISION
 
         # main decoding loop
         while True:
             # decode the next symbol
             s = self.decode_symbol(low, high, state)
-            low, high = self.shrink_range(s, low, high)
+            low, high = ArithmeticEncoder.shrink_range(self.freqs, s, low, high)
             decoded_data_list.append(s)
 
             # break when we have decoded all the symbols in the data block
@@ -239,7 +222,7 @@ class ArithmeticDecoder(DataDecoder):
                 if num_bits_consumed < arith_bitarray_size:
                     bit = encoded_bitarray[num_bits_consumed]
                     state += bit
-                    num_bits_consumed += 1
+                num_bits_consumed += 1
 
             while (low > self.QTR) and (high < 3 * self.QTR):
                 # increment the mid-range adjustment counter
@@ -250,14 +233,25 @@ class ArithmeticDecoder(DataDecoder):
                 if num_bits_consumed < arith_bitarray_size:
                     bit = encoded_bitarray[num_bits_consumed]
                     state += bit
-                    num_bits_consumed += 1
+                num_bits_consumed += 1
 
+        # # NOTE: we might have loaded in additional bits not added by the arithmetic encoder
+        # # (which are present in the encoded_bitarray).
+        # # This block of code determines the extra bits and subtracts it from num_bits_consumed
+        for extra_bits_read in range(self.PRECISION):
+            state_low = (state >> extra_bits_read) << extra_bits_read
+            state_high = state_low + (1 << extra_bits_read)
+            if (state_low < low) or (state_high > high):
+                break
+        num_bits_consumed -= extra_bits_read - 1
+
+        # add back the bits corresponding to the num elements
         num_bits_consumed += self.DATA_BLOCK_SIZE_BITS
+
         return DataBlock(decoded_data_list), num_bits_consumed
 
 
-def test_arithmetic_coding():
-    freq = Frequencies({"A": 1, "B": 1, "C": 2})
+def _test_arithmetic_coding(freq, data_size, seed):
     prob_dist = freq.get_prob_dist()
 
     # generate random data
@@ -271,3 +265,15 @@ def test_arithmetic_coding():
     is_lossless, encode_len, _ = try_lossless_compression(data_block, encoder, decoder)
     print((encode_len - data_size_bits) / data_block.size, prob_dist.entropy)
     assert is_lossless
+
+
+def test_arithmetic_coding():
+    DATA_SIZE = 5000
+    freqs = [
+        Frequencies({"A": 1, "B": 1, "C": 2}),
+        Frequencies({"A": 12, "B": 34, "C": 1, "D": 45}),
+        Frequencies({"A": 34, "B": 35, "C": 546, "D": 1, "E": 13, "F": 245}),
+    ]
+
+    for freq in freqs:
+        _test_arithmetic_coding(freq, DATA_SIZE, seed=0)
