@@ -15,11 +15,6 @@ from utils.test_utils import get_random_data_block, try_lossless_compression
 class RangeEncoderV2(DataEncoder):
     def __init__(self, precision, freqs):
         assert precision % 8 == 0
-        max_count_sum = 1 << (precision - 16)
-        self.freqs = freqs
-        assert min(self.freqs.freq_dict.values()) > 0
-        assert self.freqs.total_freq <= max_count_sum
-        super().__init__()
 
         self.DATA_BLOCK_SIZE_BITS = 32  # represents the size of the data block
         self.PRECISION = precision
@@ -33,6 +28,12 @@ class RangeEncoderV2(DataEncoder):
         # mask is like 0xFFFFFFFF for making sure the arithmetic behaves properly
         # when shifting stuff left
         self.MASK = (1 << self.PRECISION) - 1
+
+        self.freqs = freqs
+        assert min(self.freqs.freq_dict.values()) > 0
+        assert self.freqs.total_freq <= self.BOTTOM
+        super().__init__()
+
 
     @classmethod
     def shrink_range(cls, freqs: Frequencies, s: Any, low: int, range_: int) -> Tuple[int, int]:
@@ -108,6 +109,16 @@ class RangeEncoderV2(DataEncoder):
                 # high_after_step 0xac000000
                 # byte_released 0xab
 
+                # def print_info(low,range):
+                #     print("old_low:", hex(low))
+                #     print("old_range:", hex(range))
+                #     print("old_high:", hex(low+range))
+                #     range_after_step = (0xFFFFFFFF-low+1)&0xFFFF
+                #     print("range_after_step", hex(range_after_step))
+                #     print("high_after_step", hex(low+range_after_step))
+                #     print("byte_released", hex(low//int("0xFFFFFF",0))
+
+
                 range_ = (self.MASK + 1 - low) & (
                     self.BOTTOM - 1
                 )  # note that due to python's infinite precision integers and +/-handling the normal C code (-low)&0xFFFF doesn't work.
@@ -164,11 +175,6 @@ class RangeDecoderV2(DataDecoder):
 
     def __init__(self, precision, freqs):
         assert precision % 8 == 0
-        max_count_sum = 1 << (precision - 16)
-        self.freqs = freqs
-        assert min(self.freqs.freq_dict.values()) > 0
-        assert self.freqs.total_freq <= max_count_sum
-        super().__init__()
 
         self.DATA_BLOCK_SIZE_BITS = 32  # represents the size of the data block
         self.PRECISION = precision
@@ -182,6 +188,11 @@ class RangeDecoderV2(DataDecoder):
         # mask is like 0xFFFFFFFF for making sure the arithmetic behaves properly
         # when shifting stuff left
         self.MASK = (1 << self.PRECISION) - 1
+
+        self.freqs = freqs
+        assert min(self.freqs.freq_dict.values()) > 0
+        assert self.freqs.total_freq <= self.BOTTOM
+        super().__init__()
 
     def decode_symbol(self, low: int, range_: int, state: int):
         """Core range decoding function
@@ -371,4 +382,5 @@ Not completely understood points:
    have issues (too frequent normalization/loss vs. too low resolution in probabilities). Is
    2^16 the only value that would work? Is there a significance to it being byte aligned (i.e., 16=2*8)?
 
+   Based on testing, setting bottom to 2^20 also works fine, but the gap to entropy is slightly higher.
 """
