@@ -82,8 +82,8 @@ def try_file_lossless_compression(
 
     Args:
         input_file_path (str): input file path
-        encoder (DataEncoder): encodr object
-        decoder (DataDecoder): decoder objct
+        encoder (DataEncoder): encoder object
+        decoder (DataDecoder): decoder object
     """
     with tempfile.TemporaryDirectory() as tmpdirname:
         encoded_file_path = os.path.join(tmpdirname, "encoded_file.bin")

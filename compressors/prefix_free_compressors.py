@@ -2,8 +2,7 @@
 
 NOTE: prefix free codes are codes which allow convenient per-symbol encoding/decoding.
 
-We implement PrefixFreeEncoder, PrefixFreeDecoder
-and PrefixFreeTreeEncoder, PrefixFreeTreeDecoder which are utility abstract classes
+We implement PrefixFreeEncoder, PrefixFreeDecoder and PrefixFreeTree which are utility abstract classes
 useful for implementing any prefix free code
 """
 
@@ -18,7 +17,8 @@ from core.data_block import DataBlock
 class PrefixFreeEncoder(DataEncoder):
     @abc.abstractmethod
     def encode_symbol(self, s) -> BitArray:
-        """encode one symbol
+        """
+        encode one symbol. method needs to be defined in inherited class.
 
         Args:
             s (Any): symbol to encode
@@ -26,9 +26,11 @@ class PrefixFreeEncoder(DataEncoder):
         Returns:
             BitArray: the encoding for one particular symbol
         """
+        pass
 
     def encode_block(self, data_block: DataBlock) -> BitArray:
-        """encode the block of data one symbol at a time
+        """
+        encode the block of data one symbol at a time
 
         prefix free codes have specific code for each symbol, we implement encode_block
         function as a simple loop over encode_symbol function.
@@ -49,7 +51,8 @@ class PrefixFreeEncoder(DataEncoder):
 class PrefixFreeDecoder(DataDecoder):
     @abc.abstractmethod
     def decode_symbol(self, encoded_bitarray: BitArray) -> Tuple[Any, BitArray]:
-        """decode the next symbol
+        """
+        decode the next symbol. method needs to be defined in inherited class.
 
         Args:
             encoded_bitarray (BitArray): _description_
@@ -60,7 +63,8 @@ class PrefixFreeDecoder(DataDecoder):
         pass
 
     def decode_block(self, bitarray: BitArray):
-        """decode the bitarray one symbol at a time using the decode_symbol
+        """
+        decode the bitarray one symbol at a time using the decode_symbol
 
         as prefix free codes have specific code for each symbol, and due to the prefix free nature, allow for
         decoding each symbol from the stream, we implement decode_block function as a simple loop over
@@ -83,19 +87,37 @@ class PrefixFreeDecoder(DataDecoder):
 
 
 class PrefixFreeTree:
-    """Class representing a Prefix Free Tree
+    """
+    Class representing a Prefix Free Tree
 
-    Any subclassing class needs to set the root_node appropriately
+    Root node is the pointer to root of the tree with appropriate pointers to the children.
+    It subclasses from BinaryNode class in utils/tree_utils which provide a basic binary node with
+    left child, right child and id per node pointers.
+
+    Any subclassing class needs to set the root_node appropriately.
+
+    The class also provides method for utilizing the fact that the given tree is PrefixFree and hence we can utilize
+    the tree structure to encode and decode. These functions can be used to encode and decode once subclassing function
+    for a particular compressor implements the tree generation logic.
+    In particular,
+        encode_symbol returns the mapping from symbol -> encoded bits which can be utilized by PrefixFreeEncoder
+    and
+        decode_symbol provides the symbol-by-symbol decoding which can be utilized by the PrefixFreeDecoder
     """
 
     def __init__(self, root_node: BinaryNode):
         self.root_node = root_node
 
     def print_tree(self):
+        """
+        Returns: Visualize tree
+        """
         self.root_node.print_node()
 
     def get_encoding_table(self) -> Mapping[Any, BitArray]:
-        """utility func to get the encoding table based on the prefix-free tree
+        """
+        Utility func to get the encoding table based on the prefix-free tree.
+        Does a BFS over the tree to return the encoding table over the whole symbol dictionary starting from root_node
 
         Returns:
             Mapping[Any,BitArray]: the encoding_array dict
@@ -123,10 +145,20 @@ class PrefixFreeTree:
 
         # call the parsing function on the root node
         _parse_node(self.root_node, BitArray(""))
+
         return encoding_table
 
+    def encode_symbol(self, s):
+        """
+        Encodes the datastream symbol by symbol by building an encoding table from tree structure
+        """
+        encoding_table = self.get_encoding_table()
+        return encoding_table[s]
+
     def decode_symbol(self, encoded_bitarray):
-        """decode each symbol by parsing through the prefix free tree
+        """
+        Decodes the encoded bitarray stream by decoding symbol by symbol. We parse through the prefix free tree, till
+        we reach a leaf node which gives us the decoded symbol ID using prefix-free property of the tree.
 
         - start from the root node
         - if the next bit is 0, go left, else right

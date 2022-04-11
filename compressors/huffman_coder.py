@@ -45,7 +45,7 @@ class HuffmanTree(PrefixFreeTree):
         """
         # Lets say we have symbols {1,2,3,4,5,6} with prob {p1, p2,...p6}
         # We first start by initializing a list
-        # [ HuffmanNode(id=3, prob=p3), (HuffmanTree(id=6, prob=p6),  ]
+        # [..., HuffmanNode(id=3, prob=p3), (HuffmanNode(id=6, prob=p6),  ...]
 
         node_list = []
         for a in self.prob_dist.alphabet:
@@ -82,12 +82,16 @@ class HuffmanTree(PrefixFreeTree):
 
 
 class HuffmanEncoder(PrefixFreeEncoder):
+    '''
+    PrefiFreeEncoder already has a encode_block function to encode the symbols once we define a encode_symbol function
+    for the particular compressor.
+    '''
     def __init__(self, prob_dist: ProbabilityDist):
-        tree = HuffmanTree(prob_dist)
-        self.encoding_table = tree.get_encoding_table()
+        self.tree = HuffmanTree(prob_dist)
+        # self.encoding_table = tree.get_encoding_table()
 
     def encode_symbol(self, s):
-        return self.encoding_table[s]
+        return self.tree.encode_symbol(s)
 
 
 class HuffmanDecoder(PrefixFreeDecoder):
