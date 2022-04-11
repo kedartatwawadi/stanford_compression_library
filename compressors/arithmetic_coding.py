@@ -14,7 +14,7 @@ class ArithmeticEncoder(DataEncoder):
     - https://youtu.be/ouYV3rBtrTI: This series of videos on Arithmetic coding are a very gradual but a great
     way to understand them
     - Charles Bloom's blog: https://www.cbloom.com/algs/statisti.html#A5
-    - There is of course the original paper: ADD LINK
+    - There is of course the original paper: https://web.stanford.edu/class/ee398a/handouts/papers/WittenACM87ArithmCoding.pdf
     """
 
     def __init__(self, precision, freqs):
