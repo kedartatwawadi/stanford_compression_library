@@ -4,8 +4,16 @@ import numpy as np
 from typing import Tuple
 
 
-def get_bit_width(size) -> int:
-    return int(np.ceil(np.log2(size)))
+def get_bit_width(x) -> int:
+    """get the minimum number of bits needed to represent the input uint x
+
+    Args:
+        x (int): input unsigned integer
+
+    Returns:
+        int:
+    """
+    return int(np.ceil(np.log2(x)))
 
 
 # remap bitarray.bitarray for now..
