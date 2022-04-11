@@ -3,7 +3,7 @@ from typing import Tuple, Any
 from core.data_encoder_decoder import DataDecoder, DataEncoder
 from utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
 from core.data_block import DataBlock
-from core.prob_dist import Frequencies
+from core.prob_dist import Frequencies, get_mean_log_prob
 from utils.test_utils import get_random_data_block, try_lossless_compression
 
 
