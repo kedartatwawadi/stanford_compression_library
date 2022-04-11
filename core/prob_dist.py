@@ -102,7 +102,7 @@ class ProbabilityDistTest(unittest.TestCase):
         _ = ProbabilityDist(dist)
 
 
-def get_mean_log_prob(prob_dist: ProbabilityDist, data_block):
+def get_mean_log_prob(prob_dist: ProbabilityDist, data_block) -> float:
     """computes the average log_probability of the input data_block given the probability distribution
     prob_dist. This acts as a fundamental limit on what any compressor designed for distribution
     prob_dist can achieve for the input data_block

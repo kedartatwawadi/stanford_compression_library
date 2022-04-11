@@ -8,7 +8,7 @@ from compressors.prefix_free_compressors import (
     PrefixFreeTreeEncoder,
     PrefixFreeTreeNode,
 )
-from core.prob_dist import ProbabilityDist
+from core.prob_dist import ProbabilityDist, get_mean_log_prob
 import unittest
 import numpy as np
 from core.data_block import DataBlock
@@ -99,7 +99,7 @@ def test_huffman_coding_dyadic():
     2. Construct Huffman coder using the given distribution
     3. Encode/Decode the block
     """
-    NUM_SAMPLES = 10000
+    NUM_SAMPLES = 1000
 
     distributions = [
         ProbabilityDist({"A": 0.5, "B": 0.5}),
@@ -119,11 +119,15 @@ def test_huffman_coding_dyadic():
         is_lossless, output_len, _ = try_lossless_compression(data_block, encoder, decoder)
         avg_bits = output_len / NUM_SAMPLES
 
+        # get optimal codelen
+        optimal_codelen = get_mean_log_prob(prob_dist, data_block)
         assert is_lossless, "Lossless compression failed"
+
         np.testing.assert_almost_equal(
             avg_bits,
-            prob_dist.entropy,
-            decimal=2,
-            err_msg="Huffman coding is not close to entropy",
+            optimal_codelen,
+            err_msg="Huffman coding is not equal to optimal codelens",
         )
-        print(f"Avg Bits: {avg_bits}, Entropy: {prob_dist.entropy}")
+        print(
+            f"Avg Bits: {avg_bits}, optimal codelen: {optimal_codelen}, Entropy: {prob_dist.entropy}"
+        )
