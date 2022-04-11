@@ -13,10 +13,11 @@ class BinaryNode:
         return (self.left_child is None) and (self.right_child is None)
 
     def _get_lines(self):
-        """internal function to print the tree
+        """
+        internal function to visualize the tree starting from the root node.
 
         Returns:
-            lines, root_node:
+            lines, root_node
         """
 
         # utility function to merge two lists of strings
@@ -114,7 +115,8 @@ class BinaryNode:
         return lines, root_node_loc
 
     def print_node(self):
-        """print the tree from the given node
+        """
+        Print the tree from the root node
 
         returns the lines of the tree, and the line number of the node
         internal function used in recursively printing the node
