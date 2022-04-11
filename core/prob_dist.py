@@ -2,56 +2,6 @@ import numpy as np
 import unittest
 
 
-class Frequencies:
-    """
-    Wrapper around a frequency dict
-    """
-
-    def __init__(self, freq_dict=None):
-
-        # NOTE: We use the fact that since python 3.6, dictionaries in python are
-        # also OrderedDicts. https://realpython.com/python-ordereddict/
-        self.freq_dict = freq_dict
-
-    def __repr__(self):
-        return f"Frequencies({self.freq_dict.__repr__()}"
-
-    @property
-    def size(self):
-        return len(self.freq_dict)
-
-    @property
-    def alphabet(self):
-        return list(self.freq_dict)
-
-    @property
-    def freq_list(self):
-        return [self.freq_dict[s] for s in self.alphabet]
-
-    @property
-    def total_freq(self):
-        return np.sum(self.freq_list)
-
-    @property
-    def cumulative_freq_dict(self):
-        """return a list of sum of probabilities of symbols preceeding symbol"""
-        cum_freq_dict = {}
-        _sum = 0
-        for a, p in self.freq_dict.items():
-            cum_freq_dict[a] = _sum
-            _sum += p
-        return cum_freq_dict
-
-    def frequency(self, symbol):
-        return self.freq_dict[symbol]
-
-    def get_prob_dist(self):
-        prob_dict = {}
-        for s, f in self.freq_dict.items():
-            prob_dict[s] = f / self.total_freq
-        return ProbabilityDist(prob_dict)
-
-
 class ProbabilityDist:
     """
     Wrapper around a probability dict
@@ -168,3 +118,75 @@ def get_mean_log_prob(prob_dist: ProbabilityDist, data_block):
         log_prob += prob_dist.log_probability(s)
     avg_log_prob = log_prob / data_block.size
     return avg_log_prob
+
+
+class Frequencies:
+    """
+    Wrapper around a frequency dict
+    NOTE: Frequencies is a typical way to represent probability distributions using integers
+    """
+
+    def __init__(self, freq_dict=None):
+
+        # NOTE: We use the fact that since python 3.6, dictionaries in python are
+        # also OrderedDicts. https://realpython.com/python-ordereddict/
+        self.freq_dict = freq_dict
+
+    def __repr__(self):
+        return f"Frequencies({self.freq_dict.__repr__()}"
+
+    @property
+    def size(self):
+        return len(self.freq_dict)
+
+    @property
+    def alphabet(self):
+        return list(self.freq_dict)
+
+    @property
+    def freq_list(self):
+        return [self.freq_dict[s] for s in self.alphabet]
+
+    @property
+    def total_freq(self) -> int:
+        """returns the sum of all the frequencies"""
+        return np.sum(self.freq_list)
+
+    @property
+    def cumulative_freq_dict(self) -> dict:
+        """return a list of sum of probabilities of symbols preceeding symbol
+        for example: freq_dict = {A: 7,B: 1,C: 3}
+        cumulative_freq_dict = {A: 0, B: 7, C: 8}
+
+        """
+        cum_freq_dict = {}
+        _sum = 0
+        for a, p in self.freq_dict.items():
+            cum_freq_dict[a] = _sum
+            _sum += p
+        return cum_freq_dict
+
+    def frequency(self, symbol):
+        return self.freq_dict[symbol]
+
+    def get_prob_dist(self) -> ProbabilityDist:
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
+        prob_dict = {}
+        for s, f in self.freq_dict.items():
+            prob_dict[s] = f / self.total_freq
+        return ProbabilityDist(prob_dict)
+
+    @staticmethod
+    def _validate_freq_dist(freq_dict):
+        """
+        checks if each value of the prob dist is non-negative,
+        and the dist sums to 1
+        """
+
+        for _, freq in freq_dict.items():
+            assert freq > 0, "frequency cannot be negative or 0"
+            assert isinstance(freq, int)
