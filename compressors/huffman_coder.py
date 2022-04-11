@@ -83,18 +83,23 @@ class HuffmanTree(PrefixFreeTree):
 
 class HuffmanEncoder(PrefixFreeEncoder):
     '''
-    PrefiFreeEncoder already has a encode_block function to encode the symbols once we define a encode_symbol function
+    PrefixFreeEncoder already has a encode_block function to encode the symbols once we define a encode_symbol function
     for the particular compressor.
+    PrefixFreeTree provides encode_symbol given a PrefixFreeTree
     '''
     def __init__(self, prob_dist: ProbabilityDist):
         self.tree = HuffmanTree(prob_dist)
-        # self.encoding_table = tree.get_encoding_table()
 
     def encode_symbol(self, s):
         return self.tree.encode_symbol(s)
 
 
 class HuffmanDecoder(PrefixFreeDecoder):
+    '''
+    PrefixFreeDecoder already has a decode_block function to decode the symbols once we define a decode_symbol function
+    for the particular compressor.
+    PrefixFreeTree provides decode_symbol given a PrefixFreeTree
+    '''
     def __init__(self, prob_dist: ProbabilityDist):
         self.tree = HuffmanTree(prob_dist)
 
