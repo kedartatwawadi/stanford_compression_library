@@ -257,22 +257,42 @@ def _test_arithmetic_coding(freq, data_size, seed):
     # generate random data
     data_block = get_random_data_block(prob_dist, 2000, seed=0)
 
+    # get optimal codelen
+    avg_log_prob = get_mean_log_prob(prob_dist, data_block)
+
     # create encoder decoder
     data_size_bits = 32
     encoder = ArithmeticEncoder(data_size_bits, freq)
     decoder = ArithmeticDecoder(data_size_bits, freq)
 
     is_lossless, encode_len, _ = try_lossless_compression(data_block, encoder, decoder)
-    print((encode_len - data_size_bits) / data_block.size, prob_dist.entropy)
+
+    # avg codelen ignoring the bits used to signal num data elements
+    avg_codelen = (encode_len - data_size_bits) / data_block.size
+    print(
+        f"Arithmetic coding: Optical codelen={avg_log_prob:.3f}, AEC codelen(without header): {avg_codelen:.3f}"
+    )
+
+    # check whether arithmetic coding results are close to optimal codelen
+    np.testing.assert_almost_equal(
+        avg_codelen,
+        avg_log_prob,
+        decimal=2,
+        err_msg="Arithmetic coding is not close to avg codelen",
+    )
+
     assert is_lossless
 
 
 def test_arithmetic_coding():
-    DATA_SIZE = 5000
+    DATA_SIZE = 1000
+
+    # trying out some random frequencies
     freqs = [
         Frequencies({"A": 1, "B": 1, "C": 2}),
         Frequencies({"A": 12, "B": 34, "C": 1, "D": 45}),
         Frequencies({"A": 34, "B": 35, "C": 546, "D": 1, "E": 13, "F": 245}),
+        Frequencies({"A": 5, "B": 5, "C": 5, "D": 5, "E": 5, "F": 5}),
     ]
 
     for freq in freqs:
