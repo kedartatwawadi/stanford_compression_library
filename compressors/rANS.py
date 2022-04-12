@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import numpy as np
-from typing import Tuple, Any
+from typing import Tuple, Any, List
 from core.data_encoder_decoder import DataDecoder, DataEncoder
 from utils.bitarray_utils import BitArray, get_bit_width, uint_to_bitarray, bitarray_to_uint
 from core.data_block import DataBlock
@@ -10,20 +10,17 @@ from utils.test_utils import get_random_data_block, try_lossless_compression
 
 @dataclass
 class rANSParams:
-    DATA_BLOCK_SIZE_BITS: int = 32
+    """base parameters for the rANS encoder/decoder
+
+    rANS state is limited to the range [RANGE_FACTOR*total_freq, ]
+    """
+
+    DATA_BLOCK_SIZE_BITS: int = 32  # num bits used to represent the data_block size
     RANGE_FACTOR_BITS: int = 16
     RANGE_FACTOR: int = 1 << RANGE_FACTOR_BITS
-    NUM_BITS_OUT: int = 1
+    NUM_BITS_OUT: int = 1  # number of bits
 
-    def num_state_bits(self, total_freqs):
-        """_summary_
-
-        Args:
-            total_freqs (_type_): _description_
-
-        Returns:
-            _type_: _description_
-        """
+    def num_state_bits(self, total_freqs: int):
         max_state_size = self.RANGE_FACTOR * (1 << self.NUM_BITS_OUT) * total_freqs - 1
         return get_bit_width(max_state_size)
 
@@ -86,7 +83,18 @@ class rANSDecoder(DataDecoder):
         self.params = rANSParams()
 
     @staticmethod
-    def find_bin(cumulative_freqs_list, slot):
+    def find_bin(cumulative_freqs_list: List, slot: int) -> int:
+        """performs binary search over cumulative_freqs_list to locate which bin
+        the slot lies.
+
+        Args:
+            cumulative_freqs_list (List): the sorted list of cumulative frequencies
+                For example: freqs_list = [2,7,3], cumulative_freqs_list [0,2,9]
+            slot (int): the value to search in the sorted list
+
+        Returns:
+            bin: the bin in which the slot lies
+        """
         bin = np.searchsorted(cumulative_freqs_list, slot, side="right") - 1
         return bin
 
@@ -143,6 +151,7 @@ class rANSDecoder(DataDecoder):
 
 
 def _test_rANS_coding(freq, data_size, seed):
+    """Core testing function for rANS"""
     prob_dist = freq.get_prob_dist()
 
     # generate random data
@@ -152,17 +161,14 @@ def _test_rANS_coding(freq, data_size, seed):
     avg_log_prob = get_mean_log_prob(prob_dist, data_block)
 
     # create encoder decoder
-    data_size_bits = 32
     encoder = rANSEncoder(freq)
     decoder = rANSDecoder(freq)
 
     is_lossless, encode_len, _ = try_lossless_compression(data_block, encoder, decoder)
 
     # avg codelen ignoring the bits used to signal num data elements
-    avg_codelen = (encode_len - data_size_bits) / data_block.size
-    print(
-        f"rANS coding: Optical codelen={avg_log_prob:.3f}, rANS codelen(without header): {avg_codelen:.3f}"
-    )
+    avg_codelen = encode_len / data_block.size
+    print(f"rANS coding: Optical codelen={avg_log_prob:.3f}, rANS codelen: {avg_codelen:.3f}")
     assert is_lossless
 
 
