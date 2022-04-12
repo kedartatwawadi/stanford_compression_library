@@ -8,7 +8,7 @@ from core.data_block import DataBlock
 from core.data_stream import TextFileDataStream
 from core.data_encoder_decoder import DataDecoder, DataEncoder
 from core.prob_dist import ProbabilityDist
-from utils.bitarray_utils import BitArray
+from utils.bitarray_utils import BitArray, get_random_bitarray
 import tempfile
 import os
 import numpy as np
@@ -57,23 +57,40 @@ def are_blocks_equal(data_block_1: DataBlock, data_block_2: DataBlock):
 
 
 def try_lossless_compression(
-    data_block: DataBlock, encoder: DataEncoder, decoder: DataDecoder
+    data_block: DataBlock,
+    encoder: DataEncoder,
+    decoder: DataDecoder,
+    add_extra_bits_to_encoder_output: bool = False,
 ) -> Tuple[bool, int, BitArray]:
-    """
-    Encodes the data_block using data_compressor and returns True if the compression was lossless
+    """Encodes the data_block using data_compressor and returns True if the compression was lossless
+
+    Args:
+        data_block (DataBlock): input data_block to encode
+        encoder (DataEncoder): Encoder obj
+        decoder (DataDecoder): Decoder obj to test with
+        append_extra_bits_to_encoder_output (bool, optional): This flag adds a random number of slack bits at the end of encoder output.
+        This is to test the scenario where we are concatenating multiple encoder outputs in the same bitstream.
+        Defaults to False.
 
     Returns:
-        Tuple[bool,Int,BitArray]: whether encoding is lossless, size of the output block, encoded bitarray
+        Tuple[bool, int, BitArray]: whether encoding is lossless, size of the output block, encoded bitarray
     """
+
     # test encode
-    output_bits_block = encoder.encode_block(data_block)
+    encoded_bitarray = encoder.encode_block(data_block)
+
+    # if True, add some random bits to the encoder output
+    encoded_bitarray_extra = BitArray(encoded_bitarray)  # make a copy
+    if add_extra_bits_to_encoder_output:
+        num_extra_bits = int(np.random.randint(100))
+        encoded_bitarray_extra += get_random_bitarray(num_extra_bits)
 
     # test decode
-    decoded_block, num_bits_consumed = decoder.decode_block(output_bits_block)
-    assert num_bits_consumed == len(output_bits_block)
+    decoded_block, num_bits_consumed = decoder.decode_block(encoded_bitarray_extra)
+    assert num_bits_consumed == len(encoded_bitarray)
 
     # compare blocks
-    return are_blocks_equal(data_block, decoded_block), len(output_bits_block), output_bits_block
+    return are_blocks_equal(data_block, decoded_block), num_bits_consumed, encoded_bitarray
 
 
 def try_file_lossless_compression(
