@@ -3,7 +3,7 @@ from typing import Any, Tuple
 import heapq
 from functools import total_ordering
 from compressors.prefix_free_compressors import PrefixFreeTree, PrefixFreeEncoder, PrefixFreeDecoder
-from core.prob_dist import ProbabilityDist
+from core.prob_dist import ProbabilityDist, get_mean_log_prob
 import numpy as np
 from utils.bitarray_utils import BitArray
 from utils.test_utils import get_random_data_block, try_lossless_compression
