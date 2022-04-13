@@ -67,13 +67,13 @@ from utils.bitarray_utils import BitArray, get_bit_width, uint_to_bitarray, bita
 from core.data_block import DataBlock
 from core.prob_dist import Frequencies, get_mean_log_prob
 from utils.test_utils import get_random_data_block, try_lossless_compression
-from utils.misc_utils import cache
+from utils.misc_utils import cache, Symbol
 
 
 @dataclass
 class rANSParams:
     """base parameters for the rANS encoder/decoder.
-    More details in rANSEncoder/rANSDecoder docstrings
+    More details in the overview
     """
 
     # num bits used to represent the data_block size
@@ -112,15 +112,25 @@ class rANSParams:
 
 
 class rANSEncoder(DataEncoder):
-    """rANS"""
+    """rANS Encoder
+    
+    Detailed information in the overview
+    """
 
     def __init__(self, freqs: Frequencies, rans_params: rANSParams):
+        """init function
+
+        Args:
+            freqs (Frequencies): frequencies for which rANS encoder needs to be designed
+            rans_params (rANSParams): global rANS hyperparameters
+        """
         self.freqs = freqs
         self.params = rans_params
 
-    def rans_base_encode_step(self, s, state):
-        """base rANS encode step:
-        updates the state based on the input symbols s, and returns theupdated state
+    def rans_base_encode_step(self, s: Symbol, state: int):
+        """base rANS encode step
+
+        updates the state based on the input symbols s, and returns the updated state
         """
         f = self.freqs.frequency(s)
         block_id = state // f
@@ -130,10 +140,22 @@ class rANSEncoder(DataEncoder):
 
     @cache
     def max_state_val(self, symbol):
+        """
+        TODO: 
+        """
         f = self.freqs.frequency(symbol)
         return self.params.RANGE_FACTOR * f * (1 << self.params.NUM_BITS_OUT) - 1
 
     def shrink_state(self, state: int, next_symbol) -> Tuple[int, BitArray]:
+        """TODO
+
+        Args:
+            state (int): _description_
+            next_symbol (_type_): _description_
+
+        Returns:
+            Tuple[int, BitArray]: _description_
+        """
         out_bits = BitArray("")
 
         # output bits to the stream to bring the state in the range for the next encoding
@@ -146,7 +168,16 @@ class rANSEncoder(DataEncoder):
 
         return state, out_bits
 
-    def encode_symbol(self, s, state):
+    def encode_symbol(self, s, state: int) -> Tuple[int, BitArray]:
+        """Encodes the next symbol, returns some bits and  the updated state
+
+        Args:
+            s (Any): next symbol to be encoded
+            state (int): the rANS state
+
+        Returns:
+            state (int), symbol_bitarray (BitArray): 
+        """
         # output bits to the stream so that the state is in the acceptable range
         # [L, H] *after*the `rans_base_encode_step`
         symbol_bitarray = BitArray("")
@@ -195,8 +226,6 @@ class rANSDecoder(DataDecoder):
         """Performs binary search over cumulative_freqs_list to locate which bin
         the slot lies.
 
-        TODO: add unit test
-
         Args:
             cumulative_freqs_list (List): the sorted list of cumulative frequencies
                 For example: freqs_list = [2,7,3], cumulative_freqs_list [0,2,9]
@@ -208,7 +237,7 @@ class rANSDecoder(DataDecoder):
         bin = np.searchsorted(cumulative_freqs_list, slot, side="right") - 1
         return bin
 
-    def rans_base_decode_step(self, state):
+    def rans_base_decode_step(self, state: int):
         block_id = state // self.freqs.total_freq
         slot = state % self.freqs.total_freq
 
@@ -221,7 +250,7 @@ class rANSDecoder(DataDecoder):
         prev_state = block_id * self.freqs.frequency(s) + slot - self.freqs.cumulative_freq_dict[s]
         return s, prev_state
 
-    def expand_state(self, state, encoded_bitarray) -> Tuple[int, int]:
+    def expand_state(self, state: int, encoded_bitarray: BitArray) -> Tuple[int, int]:
         # remap the state into the acceptable range
         num_bits = 0
         while state < self.params.RANGE_FACTOR * self.freqs.total_freq:
@@ -232,7 +261,7 @@ class rANSDecoder(DataDecoder):
             state = (state << self.params.NUM_BITS_OUT) + state_remainder
         return state, num_bits
 
-    def decode_symbol(self, state, encoded_bitarray):
+    def decode_symbol(self, state: int, encoded_bitarray: BitArray):
         # base rANS decoding step
         s, state = self.rans_base_decode_step(state)
 
