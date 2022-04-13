@@ -1,5 +1,8 @@
 import numpy as np
 import unittest
+import functools
+
+cache = functools.lru_cache(maxsize=None)
 
 
 class ProbabilityDist:
@@ -30,6 +33,7 @@ class ProbabilityDist:
         return [self.prob_dict[s] for s in self.alphabet]
 
     @property
+    @cache
     def cumulative_prob_dict(self):
         """return a list of sum of probabilities of symbols preceeding symbol"""
         cum_prob_dict = {}
@@ -40,6 +44,7 @@ class ProbabilityDist:
         return cum_prob_dict
 
     @property
+    @cache
     def entropy(self):
         entropy = 0
         for _, prob in self.prob_dict.items():
@@ -49,6 +54,7 @@ class ProbabilityDist:
     def probability(self, symbol):
         return self.prob_dict[symbol]
 
+    @cache
     def log_probability(self, symbol):
         return -np.log2(self.probability(symbol))
 
@@ -148,11 +154,13 @@ class Frequencies:
         return [self.freq_dict[s] for s in self.alphabet]
 
     @property
+    @cache
     def total_freq(self) -> int:
         """returns the sum of all the frequencies"""
         return np.sum(self.freq_list)
 
     @property
+    @cache
     def cumulative_freq_dict(self) -> dict:
         """return a list of sum of probabilities of symbols preceeding symbol
         for example: freq_dict = {A: 7,B: 1,C: 3}
@@ -169,6 +177,7 @@ class Frequencies:
     def frequency(self, symbol):
         return self.freq_dict[symbol]
 
+    @cache
     def get_prob_dist(self) -> ProbabilityDist:
         """_summary_
 
