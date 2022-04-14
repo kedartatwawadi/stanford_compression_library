@@ -67,7 +67,7 @@ from utils.bitarray_utils import BitArray, get_bit_width, uint_to_bitarray, bita
 from core.data_block import DataBlock
 from core.prob_dist import Frequencies, get_mean_log_prob
 from utils.test_utils import get_random_data_block, try_lossless_compression
-from utils.misc_utils import cache, Symbol
+from utils.misc_utils import cache
 
 
 @dataclass
@@ -113,7 +113,7 @@ class rANSParams:
 
 class rANSEncoder(DataEncoder):
     """rANS Encoder
-    
+
     Detailed information in the overview
     """
 
@@ -127,7 +127,7 @@ class rANSEncoder(DataEncoder):
         self.freqs = freqs
         self.params = rans_params
 
-    def rans_base_encode_step(self, s: Symbol, state: int):
+    def rans_base_encode_step(self, s, state: int):
         """base rANS encode step
 
         updates the state based on the input symbols s, and returns the updated state
@@ -141,21 +141,13 @@ class rANSEncoder(DataEncoder):
     @cache
     def max_state_val(self, symbol):
         """
-        TODO: 
+        max value the state can be before calling rans_base_encode_step function
         """
         f = self.freqs.frequency(symbol)
         return self.params.RANGE_FACTOR * f * (1 << self.params.NUM_BITS_OUT) - 1
 
     def shrink_state(self, state: int, next_symbol) -> Tuple[int, BitArray]:
-        """TODO
-
-        Args:
-            state (int): _description_
-            next_symbol (_type_): _description_
-
-        Returns:
-            Tuple[int, BitArray]: _description_
-        """
+        """stream out the lower bits of the state, until the state is below self.max_state_val(next_symbol)"""
         out_bits = BitArray("")
 
         # output bits to the stream to bring the state in the range for the next encoding
@@ -176,7 +168,7 @@ class rANSEncoder(DataEncoder):
             state (int): the rANS state
 
         Returns:
-            state (int), symbol_bitarray (BitArray): 
+            state (int), symbol_bitarray (BitArray):
         """
         # output bits to the stream so that the state is in the acceptable range
         # [L, H] *after*the `rans_base_encode_step`
