@@ -1,6 +1,8 @@
 import numpy as np
 import unittest
+import functools
 
+cache = functools.lru_cache(maxsize=None)
 
 class ProbabilityDist:
     """
@@ -29,10 +31,13 @@ class ProbabilityDist:
     def prob_list(self):
         return [self.prob_dict[s] for s in self.alphabet]
 
-    @property
-    def sorted_prob_list(self):
-        self.sorted_prob_dict = ProbabilityDist(dict(sorted(self.prob_dict.items(), key=lambda x: x[1], reverse=True)))
-        return self.sorted_prob_dict
+    @classmethod
+    def get_sorted_prob_dist(cls, prob_dict, reverse=True):
+        """
+        Returns:
+            an inheritable ProbabilityDist object with sorted probabilities
+        """
+        return ProbabilityDist(dict(sorted(prob_dict.items(), key=lambda x: x[1], reverse=reverse)))
 
     @property
     @cache

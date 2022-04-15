@@ -99,10 +99,16 @@ class PrefixFreeTree:
     The class also provides method for utilizing the fact that the given tree is PrefixFree and hence we can utilize
     the tree structure to encode and decode. These functions can be used to encode and decode once subclassing function
     for a particular compressor implements the tree generation logic.
+
+    The encode need not require tree structure and hence by default provides a function for getting encoding_table
+    given the PrefixFreeTree structure. Decode on the other hand, can always benefit from decoding efficiently using
+    the codebook in tree structure.
+
     In particular,
-        encode_symbol returns the mapping from symbol -> encoded bits which can be utilized by PrefixFreeEncoder
-    and
-        decode_symbol provides the symbol-by-symbol decoding which can be utilized by the PrefixFreeDecoder
+
+            get_encoding_table: returns the mapping from tree to the encoding_table for whole codebook which can be
+            utilized by PrefixFreeEncoder
+            decode_symbol: provides the symbol-by-symbol decoding which can be utilized by the PrefixFreeDecoder
     """
 
     def __init__(self, root_node: BinaryNode):
@@ -147,13 +153,6 @@ class PrefixFreeTree:
         _parse_node(self.root_node, BitArray(""))
 
         return encoding_table
-
-    def encode_symbol(self, s):
-        """
-        Encodes the datastream symbol by symbol by building an encoding table from tree structure
-        """
-        encoding_table = self.get_encoding_table()
-        return encoding_table[s]
 
     def decode_symbol(self, encoded_bitarray):
         """
