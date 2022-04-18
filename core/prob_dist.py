@@ -4,6 +4,7 @@ import functools
 
 cache = functools.lru_cache(maxsize=None)
 
+
 class ProbabilityDist:
     """
     Wrapper around a probability dict
@@ -113,6 +114,20 @@ class ProbabilityDistTest(unittest.TestCase):
 
         # check if this works
         _ = ProbabilityDist(dist)
+
+    def test_sorted_prob_dist(self):
+        """
+        checks if sorting works as expected
+        """
+        alphabet = list(range(10))
+        dist = {i: (i + 1) / 55 for i in alphabet}
+
+        sorted_PD = ProbabilityDist.get_sorted_prob_dist(dist)
+        print(sorted_PD.prob_dict)
+        prev_prob = 1
+        for (s, p) in sorted_PD.prob_dict.items():
+            curr_prob = p
+            assert curr_prob <= prev_prob
 
 
 def get_mean_log_prob(prob_dist: ProbabilityDist, data_block) -> float:

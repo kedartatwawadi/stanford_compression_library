@@ -15,12 +15,21 @@ import math
 
 @dataclass
 class ShannonNode(BinaryNode):
+    """represents a node of the Shannon Tree
+    Adds a prefix of code to BinaryNode which provides left_child, right_child and id to allow making PrefixFreeTree
+    from code.
+    """
     code: BitArray = None
 
 
 class ShannonTree(PrefixFreeTree):
+    """
+    Generates Codewords based on Shannon Coding. Allows generating PrefixFreeTree from the obtained codewords.
+    """
+
     def __init__(self, prob_dist: ProbabilityDist):
         self.prob_dist = prob_dist
+        # sort the probability distribution and get cumulative probability which will be used for encoding
         self.sorted_prob_dist = ProbabilityDist.get_sorted_prob_dist(prob_dist.prob_dict)
         self.cum_prob_dict = self.sorted_prob_dist.cumulative_prob_dict
         # construct the tree and set the root_node of PrefixFreeTree base class
@@ -39,6 +48,15 @@ class ShannonTree(PrefixFreeTree):
 
     @staticmethod
     def build_tree_from_code(symbol, code, root_node) -> BinaryNode:
+        """ function to generate prefix-free tree from code.
+        Args:
+            symbol: current symbol
+            code: current code
+            root_node: root node to the ShannonTree
+
+        Returns:
+            the pointer to root node of the tree so far
+        """
         code_so_far = BitArray()
         code_len = len(code)
 
@@ -75,6 +93,9 @@ class ShannonTree(PrefixFreeTree):
         return root_node
 
     def build_shannon_tree(self):
+        """
+        For all symbols in the alphabet, get it's code, and add it to the PrefixFreeTree.
+        """
         root_node = ShannonNode(id=None, code=None)
         for s in self.sorted_prob_dist.prob_dict:
             code = self.encode_alphabet(s)
@@ -85,7 +106,9 @@ class ShannonTree(PrefixFreeTree):
 
 class ShannonEncoder(PrefixFreeEncoder):
     """
-    Outputs codewords
+    PrefixFreeEncoder already has a encode_block function to encode the symbols once we define a encode_symbol function
+    for the particular compressor.
+    PrefixFreeTree provides get_encoding_table given a PrefixFreeTree
     """
 
     def __init__(self, prob_dist: ProbabilityDist):
@@ -97,6 +120,12 @@ class ShannonEncoder(PrefixFreeEncoder):
 
 
 class ShannonDecoder(PrefixFreeDecoder):
+    """
+    PrefixFreeDecoder already has a decode_block function to decode the symbols once we define a decode_symbol function
+    for the particular compressor.
+    PrefixFreeTree provides decode_symbol given a PrefixFreeTree
+    """
+
     def __init__(self, prob_dist: ProbabilityDist):
         self.tree = ShannonTree(prob_dist)
 
@@ -106,7 +135,6 @@ class ShannonDecoder(PrefixFreeDecoder):
 
 
 def test_shannon_coding():
-    """test if shannon encoding is lossless"""
     NUM_SAMPLES = 2000
     distributions = [
         ProbabilityDist({"A": 0.5, "B": 0.5}),
@@ -114,9 +142,19 @@ def test_shannon_coding():
         ProbabilityDist({"A": 0.5, "B": 0.25, "C": 0.12, "D": 0.13}),
         ProbabilityDist({"A": 0.9, "B": 0.1})
     ]
-    for prob_dist in distributions:
+    expected_codewords = [
+        {"A": BitArray('0'), "B": BitArray('1')},
+        {"A": BitArray('01'), "B": BitArray('10'), "C": BitArray('00')},
+        {"A": BitArray('0'), "B": BitArray('10'), "C": BitArray('1110'), "D": BitArray('110')},
+        {"A": BitArray('0'), "B": BitArray('1110')}
+    ]
+
+    def test_end_to_end(prob_dist, num_samples):
+        """
+        Test if decoding of (encoded symbol) results in original
+        """
         # generate random data
-        data_block = get_random_data_block(prob_dist, NUM_SAMPLES, seed=0)
+        data_block = get_random_data_block(prob_dist, num_samples, seed=0)
 
         # create encoder decoder
         encoder = ShannonEncoder(prob_dist)
@@ -125,3 +163,16 @@ def test_shannon_coding():
         # perform compression
         is_lossless, _, _ = try_lossless_compression(data_block, encoder, decoder)
         assert is_lossless, "Lossless compression failed"
+
+    def test_encoded_symbol(prob_dist, expected_codeword_dict):
+        """
+        test if the encoded symbol is as expected
+        """
+        encoder = ShannonEncoder(prob_dist)
+        print(encoder.encoding_table)
+        for s in prob_dist.prob_dict.keys():
+            assert encoder.encode_symbol(s) == expected_codeword_dict[s]
+
+    for i, prob_dist in enumerate(distributions):
+        test_end_to_end(prob_dist, NUM_SAMPLES)
+        test_encoded_symbol(prob_dist, expected_codeword_dict=expected_codewords[i])
