@@ -26,7 +26,7 @@ class ShannonTree(PrefixFreeTree):
         # construct the tree and set the root_node of PrefixFreeTree base class
         super().__init__(root_node=self.build_shannon_tree())
 
-    def encode_symbol(self, symbol) -> BitArray:
+    def encode_alphabet(self, symbol) -> BitArray:
         # compute the mid-point corresponding to the range of the given symbol
         cum_prob = self.cum_prob_dict[symbol]
 
@@ -77,7 +77,7 @@ class ShannonTree(PrefixFreeTree):
     def build_shannon_tree(self):
         root_node = ShannonNode(id=None, code=None)
         for s in self.sorted_prob_dist.prob_dict:
-            code = self.encode_symbol(s)
+            code = self.encode_alphabet(s)
             root_node = self.build_tree_from_code(s, code, root_node)
 
         return root_node
