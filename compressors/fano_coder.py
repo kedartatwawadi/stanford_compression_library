@@ -21,7 +21,6 @@ class FanoTree(PrefixFreeTree):
 
         # build tree returns the root node
         super().__init__(root_node=self.build_fano_tree(self.root_node, self.sorted_prob_dist))
-        self.print_tree()
 
     @staticmethod
     def normalize_prob_dict(prob_dict):
@@ -46,45 +45,39 @@ class FanoTree(PrefixFreeTree):
         # Get cumulative probability dict
         cumulative_prob_dict = norm_sort_prob_list.cumulative_prob_dict
 
-        left_prob_dict = {}
-        right_prob_dict = {}
-
-        # IF only two symbols left, we don't need to recurse further. These iwll be left and right child of current node
-        if norm_sort_prob_list.size == 2:
-            left_symbol, right_symbol = norm_sort_prob_list.alphabet
-            root_node.left_child = BinaryNode(id=left_symbol)
-            root_node.right_child = BinaryNode(id=right_symbol)
-            return root_node
-
-        # ELSE split the tree into left and right nodes based on cumulative probability and recursively build
+        # Split the tree into left and right nodes based on cumulative probability and recursively build
         # FanoTree for these trees
+        recursive_prob_dicts = {
+            'left': {},
+            'right': {}
+        }
+
         # all alphabets which are nearest to 0.5 cumulative probability in sorted list are put to left tree and rest
         # to right, such that we have a most balanced probabilistic tree subsets.
         min_diff_code = min(cumulative_prob_dict.items(), key=FanoTree.criterion)[0]
-        flag = "left"
+        curr_dict = recursive_prob_dicts['left']
         for s, cum_prob in cumulative_prob_dict.items():
             if s == min_diff_code:
-                flag = "right"
-            if flag == "left":
-                left_prob_dict.update({s: norm_sort_prob_list.probability(s)})
-            else:
-                right_prob_dict.update({s: norm_sort_prob_list.probability(s)})
+                curr_dict = recursive_prob_dicts['right']
+            curr_dict.update({s: norm_sort_prob_list.probability(s)})
 
         # Call recursion
         # if only 1 symbol in either left or right tree, just assign it as a child and we don't have to call recursion
-        if len(left_prob_dict) != 1:
-            root_node.left_child = BinaryNode(id=None)
-            FanoTree.build_fano_tree(root_node.left_child, FanoTree.normalize_prob_dict(left_prob_dict))
-        else:
-            root_node.left_child = BinaryNode(id=list(left_prob_dict)[0])
+        for branch, curr_dict in recursive_prob_dicts.items():
+            norm_prob_dict = FanoTree.normalize_prob_dict(curr_dict)
 
-        if len(right_prob_dict) != 1:
-            root_node.right_child = BinaryNode(id=None)
-            FanoTree.build_fano_tree(root_node.right_child, FanoTree.normalize_prob_dict(right_prob_dict))
-        else:
-            root_node.right_child = BinaryNode(id=list(right_prob_dict)[0])
+            # if pointer is None, the object is not updated
+            # https://stackoverflow.com/questions/55777748/updating-none-value-does-not-reflect-in-the-object
+            if root_node.right_child is None: root_node.right_child = BinaryNode(id=None)
+            if root_node.left_child is None: root_node.left_child = BinaryNode(id=None)
 
-        print(left_prob_dict, right_prob_dict)
+            child = root_node.left_child if branch == 'left' else root_node.right_child
+            if len(curr_dict) == 1:
+                child.id = list(curr_dict)[0]
+            else:
+                child.id = None
+                FanoTree.build_fano_tree(child, norm_prob_dict)
+
         return root_node
 
 
@@ -153,7 +146,6 @@ def test_fano_coding():
         test if the encoded symbol is as expected
         """
         encoder = FanoEncoder(prob_dist)
-        print(encoder.encoding_table)
         for s in prob_dist.prob_dict.keys():
             assert encoder.encode_symbol(s) == expected_codeword_dict[s]
 

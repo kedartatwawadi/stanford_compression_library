@@ -147,7 +147,6 @@ def test_shannon_coding():
         test if the encoded symbol is as expected
         """
         encoder = ShannonEncoder(prob_dist)
-        print(encoder.encoding_table)
         for s in prob_dist.prob_dict.keys():
             assert encoder.encode_symbol(s) == expected_codeword_dict[s]
 
