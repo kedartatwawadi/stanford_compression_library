@@ -4,22 +4,12 @@ Shannon-Fano codes, e.g. see Naming section of https://en.wikipedia.org/wiki/Sha
 
 This document uses cumulative probability based method for shannon coding as described in the wiki article above.
 """
-from dataclasses import dataclass
 from typing import Any, Tuple
 from utils.bitarray_utils import float_to_bitarrays, BitArray
 from utils.test_utils import get_random_data_block, try_lossless_compression
 from compressors.prefix_free_compressors import PrefixFreeEncoder, PrefixFreeDecoder, PrefixFreeTree, BinaryNode
 from core.prob_dist import ProbabilityDist
 import math
-
-
-@dataclass
-class ShannonNode(BinaryNode):
-    """represents a node of the Shannon Tree
-    Adds a prefix of code to BinaryNode which provides left_child, right_child and id to allow making PrefixFreeTree
-    from code.
-    """
-    code: BitArray = None
 
 
 class ShannonTree(PrefixFreeTree):
@@ -57,50 +47,38 @@ class ShannonTree(PrefixFreeTree):
         Returns:
             the pointer to root node of the tree so far
         """
+        # initialize the curr_node, code_so_far temporary var
+        curr_node = root_node
         code_so_far = BitArray()
         code_len = len(code)
 
         for i, bit in enumerate(code):
+            # if pointer is None, the object is not updated
+            # https://stackoverflow.com/questions/55777748/updating-none-value-does-not-reflect-in-the-object
+            if curr_node.right_child is None: curr_node.right_child = BinaryNode(id=None)
+            if curr_node.left_child is None: curr_node.left_child = BinaryNode(id=None)
+
             code_so_far.append(bit)
 
-            if i == 0:
-                curr_node = root_node
-                right_child = curr_node.right_child
-                left_child = curr_node.left_child
+            # get a pointer to child node
+            child = curr_node.right_child if bit else curr_node.left_child
 
+            # if it's the last bit, add the codeword as ID
             if i == (code_len - 1):
-                next_node = ShannonNode(id=symbol, code=code_so_far)
-            else:
-                next_node = ShannonNode(id=None, code=code_so_far)
+                child.id = symbol
 
-            if bit:
-                if right_child is None:
-                    curr_node.right_child = next_node
-                else:
-                    next_node = right_child
-                    curr_node.right_child = next_node
-            else:
-                if left_child is None:
-                    curr_node.left_child = next_node
-                else:
-                    next_node = left_child
-                    curr_node.left_child = next_node
-
-            curr_node = next_node
-            right_child = curr_node.right_child
-            left_child = curr_node.left_child
-
+            # continue looping through the tree
+            curr_node = child
         return root_node
 
     def build_shannon_tree(self):
         """
         For all symbols in the alphabet, get it's code, and add it to the PrefixFreeTree.
         """
-        root_node = ShannonNode(id=None, code=None)
+        root_node = BinaryNode(id=None)
         for s in self.sorted_prob_dist.prob_dict:
             code = self.encode_alphabet(s)
             root_node = self.build_tree_from_code(s, code, root_node)
-
         return root_node
 
 

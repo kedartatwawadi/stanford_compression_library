@@ -35,10 +35,9 @@ class ProbabilityDist:
     @classmethod
     def get_sorted_prob_dist(cls, prob_dict, reverse=True):
         """
-        Returns:
-            an inheritable ProbabilityDist object with sorted probabilities
+        Returns ProbabilityDist class object with sorted probabilities
         """
-        return ProbabilityDist(dict(sorted(prob_dict.items(), key=lambda x: x[1], reverse=reverse)))
+        return cls(dict(sorted(prob_dict.items(), key=lambda x: x[1], reverse=reverse)))
 
     @property
     @cache
