@@ -19,7 +19,8 @@ class ShannonTree(PrefixFreeTree):
 
     def __init__(self, prob_dist: ProbabilityDist):
         self.prob_dist = prob_dist
-        # sort the probability distribution and get cumulative probability which will be used for encoding
+        # sort the probability distribution in decreasing probability and get cumulative probability which will be
+        # used for encoding
         self.sorted_prob_dist = ProbabilityDist.get_sorted_prob_dist(prob_dist.prob_dict)
         self.cum_prob_dict = self.sorted_prob_dist.cumulative_prob_dict
         # construct the tree and set the root_node of PrefixFreeTree base class
@@ -37,7 +38,7 @@ class ShannonTree(PrefixFreeTree):
         return code
 
     @staticmethod
-    def build_tree_from_code(symbol, code, root_node) -> BinaryNode:
+    def _build_tree_from_code(symbol, code, root_node) -> BinaryNode:
         """ function to generate prefix-free tree from code.
         Args:
             symbol: current symbol
@@ -78,7 +79,7 @@ class ShannonTree(PrefixFreeTree):
         root_node = BinaryNode(id=None)
         for s in self.sorted_prob_dist.prob_dict:
             code = self.encode_alphabet(s)
-            root_node = self.build_tree_from_code(s, code, root_node)
+            root_node = self._build_tree_from_code(s, code, root_node)
         return root_node
 
 

@@ -22,13 +22,6 @@ class FanoTree(PrefixFreeTree):
         # build tree returns the root node
         super().__init__(root_node=self.build_fano_tree(self.root_node, self.sorted_prob_dist))
 
-    @staticmethod
-    def normalize_prob_dict(prob_dict):
-        """
-        normalizes subset of original probability dict to 1
-        """
-        sum_p = sum(prob_dict.values())
-        return ProbabilityDist(dict([[a, b / sum_p] for a, b in prob_dict.items()]))
 
     @staticmethod
     def criterion(dict_item):
@@ -40,10 +33,13 @@ class FanoTree(PrefixFreeTree):
         return abs(value - 0.5)
 
     @staticmethod
-    def build_fano_tree(root_node, norm_sort_prob_list) -> BinaryNode:
-        """recursively build Fano Tree"""
+    def split_prob_dist_into_two(norm_sort_prob_dist):
+        """
+        Given a normalized and sorted probability distribution, split it into two sets of approximately equal
+        probabilities as described in Fano's algorithm.
+        """
         # Get cumulative probability dict
-        cumulative_prob_dict = norm_sort_prob_list.cumulative_prob_dict
+        cumulative_prob_dict = norm_sort_prob_dist.cumulative_prob_dict
 
         # Split the tree into left and right nodes based on cumulative probability and recursively build
         # FanoTree for these trees
@@ -59,12 +55,22 @@ class FanoTree(PrefixFreeTree):
         for s, cum_prob in cumulative_prob_dict.items():
             if s == min_diff_code:
                 curr_dict = recursive_prob_dicts['right']
-            curr_dict.update({s: norm_sort_prob_list.probability(s)})
+            curr_dict.update({s: norm_sort_prob_dist.probability(s)})
+
+        return recursive_prob_dicts
+
+
+    @staticmethod
+    def build_fano_tree(root_node, norm_sort_prob_dist) -> BinaryNode:
+        """recursively build Fano Tree"""
+        # split the symbols into left and right half symbols such that the probability weights in each set is
+        # most balanced
+        recursive_prob_dicts = FanoTree.split_prob_dist_into_two(norm_sort_prob_dist)
 
         # Call recursion
         # if only 1 symbol in either left or right tree, just assign it as a child and we don't have to call recursion
         for branch, curr_dict in recursive_prob_dicts.items():
-            norm_prob_dict = FanoTree.normalize_prob_dict(curr_dict)
+            norm_prob_dict = ProbabilityDist.normalize_prob_dict(curr_dict)
 
             # if pointer is None, the object is not updated
             # https://stackoverflow.com/questions/55777748/updating-none-value-does-not-reflect-in-the-object

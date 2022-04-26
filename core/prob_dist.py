@@ -35,9 +35,20 @@ class ProbabilityDist:
     @classmethod
     def get_sorted_prob_dist(cls, prob_dict, reverse=True):
         """
-        Returns ProbabilityDist class object with sorted probabilities
+        Returns ProbabilityDist class object with sorted probabilities.
+        By default, returns Probabilities in decreasing order (reverse=True), i.e.,
+        p1 >= p2 >= .... >= pn
         """
         return cls(dict(sorted(prob_dict.items(), key=lambda x: x[1], reverse=reverse)))
+
+    @classmethod
+    def normalize_prob_dict(cls, prob_dict):
+        """
+        normalizes dict -> dict_norm so that the sum of values is 1
+        wraps dict_norm as a ProbabilityDist
+        """
+        sum_p = sum(prob_dict.values())
+        return cls(dict([[a, b / sum_p] for a, b in prob_dict.items()]))
 
     @property
     @cache
