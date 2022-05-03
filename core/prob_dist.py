@@ -48,7 +48,7 @@ class ProbabilityDist:
         wraps dict_norm as a ProbabilityDist
         """
         sum_p = sum(prob_dict.values())
-        return cls(dict([[a, b / sum_p] for a, b in prob_dict.items()]))
+        return cls({a: b/sum_p for a, b in prob_dict.items()})
 
     @property
     @cache
@@ -127,17 +127,21 @@ class ProbabilityDistTest(unittest.TestCase):
 
     def test_sorted_prob_dist(self):
         """
-        checks if sorting works as expected
+        checks if sorting works as expected and doesn't change the dict.
         """
         alphabet = list(range(10))
         dist = {i: (i + 1) / 55 for i in alphabet}
 
         sorted_PD = ProbabilityDist.get_sorted_prob_dist(dist)
-        print(sorted_PD.prob_dict)
-        prev_prob = 1
-        for (s, p) in sorted_PD.prob_dict.items():
-            curr_prob = p
-            assert curr_prob <= prev_prob
+        # initialize to max prob
+        prev_symbol_prob = 1
+        for (s, curr_symbol_prob) in sorted_PD.prob_dict.items():
+            assert curr_symbol_prob <= prev_symbol_prob
+            prev_symbol_prob = curr_symbol_prob
+
+        # assert the elements of the new sorted dict is same as pre-sorting
+        assert sorted_PD.prob_dict == dist
+
 
 
 def get_mean_log_prob(prob_dist: ProbabilityDist, data_block) -> float:

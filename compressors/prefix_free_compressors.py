@@ -179,3 +179,41 @@ class PrefixFreeTree:
         # as we reach the leaf node, the decoded symbol is the id of the node
         decoded_symbol = curr_node.id
         return decoded_symbol, num_bits_consumed
+
+    @staticmethod
+    def _add_tree_nodes_from_code(symbol, code, root_node) -> BinaryNode:
+        """ function to generate prefix-free tree from code.
+        Args:
+            symbol: current symbol
+            code: current code
+            root_node: root node to the ShannonTree
+
+        Returns:
+            the pointer to root node of the tree so far
+        """
+        # initialize the curr_node, code_so_far temporary var
+        curr_node = root_node
+        code_so_far = BitArray()
+        code_len = len(code)
+
+        for i, bit in enumerate(code):
+            # We initialize the right and left child here and later
+            # separately update/recurse on them.
+            # Initialization is important since if we leave these as None, then a pattern like var =
+            # root_node.left_child; var.id = new_id` won't work because `var` would be just `None` and not a pointer.
+            # More details:
+            # https://stackoverflow.com/questions/55777748/updating-none-value-does-not-reflect-in-the-object
+            if curr_node.right_child is None: curr_node.right_child = BinaryNode(id=None)
+            if curr_node.left_child is None: curr_node.left_child = BinaryNode(id=None)
+
+            code_so_far.append(bit)
+
+            # get a pointer to child node
+            child = curr_node.right_child if bit else curr_node.left_child
+
+            # if it's the last bit, add the codeword as ID
+            if i == (code_len - 1):
+                child.id = symbol
+
+            # continue looping through the tree
+            curr_node = child

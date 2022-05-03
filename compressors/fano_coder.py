@@ -1,6 +1,7 @@
 """Fano Coding
 Shannon coding is a basic prefix free coding. There is some confusion in literature about Shannon, Fano and
-Shannon-Fano codes, e.g. see Naming section of https://en.wikipedia.org/wiki/Shannon–Fano_coding.
+Shannon-Fano codes, e.g. see Naming section of
+https://en.wikipedia.org/w/index.php?title=Shannon–Fano_coding&oldid=1076520027.
 
 This document uses Fano coding as described in the wiki article above.
 """
@@ -22,42 +23,39 @@ class FanoTree(PrefixFreeTree):
         # build tree returns the root node
         super().__init__(root_node=self.build_fano_tree(self.root_node, self.sorted_prob_dist))
 
-
     @staticmethod
-    def criterion(dict_item):
-        """used for finding the symbol at which cumulative probability is nearest to 0.5
-        This symbol is used to split between left and right trees of Fano. We split right starting this symbol
-        to get most balanced tree.
-        """
-        key, value = dict_item
-        return abs(value - 0.5)
-
-    @staticmethod
-    def split_prob_dist_into_two(norm_sort_prob_dist):
+    def _split_prob_dist_into_two(norm_sort_prob_dist):
         """
         Given a normalized and sorted probability distribution, split it into two sets of approximately equal
         probabilities as described in Fano's algorithm.
         """
+
+        def _criterion(dict_item):
+            """used for finding the symbol at which cumulative probability is nearest to 0.5
+            This symbol is used to split between left and right trees of Fano. We split right starting this symbol
+            to get most balanced tree.
+            """
+            key, value = dict_item
+            return abs(value - 0.5)
+
         # Get cumulative probability dict
         cumulative_prob_dict = norm_sort_prob_dist.cumulative_prob_dict
 
         # Split the tree into left and right nodes based on cumulative probability and recursively build
         # FanoTree for these trees
-        recursive_prob_dicts = {
-            'left': {},
-            'right': {}
-        }
+        left_subtree, right_subtree = {}, {}
 
         # all alphabets which are nearest to 0.5 cumulative probability in sorted list are put to left tree and rest
         # to right, such that we have a most balanced probabilistic tree subsets.
-        min_diff_code = min(cumulative_prob_dict.items(), key=FanoTree.criterion)[0]
-        curr_dict = recursive_prob_dicts['left']
+        min_diff_symbol = min(cumulative_prob_dict.items(), key=_criterion)[0]
+        curr_dict = left_subtree
         for s, cum_prob in cumulative_prob_dict.items():
-            if s == min_diff_code:
-                curr_dict = recursive_prob_dicts['right']
+            # after min_diff_symbol switch to right tree for putting the symbols
+            if s == min_diff_symbol:
+                curr_dict = right_subtree
             curr_dict.update({s: norm_sort_prob_dist.probability(s)})
 
-        return recursive_prob_dicts
+        return left_subtree, right_subtree
 
 
     @staticmethod
@@ -65,19 +63,24 @@ class FanoTree(PrefixFreeTree):
         """recursively build Fano Tree"""
         # split the symbols into left and right half symbols such that the probability weights in each set is
         # most balanced
-        recursive_prob_dicts = FanoTree.split_prob_dist_into_two(norm_sort_prob_dist)
+        left_subtree, right_subtree = FanoTree._split_prob_dist_into_two(norm_sort_prob_dist)
 
-        # Call recursion
+        # We initialize the right and left child here and later
+        # separately update/recurse on them in the loop below (the loop has just 2 steps: left and right).
+        # Initialization is important since if we leave these as None, then a pattern like var =
+        # root_node.left_child; var.id = new_id` won't work because `var` would be just `None` and not a pointer.
+        # More details:
+        # https://stackoverflow.com/questions/55777748/updating-none-value-does-not-reflect-in-the-object
+        if root_node.right_child is None: root_node.right_child = BinaryNode(id=None)
+        if root_node.left_child is None: root_node.left_child = BinaryNode(id=None)
+
+        # Call recursion -- depth-first search
         # if only 1 symbol in either left or right tree, just assign it as a child and we don't have to call recursion
-        for branch, curr_dict in recursive_prob_dicts.items():
+        for curr_dict in [left_subtree, right_subtree]:
             norm_prob_dict = ProbabilityDist.normalize_prob_dict(curr_dict)
 
-            # if pointer is None, the object is not updated
-            # https://stackoverflow.com/questions/55777748/updating-none-value-does-not-reflect-in-the-object
-            if root_node.right_child is None: root_node.right_child = BinaryNode(id=None)
-            if root_node.left_child is None: root_node.left_child = BinaryNode(id=None)
-
-            child = root_node.left_child if branch == 'left' else root_node.right_child
+            # work with left child for "left subtree" and right for right "right subtree"
+            child = root_node.left_child if curr_dict == left_subtree else root_node.right_child
             if len(curr_dict) == 1:
                 child.id = list(curr_dict)[0]
             else:
