@@ -314,7 +314,6 @@ def _test_rANS_coding(freq, rans_params, data_size, seed):
     avg_log_prob = get_mean_log_prob(prob_dist, data_block)
 
     # create encoder decoder
-    rans_params = rANSParams()
     encoder = rANSEncoder(freq, rans_params)
     decoder = rANSDecoder(freq, rans_params)
 
