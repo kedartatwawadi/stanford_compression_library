@@ -182,7 +182,7 @@ class PrefixFreeTree:
 
     @staticmethod
     def _add_tree_nodes_from_code(symbol, code, root_node) -> BinaryNode:
-        """ function to generate prefix-free tree from code.
+        """ function to add nodes to a prefix-free tree based on a codeword.
         Args:
             symbol: current symbol
             code: current code
@@ -217,3 +217,15 @@ class PrefixFreeTree:
 
             # continue looping through the tree
             curr_node = child
+
+    def _build_prefix_free_tree_from_code(self, codes, root_node):
+        """function to generate prefix-free tree from a dictionary of prefix-free codes
+        Args:
+            codes: dictionary with symbols as keys and codes as values
+            root_node: root node of the prefix free tree
+        Returns:
+            root_node: pointer to the root_node of prefix-free tree generated from the codewords
+        """
+        for s in codes:
+            self._add_tree_nodes_from_code(s, codes[s], root_node)
+        return root_node

@@ -33,13 +33,13 @@ class ProbabilityDist:
         return [self.prob_dict[s] for s in self.alphabet]
 
     @classmethod
-    def get_sorted_prob_dist(cls, prob_dict, reverse=True):
+    def get_sorted_prob_dist(cls, prob_dict, descending=False):
         """
         Returns ProbabilityDist class object with sorted probabilities.
-        By default, returns Probabilities in decreasing order (reverse=True), i.e.,
-        p1 >= p2 >= .... >= pn
+        By default, returns Probabilities in increasing order (descending=False), i.e.,
+        p1 <= p2 <= .... <= pn (python-default)
         """
-        return cls(dict(sorted(prob_dict.items(), key=lambda x: x[1], reverse=reverse)))
+        return cls(dict(sorted(prob_dict.items(), key=lambda x: x[1], reverse=descending)))
 
     @classmethod
     def normalize_prob_dict(cls, prob_dict):
@@ -48,7 +48,7 @@ class ProbabilityDist:
         wraps dict_norm as a ProbabilityDist
         """
         sum_p = sum(prob_dict.values())
-        return cls({a: b/sum_p for a, b in prob_dict.items()})
+        return cls({a: b / sum_p for a, b in prob_dict.items()})
 
     @property
     @cache
@@ -132,7 +132,7 @@ class ProbabilityDistTest(unittest.TestCase):
         alphabet = list(range(10))
         dist = {i: (i + 1) / 55 for i in alphabet}
 
-        sorted_PD = ProbabilityDist.get_sorted_prob_dist(dist)
+        sorted_PD = ProbabilityDist.get_sorted_prob_dist(dist, descending=True)
         # initialize to max prob
         prev_symbol_prob = 1
         for (s, curr_symbol_prob) in sorted_PD.prob_dict.items():
@@ -141,7 +141,6 @@ class ProbabilityDistTest(unittest.TestCase):
 
         # assert the elements of the new sorted dict is same as pre-sorting
         assert sorted_PD.prob_dict == dist
-
 
 
 def get_mean_log_prob(prob_dist: ProbabilityDist, data_block) -> float:

@@ -25,12 +25,12 @@ class ShannonTree(PrefixFreeTree):
         self.prob_dist = prob_dist
         # sort the probability distribution in decreasing probability and get cumulative probability which will be
         # used for encoding
-        self.sorted_prob_dist = ProbabilityDist.get_sorted_prob_dist(prob_dist.prob_dict)
+        self.sorted_prob_dist = ProbabilityDist.get_sorted_prob_dist(prob_dist.prob_dict, descending=True)
         self.cum_prob_dict = self.sorted_prob_dist.cumulative_prob_dict
         # construct the tree and set the root_node of PrefixFreeTree base class
         super().__init__(root_node=self.build_shannon_tree())
 
-    def _encode_alphabet(self, symbol) -> BitArray:
+    def _encode_symbol(self, symbol) -> BitArray:
         # compute the mid-point corresponding to the range of the given symbol
         cum_prob = self.cum_prob_dict[symbol]
 
@@ -41,25 +41,19 @@ class ShannonTree(PrefixFreeTree):
         _, code = float_to_bitarrays(cum_prob, encode_len)
         return code
 
-    def _generate_codewords(self, root_node):
+    def _generate_codewords(self):
         codes = {}
         for s in self.sorted_prob_dist.prob_dict:
-            code = self._encode_alphabet(s)
+            code = self._encode_symbol(s)
             codes[s] = code
         return codes
-
-    def _build_shannon_tree_from_code(self, codes, root_node):
-        for s in codes:
-            self._add_tree_nodes_from_code(s, codes[s], root_node)
-        return root_node
 
     def build_shannon_tree(self):
         """
         For all symbols in the alphabet, get it's code, and add it to the PrefixFreeTree.
         """
-        root_node = BinaryNode(id=None)
-        codes = self._generate_codewords(root_node)
-        root_node = self._build_shannon_tree_from_code(codes, root_node)
+        codes = self._generate_codewords()
+        root_node = self._build_prefix_free_tree_from_code(codes, root_node=BinaryNode(id=None))
         return root_node
 
 

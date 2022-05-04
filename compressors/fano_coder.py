@@ -14,9 +14,9 @@ from core.prob_dist import ProbabilityDist
 
 class FanoTree(PrefixFreeTree):
     def __init__(self, prob_dist):
-        super().__init__(prob_dist)
+        self.prob_dist = prob_dist
         # sort the probability distribution
-        self.sorted_prob_dist = ProbabilityDist.get_sorted_prob_dist(prob_dist.prob_dict)
+        self.sorted_prob_dist = ProbabilityDist.get_sorted_prob_dist(prob_dist.prob_dict, descending=True)
         # initialize root node of Fano Tree
         self.root_node = BinaryNode(id=None)
 
