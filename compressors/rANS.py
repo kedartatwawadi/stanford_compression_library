@@ -139,7 +139,7 @@ class rANSEncoder(DataEncoder):
         return next_state
 
     @cache
-    def max_state_val(self, symbol):
+    def max_shrunk_state_val(self, symbol):
         """
         max value the state can be before calling rans_base_encode_step function
         """
@@ -151,7 +151,7 @@ class rANSEncoder(DataEncoder):
         out_bits = BitArray("")
 
         # output bits to the stream to bring the state in the range for the next encoding
-        while state > self.max_state_val(next_symbol):
+        while state > self.max_shrunk_state_val(next_symbol):
             _bits = uint_to_bitarray(
                 state % (1 << self.params.NUM_BITS_OUT), bit_width=self.params.NUM_BITS_OUT
             )
@@ -213,6 +213,10 @@ class rANSDecoder(DataDecoder):
         self.freqs = freqs
         self.params = rans_params
 
+        # the range in which the state lies
+        self.L = self.params.RANGE_FACTOR * self.freqs.total_freq
+        self.H = self.L * (1 << self.params.NUM_BITS_OUT) - 1
+
     @staticmethod
     def find_bin(cumulative_freqs_list: List, slot: int) -> int:
         """Performs binary search over cumulative_freqs_list to locate which bin
@@ -226,8 +230,9 @@ class rANSDecoder(DataDecoder):
         Returns:
             bin: the bin in which the slot lies
         """
+        # NOTE: side="right" corresponds to search of type a[i-1] <= t < a[i]
         bin = np.searchsorted(cumulative_freqs_list, slot, side="right") - 1
-        return bin
+        return int(bin)
 
     def rans_base_decode_step(self, state: int):
         block_id = state // self.freqs.total_freq
@@ -245,7 +250,7 @@ class rANSDecoder(DataDecoder):
     def expand_state(self, state: int, encoded_bitarray: BitArray) -> Tuple[int, int]:
         # remap the state into the acceptable range
         num_bits = 0
-        while state < self.params.RANGE_FACTOR * self.freqs.total_freq:
+        while state < self.L:
             state_remainder = bitarray_to_uint(
                 encoded_bitarray[num_bits : num_bits + self.params.NUM_BITS_OUT]
             )
@@ -295,7 +300,7 @@ class rANSDecoder(DataDecoder):
 ######################################## TESTS ##########################################
 
 
-def _test_rANS_coding(freq, data_size, seed):
+def _test_rANS_coding(freq, rans_params, data_size, seed):
     """Core testing function for rANS"""
     prob_dist = freq.get_prob_dist()
 
@@ -331,5 +336,11 @@ def test_rANS_coding():
         Frequencies({"A": 5, "B": 5, "C": 5, "D": 5, "E": 5, "F": 5}),
     ]
 
-    for freq in freqs:
-        _test_rANS_coding(freq, DATA_SIZE, seed=0)
+    params = [
+        rANSParams(),
+        rANSParams(),
+        rANSParams(NUM_BITS_OUT=8),
+        rANSParams(RANGE_FACTOR_BITS=12),
+    ]
+    for freq, param in zip(freqs, params):
+        _test_rANS_coding(freq, param, DATA_SIZE, seed=0)
