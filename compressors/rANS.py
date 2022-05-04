@@ -1,5 +1,8 @@
 """Streaming rANS (range Asymmetric Numeral Systems) implementation
 
+NOTE: Detailed algorithm description and discussion is on the wiki page:
+https://github.com/kedartatwawadi/stanford_compression_library/wiki/Asymmetric-Numeral-Systems
+
 ## Core idea
 - the theoretical rANS Encoder maintains an integer `state` 
 - For each symbol s, the state is updated by calling: 
