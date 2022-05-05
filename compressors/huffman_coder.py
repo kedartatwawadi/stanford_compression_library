@@ -85,14 +85,15 @@ class HuffmanEncoder(PrefixFreeEncoder):
     """
     PrefixFreeEncoder already has a encode_block function to encode the symbols once we define a encode_symbol function
     for the particular compressor.
-    PrefixFreeTree provides encode_symbol given a PrefixFreeTree
+    PrefixFreeTree provides get_encoding_table given a PrefixFreeTree
     """
 
     def __init__(self, prob_dist: ProbabilityDist):
-        self.tree = HuffmanTree(prob_dist)
+        tree = HuffmanTree(prob_dist)
+        self.encoding_table = tree.get_encoding_table()
 
     def encode_symbol(self, s):
-        return self.tree.encode_symbol(s)
+        return self.encoding_table[s]
 
 
 class HuffmanDecoder(PrefixFreeDecoder):

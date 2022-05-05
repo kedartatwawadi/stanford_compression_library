@@ -99,10 +99,16 @@ class PrefixFreeTree:
     The class also provides method for utilizing the fact that the given tree is PrefixFree and hence we can utilize
     the tree structure to encode and decode. These functions can be used to encode and decode once subclassing function
     for a particular compressor implements the tree generation logic.
+
+    The encode need not require tree structure and hence by default provides a function for getting encoding_table
+    given the PrefixFreeTree structure. Decode on the other hand, can always benefit from decoding efficiently using
+    the codebook in tree structure.
+
     In particular,
-        encode_symbol returns the mapping from symbol -> encoded bits which can be utilized by PrefixFreeEncoder
-    and
-        decode_symbol provides the symbol-by-symbol decoding which can be utilized by the PrefixFreeDecoder
+
+            get_encoding_table: returns the mapping from tree to the encoding_table for whole codebook which can be
+            utilized by PrefixFreeEncoder
+            decode_symbol: provides the symbol-by-symbol decoding which can be utilized by the PrefixFreeDecoder
     """
 
     def __init__(self, root_node: BinaryNode):
@@ -148,13 +154,6 @@ class PrefixFreeTree:
 
         return encoding_table
 
-    def encode_symbol(self, s):
-        """
-        Encodes the datastream symbol by symbol by building an encoding table from tree structure
-        """
-        encoding_table = self.get_encoding_table()
-        return encoding_table[s]
-
     def decode_symbol(self, encoded_bitarray):
         """
         Decodes the encoded bitarray stream by decoding symbol by symbol. We parse through the prefix free tree, till
@@ -180,3 +179,53 @@ class PrefixFreeTree:
         # as we reach the leaf node, the decoded symbol is the id of the node
         decoded_symbol = curr_node.id
         return decoded_symbol, num_bits_consumed
+
+    @staticmethod
+    def _add_tree_nodes_from_code(symbol, code, root_node) -> BinaryNode:
+        """ function to add nodes to a prefix-free tree based on a codeword.
+        Args:
+            symbol: current symbol
+            code: current code
+            root_node: root node to the ShannonTree
+
+        Returns:
+            the pointer to root node of the tree so far
+        """
+        # initialize the curr_node, code_so_far temporary var
+        curr_node = root_node
+        code_so_far = BitArray()
+        code_len = len(code)
+
+        for i, bit in enumerate(code):
+            # We initialize the right and left child here and later
+            # separately update/recurse on them.
+            # Initialization is important since if we leave these as None, then a pattern like var =
+            # root_node.left_child; var.id = new_id` won't work because `var` would be just `None` and not a pointer.
+            # More details:
+            # https://stackoverflow.com/questions/55777748/updating-none-value-does-not-reflect-in-the-object
+            if curr_node.right_child is None: curr_node.right_child = BinaryNode(id=None)
+            if curr_node.left_child is None: curr_node.left_child = BinaryNode(id=None)
+
+            code_so_far.append(bit)
+
+            # get a pointer to child node
+            child = curr_node.right_child if bit else curr_node.left_child
+
+            # if it's the last bit, add the codeword as ID
+            if i == (code_len - 1):
+                child.id = symbol
+
+            # continue looping through the tree
+            curr_node = child
+
+    def _build_prefix_free_tree_from_code(self, codes, root_node):
+        """function to generate prefix-free tree from a dictionary of prefix-free codes
+        Args:
+            codes: dictionary with symbols as keys and codes as values
+            root_node: root node of the prefix free tree
+        Returns:
+            root_node: pointer to the root_node of prefix-free tree generated from the codewords
+        """
+        for s in codes:
+            self._add_tree_nodes_from_code(s, codes[s], root_node)
+        return root_node

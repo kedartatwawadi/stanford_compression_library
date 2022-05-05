@@ -26,7 +26,7 @@ BitArray = bitarray.bitarray
 
 def uint_to_bitarray(x: int, bit_width=None) -> BitArray:
     """
-    converts an unsigned into to bits.
+    converts an unsigned int to bits.
     if bit_width is provided then data is converted accordingly
     """
     assert isinstance(x, int)
