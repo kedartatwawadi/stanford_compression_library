@@ -55,11 +55,8 @@ https://github.com/kedartatwawadi/stanford_compression_library/wiki/Asymmetric-N
 
 ## References
 1. Original Asymmetric Numeral Systems paper:  https://arxiv.org/abs/0902.0271
-2. Interactive write-up on rANS: https://kedartatwawadi.github.io/post--ANS/
-
-## TODO
-1. Implement alias-coding style rANS
-2. Adaptive rANS
+2. https://github.com/kedartatwawadi/stanford_compression_library/wiki/Asymmetric-Numeral-Systems
+More references in the wiki article
 """
 
 from dataclasses import dataclass
@@ -327,9 +324,69 @@ def _test_rANS_coding(freq, rans_params, data_size, seed):
     assert is_lossless
 
 
-def test_rANS_coding():
-    DATA_SIZE = 10000
+def test_check_encoded_bitarray():
+    # test a specific example to check if the bitstream is as expected
+    freq = Frequencies({"A": 3, "B": 3, "C": 2})
+    data = DataBlock(["A", "C", "B"])
+    params = rANSParams(DATA_BLOCK_SIZE_BITS=5, NUM_BITS_OUT=1, RANGE_FACTOR=1)
 
+    # NOTE: the encoded_bitstream looks like = [<data_size_bits>, <final_state_bits>,<s0_bits>, <s1_bits>, ..., <s3_bits>]
+    ## Lets manually encode to find intermediate state etc:
+    M = 8  # freq.total_freq
+    L = 8  # = Mt
+    H = 15  # = 2Mt-1
+
+    expected_encoded_bitarray = BitArray("")
+
+    # lets start with defining the initial_state
+    x = 8
+    assert params.initial_state(freq) == 8
+
+    ## encode symbol 1 = A
+    # step-1: shrink state x to be in [3, 5]
+    x = 4  # x = x//2
+    expected_encoded_bitarray = BitArray("0") + expected_encoded_bitarray
+
+    # step-2: rANS base encoding step
+    x = 9  # x = (x//3)*8 + 0 + (x%3)
+
+    ## encode symbol 2 = C
+    # step-1: shrink state x to be in [2, 3]
+    x = 2  # x = x//4
+    expected_encoded_bitarray = BitArray("01") + expected_encoded_bitarray
+
+    # step-2: rANS base encoding step
+    x = 14  # x = (x//2)*8 + 6 + (x%2)
+
+    ## encode symbol 3 = B
+    # step-1: shrink state x to be in [3, 5]
+    x = 3  # x = x//4
+    expected_encoded_bitarray = BitArray("10") + expected_encoded_bitarray
+
+    # step-2: rANS base encoding step
+    x = 11  # x = (x//3)*8 + 3 + (x%3)
+
+    ## prepnd the final state to the bitarray
+    num_state_bits = 4  # log2(15)
+    assert params.num_state_bits(freq.total_freq) == num_state_bits
+    expected_encoded_bitarray = BitArray("1011") + expected_encoded_bitarray
+
+    # append number of symbols = 3 using params.DATA_BLOCK_SIZE_BITS
+    expected_encoded_bitarray = BitArray("00011") + expected_encoded_bitarray
+
+    ################################
+
+    ## Now lets encode using the encode_block and see it the result matches
+    encoder = rANSEncoder(freq, params)
+    encoded_bitarray = encoder.encode_block(data)
+
+    assert expected_encoded_bitarray == encoded_bitarray
+
+
+def test_rANS_coding():
+
+    ## Test lossless coding
+    DATA_SIZE = 10000
     # trying out some random frequencies
     freqs = [
         Frequencies({"A": 1, "B": 1, "C": 2}),
