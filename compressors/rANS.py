@@ -174,6 +174,9 @@ class rANSEncoder(DataEncoder):
         # [L, H] *after*the `rans_base_encode_step`
         symbol_bitarray = BitArray("")
         state, out_bits = self.shrink_state(state, s)
+
+        # NOTE: we are prepending bits for pedagogy. In practice, it might be faster to assign a larger memory chunk and then fill it from the back
+        # see: https://github.com/rygorous/ryg_rans/blob/c9d162d996fd600315af9ae8eb89d832576cb32d/main.cpp#L176 for example
         symbol_bitarray = out_bits + symbol_bitarray
 
         # core encoding step
