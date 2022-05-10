@@ -29,8 +29,8 @@ def uint_to_bitarray(x: int, bit_width=None) -> BitArray:
     converts an unsigned int to bits.
     if bit_width is provided then data is converted accordingly
     """
-    assert isinstance(x, int)
-    return int2ba(x, length=bit_width)
+    assert isinstance(x, (int, np.integer))
+    return int2ba(int(x), length=bit_width)  # int2ba requires input to be dtype int
 
 
 def bitarray_to_uint(bit_array: BitArray) -> int:

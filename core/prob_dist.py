@@ -1,8 +1,6 @@
 import numpy as np
 import unittest
-import functools
-
-cache = functools.lru_cache(maxsize=None)
+from utils.misc_utils import cache
 
 
 class ProbabilityDist:
