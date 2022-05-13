@@ -11,7 +11,12 @@ https://github.com/kedartatwawadi/stanford_compression_library/wiki/Shannon-Code
 from typing import Any, Tuple
 from utils.bitarray_utils import float_to_bitarrays, BitArray
 from utils.test_utils import get_random_data_block, try_lossless_compression
-from compressors.prefix_free_compressors import PrefixFreeEncoder, PrefixFreeDecoder, PrefixFreeTree, BinaryNode
+from compressors.prefix_free_compressors import (
+    PrefixFreeEncoder,
+    PrefixFreeDecoder,
+    PrefixFreeTree,
+    BinaryNode,
+)
 from core.prob_dist import ProbabilityDist
 import math
 
@@ -25,7 +30,9 @@ class ShannonTree(PrefixFreeTree):
         self.prob_dist = prob_dist
         # sort the probability distribution in decreasing probability and get cumulative probability which will be
         # used for encoding
-        self.sorted_prob_dist = ProbabilityDist.get_sorted_prob_dist(prob_dist.prob_dict, descending=True)
+        self.sorted_prob_dist = ProbabilityDist.get_sorted_prob_dist(
+            prob_dist.prob_dict, descending=True
+        )
         self.cum_prob_dict = self.sorted_prob_dist.cumulative_prob_dict
         # construct the tree and set the root_node of PrefixFreeTree base class
         super().__init__(root_node=self.build_shannon_tree())
@@ -93,13 +100,13 @@ def test_shannon_coding():
         ProbabilityDist({"A": 0.5, "B": 0.5}),
         ProbabilityDist({"A": 0.3, "B": 0.3, "C": 0.4}),
         ProbabilityDist({"A": 0.5, "B": 0.25, "C": 0.12, "D": 0.13}),
-        ProbabilityDist({"A": 0.9, "B": 0.1})
+        ProbabilityDist({"A": 0.9, "B": 0.1}),
     ]
     expected_codewords = [
-        {"A": BitArray('0'), "B": BitArray('1')},
-        {"A": BitArray('01'), "B": BitArray('10'), "C": BitArray('00')},
-        {"A": BitArray('0'), "B": BitArray('10'), "C": BitArray('1110'), "D": BitArray('110')},
-        {"A": BitArray('0'), "B": BitArray('1110')}
+        {"A": BitArray("0"), "B": BitArray("1")},
+        {"A": BitArray("01"), "B": BitArray("10"), "C": BitArray("00")},
+        {"A": BitArray("0"), "B": BitArray("10"), "C": BitArray("1110"), "D": BitArray("110")},
+        {"A": BitArray("0"), "B": BitArray("1110")},
     ]
 
     def test_end_to_end(prob_dist, num_samples):
