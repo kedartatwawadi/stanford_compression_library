@@ -76,6 +76,9 @@ class rANSParams:
     More details in the overview
     """
 
+    ## define global params
+    freqs: Frequencies
+
     # num bits used to represent the data_block size
     DATA_BLOCK_SIZE_BITS: int = 32
 
@@ -86,28 +89,26 @@ class rANSParams:
     # RANGE_FACTOR is a base parameter controlling this range
     RANGE_FACTOR: int = 1 << 16
 
-    def initial_state(self, freqs: Frequencies) -> int:
-        """the initial state from which rANS encoding begins
+    def __post_init__(self):
+        ## define derived params
+        # the state always lies in the range [L,H]
+        self.L = self.RANGE_FACTOR * self.freqs.total_freq
+        self.H = self.L * (1 << self.NUM_BITS_OUT) - 1
 
-        NOTE: the choice of  this state is somewhat arbitrary, the only condition being, it should lie in the acceptable range
-        [L, H]
-        """
-        return self.RANGE_FACTOR * freqs.total_freq
+        # define min max range for shrunk_state (useful during encoding)
+        self.min_shrunk_state = {}
+        self.max_shrunk_state = {}
+        for s in self.freqs.alphabet:
+            f = self.freqs.frequency(s)
+            self.min_shrunk_state[s] = self.RANGE_FACTOR * f
+            self.max_shrunk_state[s] = self.RANGE_FACTOR * f * (1 << self.NUM_BITS_OUT) - 1
 
-    def num_state_bits(self, total_freqs: int) -> int:
-        """returns the number of bits necessary to represent the rANS state
-        NOTE:  in rANS, the state is always limited to be in the range [L, H], where:
-        L = RANGE_FACTOR*total_freq
-        H = (2**NUM_BITS_OUT)*RANGE_FACTOR*total_freq - 1)
+        ## define initial state, state bits etc.
+        # NOTE: the choice of  this state is somewhat arbitrary, the only condition being, it should lie in the acceptable range [L, H]
+        self.INITIAL_STATE = self.L
 
-        Args:
-            total_freqs (int): sum of all the frequencies of the alphabet
-
-        Returns:
-            int: the number of bits required to represent the rANS state
-        """
-        max_state_size = self.RANGE_FACTOR * (1 << self.NUM_BITS_OUT) * total_freqs - 1
-        return get_bit_width(max_state_size)
+        # define num bits used to represent the final state
+        self.NUM_STATE_BITS = get_bit_width(self.H)
 
 
 class rANSEncoder(DataEncoder):
@@ -116,14 +117,13 @@ class rANSEncoder(DataEncoder):
     Detailed information in the overview
     """
 
-    def __init__(self, freqs: Frequencies, rans_params: rANSParams):
+    def __init__(self, rans_params: rANSParams):
         """init function
 
         Args:
             freqs (Frequencies): frequencies for which rANS encoder needs to be designed
             rans_params (rANSParams): global rANS hyperparameters
         """
-        self.freqs = freqs
         self.params = rans_params
 
     def rans_base_encode_step(self, s, state: int):
@@ -131,26 +131,18 @@ class rANSEncoder(DataEncoder):
 
         updates the state based on the input symbols s, and returns the updated state
         """
-        f = self.freqs.frequency(s)
+        f = self.params.freqs.frequency(s)
         block_id = state // f
-        slot = self.freqs.cumulative_freq_dict[s] + (state % f)
-        next_state = block_id * self.freqs.total_freq + slot
+        slot = self.params.freqs.cumulative_freq_dict[s] + (state % f)
+        next_state = block_id * self.params.freqs.total_freq + slot
         return next_state
 
-    @cache
-    def max_shrunk_state_val(self, symbol):
-        """
-        max value the state can be before calling rans_base_encode_step function
-        """
-        f = self.freqs.frequency(symbol)
-        return self.params.RANGE_FACTOR * f * (1 << self.params.NUM_BITS_OUT) - 1
-
     def shrink_state(self, state: int, next_symbol) -> Tuple[int, BitArray]:
-        """stream out the lower bits of the state, until the state is below self.max_state_val(next_symbol)"""
+        """stream out the lower bits of the state, until the state is below params.max_shrunk_state[next_symbol]"""
         out_bits = BitArray("")
 
         # output bits to the stream to bring the state in the range for the next encoding
-        while state > self.max_shrunk_state_val(next_symbol):
+        while state > self.params.max_shrunk_state[next_symbol]:
             _bits = uint_to_bitarray(
                 state % (1 << self.params.NUM_BITS_OUT), bit_width=self.params.NUM_BITS_OUT
             )
@@ -187,7 +179,7 @@ class rANSEncoder(DataEncoder):
         encoded_bitarray = BitArray("")
 
         # initialize the state
-        state = self.params.initial_state(self.freqs)
+        state = self.params.INITIAL_STATE
 
         # update the state
         for s in data_block.data_list:
@@ -195,8 +187,7 @@ class rANSEncoder(DataEncoder):
             encoded_bitarray = symbol_bitarray + encoded_bitarray
 
         # Finally, pre-pend binary representation of the final state
-        num_state_bits = self.params.num_state_bits(self.freqs.total_freq)
-        encoded_bitarray = uint_to_bitarray(state, num_state_bits) + encoded_bitarray
+        encoded_bitarray = uint_to_bitarray(state, self.params.NUM_STATE_BITS) + encoded_bitarray
 
         # add the data_block size at the beginning
         # NOTE: rANS decoding needs a way to indicate where to stop the decoding
@@ -211,13 +202,8 @@ class rANSEncoder(DataEncoder):
 
 
 class rANSDecoder(DataDecoder):
-    def __init__(self, freqs: Frequencies, rans_params: rANSParams):
-        self.freqs = freqs
+    def __init__(self, rans_params: rANSParams):
         self.params = rans_params
-
-        # the range in which the state lies
-        self.L = self.params.RANGE_FACTOR * self.freqs.total_freq
-        self.H = self.L * (1 << self.params.NUM_BITS_OUT) - 1
 
     @staticmethod
     def find_bin(cumulative_freqs_list: List, slot: int) -> int:
@@ -237,22 +223,26 @@ class rANSDecoder(DataDecoder):
         return int(bin)
 
     def rans_base_decode_step(self, state: int):
-        block_id = state // self.freqs.total_freq
-        slot = state % self.freqs.total_freq
+        block_id = state // self.params.freqs.total_freq
+        slot = state % self.params.freqs.total_freq
 
         # decode symbol
-        cum_prob_list = list(self.freqs.cumulative_freq_dict.values())
+        cum_prob_list = list(self.params.freqs.cumulative_freq_dict.values())
         symbol_ind = self.find_bin(cum_prob_list, slot)
-        s = self.freqs.alphabet[symbol_ind]
+        s = self.params.freqs.alphabet[symbol_ind]
 
         # retrieve prev state
-        prev_state = block_id * self.freqs.frequency(s) + slot - self.freqs.cumulative_freq_dict[s]
+        prev_state = (
+            block_id * self.params.freqs.frequency(s)
+            + slot
+            - self.params.freqs.cumulative_freq_dict[s]
+        )
         return s, prev_state
 
     def expand_state(self, state: int, encoded_bitarray: BitArray) -> Tuple[int, int]:
         # remap the state into the acceptable range
         num_bits = 0
-        while state < self.L:
+        while state < self.params.L:
             state_remainder = bitarray_to_uint(
                 encoded_bitarray[num_bits : num_bits + self.params.NUM_BITS_OUT]
             )
@@ -275,11 +265,10 @@ class rANSDecoder(DataDecoder):
         num_bits_consumed = self.params.DATA_BLOCK_SIZE_BITS
 
         # get the final state
-        num_state_bits = self.params.num_state_bits(self.freqs.total_freq)
         state = bitarray_to_uint(
-            encoded_bitarray[num_bits_consumed : num_bits_consumed + num_state_bits]
+            encoded_bitarray[num_bits_consumed : num_bits_consumed + self.params.NUM_STATE_BITS]
         )
-        num_bits_consumed += num_state_bits
+        num_bits_consumed += self.params.NUM_STATE_BITS
 
         # perform the decoding
         decoded_data_list = []
@@ -294,7 +283,7 @@ class rANSDecoder(DataDecoder):
             num_bits_consumed += num_symbol_bits
 
         # Finally, as a sanity check, ensure that the end state should be equal to the initial state
-        assert state == self.params.initial_state(self.freqs)
+        assert state == self.params.INITIAL_STATE
 
         return DataBlock(decoded_data_list), num_bits_consumed
 
@@ -306,7 +295,7 @@ def test_check_encoded_bitarray():
     # test a specific example to check if the bitstream is as expected
     freq = Frequencies({"A": 3, "B": 3, "C": 2})
     data = DataBlock(["A", "C", "B"])
-    params = rANSParams(DATA_BLOCK_SIZE_BITS=5, NUM_BITS_OUT=1, RANGE_FACTOR=1)
+    params = rANSParams(freq, DATA_BLOCK_SIZE_BITS=5, NUM_BITS_OUT=1, RANGE_FACTOR=1)
 
     # NOTE: the encoded_bitstream looks like = [<data_size_bits>, <final_state_bits>,<s0_bits>, <s1_bits>, ..., <s3_bits>]
     ## Lets manually encode to find intermediate state etc:
@@ -318,7 +307,7 @@ def test_check_encoded_bitarray():
 
     # lets start with defining the initial_state
     x = 8
-    assert params.initial_state(freq) == 8
+    assert params.INITIAL_STATE == 8
 
     ## encode symbol 1 = A
     # step-1: shrink state x to be in [3, 5]
@@ -346,7 +335,7 @@ def test_check_encoded_bitarray():
 
     ## prepnd the final state to the bitarray
     num_state_bits = 4  # log2(15)
-    assert params.num_state_bits(freq.total_freq) == num_state_bits
+    assert params.NUM_STATE_BITS == num_state_bits
     expected_encoded_bitarray = BitArray("1011") + expected_encoded_bitarray
 
     # append number of symbols = 3 using params.DATA_BLOCK_SIZE_BITS
@@ -355,55 +344,48 @@ def test_check_encoded_bitarray():
     ################################
 
     ## Now lets encode using the encode_block and see it the result matches
-    encoder = rANSEncoder(freq, params)
+    encoder = rANSEncoder(params)
     encoded_bitarray = encoder.encode_block(data)
 
     assert expected_encoded_bitarray == encoded_bitarray
 
 
-def _test_rANS_coding(freq, rans_params, data_size, seed):
-    """Core testing function for rANS"""
-    prob_dist = freq.get_prob_dist()
-
-    # generate random data
-    data_block = get_random_data_block(prob_dist, data_size, seed=seed)
-
-    # get optimal codelen
-    avg_log_prob = get_mean_log_prob(prob_dist, data_block)
-
-    # create encoder decoder
-    encoder = rANSEncoder(freq, rans_params)
-    decoder = rANSDecoder(freq, rans_params)
-
-    is_lossless, encode_len, _ = try_lossless_compression(
-        data_block, encoder, decoder, add_extra_bits_to_encoder_output=True
-    )
-
-    # avg codelen ignoring the bits used to signal num data elements
-    avg_codelen = encode_len / data_block.size
-    print(f"rANS coding: Optimal codelen={avg_log_prob:.3f}, rANS codelen: {avg_codelen:.3f}")
-    assert is_lossless
-
-
 def test_rANS_coding():
-
-    ## Test lossless coding
-    DATA_SIZE = 10000
+    ## List different distributions, rANS params to test
     # trying out some random frequencies
-    freqs = [
+    freqs_list = [
         Frequencies({"A": 1, "B": 1, "C": 2}),
         Frequencies({"A": 12, "B": 34, "C": 1, "D": 45}),
         Frequencies({"A": 34, "B": 35, "C": 546, "D": 1, "E": 13, "F": 245}),
         Frequencies({"A": 5, "B": 5, "C": 5, "D": 5, "E": 5, "F": 5}),
         Frequencies({"A": 1, "B": 3}),
     ]
-
-    params = [
-        rANSParams(),
-        rANSParams(),
-        rANSParams(NUM_BITS_OUT=8),
-        rANSParams(RANGE_FACTOR=1 << 12),
-        rANSParams(RANGE_FACTOR=1 << 4),
+    params_list = [
+        rANSParams(freqs_list[0]),
+        rANSParams(freqs_list[1]),
+        rANSParams(freqs_list[2], NUM_BITS_OUT=8),
+        rANSParams(freqs_list[3], RANGE_FACTOR=1 << 12),
+        rANSParams(freqs_list[4], RANGE_FACTOR=1 << 4),
     ]
-    for freq, param in zip(freqs, params):
-        _test_rANS_coding(freq, param, DATA_SIZE, seed=0)
+
+    # generate random data and test if coding is lossless
+    DATA_SIZE = 10000
+    SEED = 0
+    for freq, rans_params in zip(freqs_list, params_list):
+        # generate random data
+        prob_dist = freq.get_prob_dist()
+        data_block = get_random_data_block(prob_dist, DATA_SIZE, seed=SEED)
+        avg_log_prob = get_mean_log_prob(prob_dist, data_block)
+
+        # create encoder decoder
+        encoder = rANSEncoder(rans_params)
+        decoder = rANSDecoder(rans_params)
+
+        # test lossless coding
+        is_lossless, encode_len, _ = try_lossless_compression(
+            data_block, encoder, decoder, add_extra_bits_to_encoder_output=True
+        )
+        assert is_lossless
+        # avg codelen ignoring the bits used to signal num data elements
+        avg_codelen = encode_len / data_block.size
+        print(f"rANS coding: avg_log_prob={avg_log_prob:.3f}, rANS codelen: {avg_codelen:.3f}")

@@ -25,12 +25,12 @@ from compressors.rANS import rANSParams, rANSEncoder
 class tANSParams(rANSParams):
     # NOTE: some params are same as rANSParams
     # additional params below
-    freqs: Frequencies
+    freqs: Frequencies = None
 
     def __post_init__(self):
         ## check some params
-        assert self.params.NUM_BITS_OUT == 1, "only NUM_OUT_BITS = 1 supported for now"
-        if self.params.RANGE_FACTOR > (1 << 16):
+        assert self.NUM_BITS_OUT == 1, "only NUM_OUT_BITS = 1 supported for now"
+        if self.RANGE_FACTOR > (1 << 16):
             print("WARNING: RANGE_FACTOR > 2^16 --> the lookup tables could be huge")
 
         assert is_power_of_two(
@@ -43,22 +43,28 @@ class tANSParams(rANSParams):
         self.min_shrunk_state = {}
         self.max_shrunk_state = {}
         for s in self.freqs.alphabet:
-            f = self.freqs.frequency[s]
+            f = self.freqs.frequency(s)
             self.min_shrunk_state[s] = self.RANGE_FACTOR * f
             self.max_shrunk_state[s] = self.RANGE_FACTOR * f * (1 << self.NUM_BITS_OUT) - 1
+
+        ## define initial state, state bits etc.
+        # NOTE: the choice of  this state is somewhat arbitrary, the only condition being, it should lie in the acceptable range [L, H]
+        self.INITIAL_STATE = self.L
+
+        ## define state params
+        self.NUM_STATE_BITS = get_bit_width(self.H)
 
 
 class tANSEncoder(DataEncoder):
     """tANS Encoder (cached rANS version)"""
 
-    def __init__(self, tans_params: rANSParams):
+    def __init__(self, tans_params: tANSParams):
         """init function
 
         Args:
-            freqs (Frequencies): frequencies for which rANS encoder needs to be designed
-            rans_params (rANSParams): global rANS hyperparameters
+            tans_params (tANSParams): global tANS hyperparameters
         """
-        self.params = rans_params
+        self.params = tans_params
 
         # build lookup tables
         self.build_base_encode_step_table()
@@ -69,19 +75,19 @@ class tANSEncoder(DataEncoder):
 
     def shrink_state_num_out_bits_base(self, s):
         # calculate the power of 2 lying in [freq[s], 2freq[s] - 1]
-        y = get_bit_width(self.max_shrunk_state_val(s))
-        state_bits = get_bit_width(self.params.RANGE_FACTOR * self.freqs.total_freq)
+        y = get_bit_width(self.params.max_shrunk_state[s])
+        state_bits = get_bit_width(self.params.RANGE_FACTOR * self.params.freqs.total_freq)
         num_out_bits_base = state_bits - y
 
         # calculate the threshold to output 1 more bit
-        thresh_state = (self.max_shrunk_state_val(s) + 1) << num_out_bits_base
+        thresh_state = (self.params.max_shrunk_state[s] + 1) << num_out_bits_base
         return num_out_bits_base, thresh_state
 
     def build_base_encode_step_table(self):
-        rans_encoder = rANSEncoder(self.freqs, self.params)
+        rans_encoder = rANSEncoder(self.params.freqs, self.params)
         self.base_encode_step_table = {}  # M rows, each storing x_next in [L,H]
-        for s in self.freqs.alphabet:
-            _min, _max = self.min_shrunk_state_val(s), self.max_shrunk_state_val(s)
+        for s in self.params.freqs.alphabet:
+            _min, _max = self.params.min_shrunk_state[s], self.params.max_shrunk_state[s]
             for x_shrunk in range(_min, _max + 1):
                 self.base_encode_step_table[(s, x_shrunk)] = rans_encoder.rans_base_encode_step(
                     s, x_shrunk
@@ -90,7 +96,7 @@ class tANSEncoder(DataEncoder):
     def build_shrink_num_out_bits_lookup_table(self):
         self.shrink_state_num_out_bits_base_table = {}
         self.shrink_state_thresh_table = {}
-        for s in self.freqs.alphabet:
+        for s in self.params.freqs.alphabet:
             num_bits, thresh = self.shrink_state_num_out_bits_base(s)
             self.shrink_state_num_out_bits_base_table[s] = num_bits
             self.shrink_state_thresh_table[s] = thresh
@@ -144,7 +150,7 @@ class tANSEncoder(DataEncoder):
         encoded_bitarray = BitArray("")
 
         # initialize the state
-        state = self.params.initial_state(self.freqs)
+        state = self.params.INITIAL_STATE
 
         # update the state
         for s in data_block.data_list:
@@ -152,8 +158,7 @@ class tANSEncoder(DataEncoder):
             encoded_bitarray = symbol_bitarray + encoded_bitarray
 
         # Finally, pre-pend binary representation of the final state
-        num_state_bits = self.params.num_state_bits(self.freqs.total_freq)
-        encoded_bitarray = uint_to_bitarray(state, num_state_bits) + encoded_bitarray
+        encoded_bitarray = uint_to_bitarray(state, self.params.NUM_STATE_BITS) + encoded_bitarray
 
         # add the data_block size at the beginning
         # NOTE: rANS decoding needs a way to indicate where to stop the decoding
@@ -171,10 +176,6 @@ class tANSDecoder(DataDecoder):
     def __init__(self, freqs: Frequencies, rans_params: rANSParams):
         self.freqs = freqs
         self.params = rans_params
-
-        # the range in which the state lies
-        self.L = self.params.RANGE_FACTOR * self.freqs.total_freq
-        self.H = self.L * (1 << self.params.NUM_BITS_OUT) - 1
 
     @staticmethod
     def find_bin(cumulative_freqs_list: List, slot: int) -> int:
@@ -209,7 +210,7 @@ class tANSDecoder(DataDecoder):
     def expand_state(self, state: int, encoded_bitarray: BitArray) -> Tuple[int, int]:
         # remap the state into the acceptable range
         num_bits = 0
-        while state < self.L:
+        while state < self.params.L:
             state_remainder = bitarray_to_uint(
                 encoded_bitarray[num_bits : num_bits + self.params.NUM_BITS_OUT]
             )
@@ -329,7 +330,7 @@ def _test_tANS_coding(freq, rans_params, data_size, seed):
     avg_log_prob = get_mean_log_prob(prob_dist, data_block)
 
     # create encoder decoder
-    encoder = tANSEncoder(freq, rans_params)
+    encoder = tANSEncoder(rans_params)
     decoder = tANSDecoder(freq, rans_params)
 
     is_lossless, encode_len, _ = try_lossless_compression(
@@ -354,9 +355,9 @@ def test_tANS_coding():
     ]
 
     params = [
-        rANSParams(RANGE_FACTOR=1),
-        rANSParams(RANGE_FACTOR=1 << 8),
-        rANSParams(RANGE_FACTOR=1),
+        tANSParams(RANGE_FACTOR=1, freqs=freqs[0]),
+        tANSParams(RANGE_FACTOR=1 << 8, freqs=freqs[0]),
+        tANSParams(RANGE_FACTOR=1, freqs=freqs[0]),
     ]
     for freq, param in zip(freqs, params):
         _test_tANS_coding(freq, param, DATA_SIZE, seed=0)
