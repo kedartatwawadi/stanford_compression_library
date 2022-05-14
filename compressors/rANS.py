@@ -84,8 +84,7 @@ class rANSParams:
 
     # rANS state is limited to the range [RANGE_FACTOR*total_freq, (2**NUM_BITS_OUT)*RANGE_FACTOR*total_freq - 1)]
     # RANGE_FACTOR is a base parameter controlling this range
-    RANGE_FACTOR_BITS: int = 16
-    RANGE_FACTOR: int = 1 << RANGE_FACTOR_BITS
+    RANGE_FACTOR: int = 1 << 16
 
     def initial_state(self, freqs: Frequencies) -> int:
         """the initial state from which rANS encoding begins
@@ -303,30 +302,6 @@ class rANSDecoder(DataDecoder):
 ######################################## TESTS ##########################################
 
 
-def _test_rANS_coding(freq, rans_params, data_size, seed):
-    """Core testing function for rANS"""
-    prob_dist = freq.get_prob_dist()
-
-    # generate random data
-    data_block = get_random_data_block(prob_dist, data_size, seed=seed)
-
-    # get optimal codelen
-    avg_log_prob = get_mean_log_prob(prob_dist, data_block)
-
-    # create encoder decoder
-    encoder = rANSEncoder(freq, rans_params)
-    decoder = rANSDecoder(freq, rans_params)
-
-    is_lossless, encode_len, _ = try_lossless_compression(
-        data_block, encoder, decoder, add_extra_bits_to_encoder_output=True
-    )
-
-    # avg codelen ignoring the bits used to signal num data elements
-    avg_codelen = encode_len / data_block.size
-    print(f"rANS coding: Optical codelen={avg_log_prob:.3f}, rANS codelen: {avg_codelen:.3f}")
-    assert is_lossless
-
-
 def test_check_encoded_bitarray():
     # test a specific example to check if the bitstream is as expected
     freq = Frequencies({"A": 3, "B": 3, "C": 2})
@@ -386,6 +361,30 @@ def test_check_encoded_bitarray():
     assert expected_encoded_bitarray == encoded_bitarray
 
 
+def _test_rANS_coding(freq, rans_params, data_size, seed):
+    """Core testing function for rANS"""
+    prob_dist = freq.get_prob_dist()
+
+    # generate random data
+    data_block = get_random_data_block(prob_dist, data_size, seed=seed)
+
+    # get optimal codelen
+    avg_log_prob = get_mean_log_prob(prob_dist, data_block)
+
+    # create encoder decoder
+    encoder = rANSEncoder(freq, rans_params)
+    decoder = rANSDecoder(freq, rans_params)
+
+    is_lossless, encode_len, _ = try_lossless_compression(
+        data_block, encoder, decoder, add_extra_bits_to_encoder_output=True
+    )
+
+    # avg codelen ignoring the bits used to signal num data elements
+    avg_codelen = encode_len / data_block.size
+    print(f"rANS coding: Optimal codelen={avg_log_prob:.3f}, rANS codelen: {avg_codelen:.3f}")
+    assert is_lossless
+
+
 def test_rANS_coding():
 
     ## Test lossless coding
@@ -396,13 +395,15 @@ def test_rANS_coding():
         Frequencies({"A": 12, "B": 34, "C": 1, "D": 45}),
         Frequencies({"A": 34, "B": 35, "C": 546, "D": 1, "E": 13, "F": 245}),
         Frequencies({"A": 5, "B": 5, "C": 5, "D": 5, "E": 5, "F": 5}),
+        Frequencies({"A": 1, "B": 3}),
     ]
 
     params = [
         rANSParams(),
         rANSParams(),
         rANSParams(NUM_BITS_OUT=8),
-        rANSParams(RANGE_FACTOR_BITS=12),
+        rANSParams(RANGE_FACTOR=1 << 12),
+        rANSParams(RANGE_FACTOR=1 << 4),
     ]
     for freq, param in zip(freqs, params):
         _test_rANS_coding(freq, param, DATA_SIZE, seed=0)
