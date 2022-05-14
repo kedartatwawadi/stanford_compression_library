@@ -23,36 +23,23 @@ from compressors.rANS import rANSParams, rANSEncoder
 
 @dataclass
 class tANSParams(rANSParams):
-    # NOTE: some params are same as rANSParams
-    # additional params below
-    freqs: Frequencies = None
+    # NOTE: params are same as rANSParams
+    # we just restrict some parameter values
 
     def __post_init__(self):
-        ## check some params
-        assert self.NUM_BITS_OUT == 1, "only NUM_OUT_BITS = 1 supported for now"
-        if self.RANGE_FACTOR > (1 << 16):
-            print("WARNING: RANGE_FACTOR > 2^16 --> the lookup tables could be huge")
-
+        super().__post_init__()
+        ## restrict some param values for tANS
+        # to make the rANS cachable, the total_freq needs to be a power of 2
         assert is_power_of_two(
             self.freqs.total_freq
         ), "Please normalize self.freqs.total_freq to be a power of two"
 
-        ## define fixed global params
-        self.L = self.RANGE_FACTOR * self.freqs.total_freq
-        self.H = self.L * (1 << self.NUM_BITS_OUT) - 1
-        self.min_shrunk_state = {}
-        self.max_shrunk_state = {}
-        for s in self.freqs.alphabet:
-            f = self.freqs.frequency(s)
-            self.min_shrunk_state[s] = self.RANGE_FACTOR * f
-            self.max_shrunk_state[s] = self.RANGE_FACTOR * f * (1 << self.NUM_BITS_OUT) - 1
+        # NOTE: NUM_BITS_OUT != 1, probably doesn't make practical sense for tANS?
+        assert self.NUM_BITS_OUT == 1, "only NUM_OUT_BITS = 1 supported for now"
 
-        ## define initial state, state bits etc.
-        # NOTE: the choice of  this state is somewhat arbitrary, the only condition being, it should lie in the acceptable range [L, H]
-        self.INITIAL_STATE = self.L
-
-        ## define state params
-        self.NUM_STATE_BITS = get_bit_width(self.H)
+        # just a warning to limit the table sizes
+        if self.RANGE_FACTOR > (1 << 16):
+            print("WARNING: RANGE_FACTOR > 2^16 --> the lookup tables could be huge")
 
 
 class tANSEncoder(DataEncoder):
@@ -84,7 +71,7 @@ class tANSEncoder(DataEncoder):
         return num_out_bits_base, thresh_state
 
     def build_base_encode_step_table(self):
-        rans_encoder = rANSEncoder(self.params.freqs, self.params)
+        rans_encoder = rANSEncoder(self.params)
         self.base_encode_step_table = {}  # M rows, each storing x_next in [L,H]
         for s in self.params.freqs.alphabet:
             _min, _max = self.params.min_shrunk_state[s], self.params.max_shrunk_state[s]
@@ -117,6 +104,9 @@ class tANSEncoder(DataEncoder):
 
     def encode_symbol(self, s, state: int) -> Tuple[int, BitArray]:
         """Encodes the next symbol, returns some bits and  the updated state
+
+        In the tANS encode_symbol, note that all we are doing is accessing lookup tables.
+        The lookup tables are already defined during the init
 
         Args:
             s (Any): next symbol to be encoded
@@ -173,9 +163,8 @@ class tANSEncoder(DataEncoder):
 
 
 class tANSDecoder(DataDecoder):
-    def __init__(self, freqs: Frequencies, rans_params: rANSParams):
-        self.freqs = freqs
-        self.params = rans_params
+    def __init__(self, tans_params: tANSParams):
+        self.params = tans_params
 
     @staticmethod
     def find_bin(cumulative_freqs_list: List, slot: int) -> int:
@@ -195,16 +184,20 @@ class tANSDecoder(DataDecoder):
         return int(bin)
 
     def rans_base_decode_step(self, state: int):
-        block_id = state // self.freqs.total_freq
-        slot = state % self.freqs.total_freq
+        block_id = state // self.params.freqs.total_freq
+        slot = state % self.params.freqs.total_freq
 
         # decode symbol
-        cum_prob_list = list(self.freqs.cumulative_freq_dict.values())
+        cum_prob_list = list(self.params.freqs.cumulative_freq_dict.values())
         symbol_ind = self.find_bin(cum_prob_list, slot)
-        s = self.freqs.alphabet[symbol_ind]
+        s = self.params.freqs.alphabet[symbol_ind]
 
         # retrieve prev state
-        prev_state = block_id * self.freqs.frequency(s) + slot - self.freqs.cumulative_freq_dict[s]
+        prev_state = (
+            block_id * self.params.freqs.frequency(s)
+            + slot
+            - self.params.freqs.cumulative_freq_dict[s]
+        )
         return s, prev_state
 
     def expand_state(self, state: int, encoded_bitarray: BitArray) -> Tuple[int, int]:
@@ -233,11 +226,10 @@ class tANSDecoder(DataDecoder):
         num_bits_consumed = self.params.DATA_BLOCK_SIZE_BITS
 
         # get the final state
-        num_state_bits = self.params.num_state_bits(self.freqs.total_freq)
         state = bitarray_to_uint(
-            encoded_bitarray[num_bits_consumed : num_bits_consumed + num_state_bits]
+            encoded_bitarray[num_bits_consumed : num_bits_consumed + self.params.NUM_STATE_BITS]
         )
-        num_bits_consumed += num_state_bits
+        num_bits_consumed += self.params.NUM_STATE_BITS
 
         # perform the decoding
         decoded_data_list = []
@@ -252,7 +244,7 @@ class tANSDecoder(DataDecoder):
             num_bits_consumed += num_symbol_bits
 
         # Finally, as a sanity check, ensure that the end state should be equal to the initial state
-        assert state == self.params.initial_state(self.freqs)
+        assert state == self.params.INITIAL_STATE
 
         return DataBlock(decoded_data_list), num_bits_consumed
 
@@ -264,7 +256,7 @@ def test_check_encoded_bitarray():
     # test a specific example to check if the bitstream is as expected
     freq = Frequencies({"A": 3, "B": 3, "C": 2})
     data = DataBlock(["A", "C", "B"])
-    params = rANSParams(DATA_BLOCK_SIZE_BITS=5, NUM_BITS_OUT=1, RANGE_FACTOR=1)
+    params = tANSParams(freq, DATA_BLOCK_SIZE_BITS=5, NUM_BITS_OUT=1, RANGE_FACTOR=1)
 
     # NOTE: the encoded_bitstream looks like = [<data_size_bits>, <final_state_bits>,<s0_bits>, <s1_bits>, ..., <s3_bits>]
     ## Lets manually encode to find intermediate state etc:
@@ -276,7 +268,7 @@ def test_check_encoded_bitarray():
 
     # lets start with defining the initial_state
     x = 8
-    assert params.initial_state(freq) == 8
+    assert params.INITIAL_STATE == 8
 
     ## encode symbol 1 = A
     # step-1: shrink state x to be in [3, 5]
@@ -304,7 +296,7 @@ def test_check_encoded_bitarray():
 
     ## prepnd the final state to the bitarray
     num_state_bits = 4  # log2(15)
-    assert params.num_state_bits(freq.total_freq) == num_state_bits
+    assert params.NUM_STATE_BITS == num_state_bits
     expected_encoded_bitarray = BitArray("1011") + expected_encoded_bitarray
 
     # append number of symbols = 3 using params.DATA_BLOCK_SIZE_BITS
@@ -313,51 +305,44 @@ def test_check_encoded_bitarray():
     ################################
 
     ## Now lets encode using the encode_block and see it the result matches
-    encoder = tANSEncoder(freq, params)
+    encoder = tANSEncoder(params)
     encoded_bitarray = encoder.encode_block(data)
 
     assert expected_encoded_bitarray == encoded_bitarray
 
 
-def _test_tANS_coding(freq, rans_params, data_size, seed):
-    """Core testing function for rANS"""
-    prob_dist = freq.get_prob_dist()
-
-    # generate random data
-    data_block = get_random_data_block(prob_dist, data_size, seed=seed)
-
-    # get optimal codelen
-    avg_log_prob = get_mean_log_prob(prob_dist, data_block)
-
-    # create encoder decoder
-    encoder = tANSEncoder(rans_params)
-    decoder = tANSDecoder(freq, rans_params)
-
-    is_lossless, encode_len, _ = try_lossless_compression(
-        data_block, encoder, decoder, add_extra_bits_to_encoder_output=True
-    )
-
-    # avg codelen ignoring the bits used to signal num data elements
-    avg_codelen = encode_len / data_block.size
-    print(f"rANS coding: Optical codelen={avg_log_prob:.3f}, rANS codelen: {avg_codelen:.3f}")
-    assert is_lossless
-
-
 def test_tANS_coding():
-
-    ## Test lossless coding
-    DATA_SIZE = 10000
+    ## List different distributions, rANS params to test
     # trying out some random frequencies
-    freqs = [
+    freqs_list = [
         Frequencies({"A": 1, "B": 1, "C": 2}),
         Frequencies({"A": 1, "B": 3}),
         Frequencies({"A": 3, "B": 4, "C": 9}),
     ]
-
-    params = [
-        tANSParams(RANGE_FACTOR=1, freqs=freqs[0]),
-        tANSParams(RANGE_FACTOR=1 << 8, freqs=freqs[0]),
-        tANSParams(RANGE_FACTOR=1, freqs=freqs[0]),
+    params_list = [
+        tANSParams(freqs_list[0], RANGE_FACTOR=1),
+        tANSParams(freqs_list[1], RANGE_FACTOR=1 << 8),
+        tANSParams(freqs_list[2]),
     ]
-    for freq, param in zip(freqs, params):
-        _test_tANS_coding(freq, param, DATA_SIZE, seed=0)
+
+    # generate random data and test if coding is lossless
+    DATA_SIZE = 10000
+    SEED = 0
+    for freq, tans_params in zip(freqs_list, params_list):
+        # generate random data
+        prob_dist = freq.get_prob_dist()
+        data_block = get_random_data_block(prob_dist, DATA_SIZE, seed=SEED)
+        avg_log_prob = get_mean_log_prob(prob_dist, data_block)
+
+        # create encoder decoder
+        encoder = tANSEncoder(tans_params)
+        decoder = tANSDecoder(tans_params)
+
+        # test lossless coding
+        is_lossless, encode_len, _ = try_lossless_compression(
+            data_block, encoder, decoder, add_extra_bits_to_encoder_output=True
+        )
+        assert is_lossless
+        # avg codelen ignoring the bits used to signal num data elements
+        avg_codelen = encode_len / data_block.size
+        print(f"tANS coding: avg_log_prob={avg_log_prob:.3f}, tANS codelen: {avg_codelen:.3f}")
