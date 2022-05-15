@@ -1,6 +1,8 @@
 """tANS v1 (table ANS) implementation 
 
 NOTE: tANS v1 is ina  way cached rANS implementation. There are other variants of tANS possible
+See the wiki link: https://github.com/kedartatwawadi/stanford_compression_library/wiki/Asymmetric-Numeral-Systems
+for more details on the algorithm
 
 ## References
 1. Original Asymmetric Numeral Systems paper:  https://arxiv.org/abs/0902.0271
@@ -23,8 +25,10 @@ from compressors.rANS import rANSParams, rANSEncoder, rANSDecoder
 
 @dataclass
 class tANSParams(rANSParams):
-    # NOTE: params are same as rANSParams
-    # we just restrict some parameter values
+    """
+    NOTE: params are same as rANSParams
+    we just restrict some parameter values
+    """
 
     def __post_init__(self):
         super().__post_init__()
@@ -49,7 +53,7 @@ class tANSEncoder(DataEncoder):
         """init function
 
         Args:
-            tans_params (tANSParams): global tANS hyperparameters
+            tans_params (tANSParams): global tANS parameters
         """
         self.params = tans_params
 
@@ -61,6 +65,11 @@ class tANSEncoder(DataEncoder):
         # self._print_lookup_tables()
 
     def shrink_state_num_out_bits_base(self, s):
+        """
+        rANS shrink function either outputs n or n+1 number of bits
+        , depending upon the state s.
+        This function determines what n is here. More details on the wiki
+        """
         # calculate the power of 2 lying in [freq[s], 2freq[s] - 1]
         y = get_bit_width(self.params.max_shrunk_state[s])
         num_out_bits_base = self.params.NUM_STATE_BITS - y
@@ -70,6 +79,9 @@ class tANSEncoder(DataEncoder):
         return num_out_bits_base, thresh_state
 
     def build_base_encode_step_table(self):
+        """
+        cached version of rans_encoder.rans_base_encode_step function
+        """
         rans_encoder = rANSEncoder(self.params)
         self.base_encode_step_table = {}  # M rows, each storing x_next in [L,H]
         for s in self.params.freqs.alphabet:
@@ -80,6 +92,9 @@ class tANSEncoder(DataEncoder):
                 )
 
     def build_shrink_num_out_bits_lookup_table(self):
+        """
+        caching the shrink_state_num_out_bits_base function
+        """
         self.shrink_state_num_out_bits_base_table = {}
         self.shrink_state_thresh_table = {}
         for s in self.params.freqs.alphabet:
@@ -102,7 +117,7 @@ class tANSEncoder(DataEncoder):
         pprint.pprint(self.shrink_state_thresh_table)
 
     def encode_symbol(self, s, state: int) -> Tuple[int, BitArray]:
-        """Encodes the next symbol, returns some bits and  the updated state
+        """Encodes the next symbol, returns some bits and the updated state
 
         In the tANS encode_symbol, note that all we are doing is accessing lookup tables.
         The lookup tables are already defined during the init
@@ -135,6 +150,16 @@ class tANSEncoder(DataEncoder):
         return state, symbol_bitarray
 
     def encode_block(self, data_block: DataBlock):
+        """
+        main encode function. Does the following:
+        1. sets state to INITIAL STATE
+        2. recursively calls `state, symbol_bitarray = self.encode_symbol(s, state)` to update the state and
+        output a few bits
+        3. finally add the size of the input data using self.params.DATA_BLOCK_SIZE_BITS
+
+        FIXME: this function is a duplicate or rANSEncoder, but duplicating it for clarity
+        (we should remove once we know how to logically combine different rANS, tANS variants)
+        """
         # initialize the output
         encoded_bitarray = BitArray("")
 
@@ -162,6 +187,10 @@ class tANSEncoder(DataEncoder):
 
 
 class tANSDecoder(DataDecoder):
+    """
+    the table ANS decoder (implementing the cached rANS variant)
+    """
+
     def __init__(self, tans_params: tANSParams):
         self.params = tans_params
 
@@ -170,14 +199,18 @@ class tANSDecoder(DataDecoder):
         self.build_expand_state_num_bits_table()
 
     def build_rans_base_decode_table(self):
-        """ """
+        """
+        cache the rans_decoder.rans_base_decode_step function
+        """
         rans_decoder = rANSDecoder(self.params)
         self.base_decode_step_table = {}  # stores s, state_shrunk
         for state in range(self.params.L, self.params.H + 1):
             self.base_decode_step_table[state] = rans_decoder.rans_base_decode_step(state)
 
     def build_expand_state_num_bits_table(self):
-        """ """
+        """
+        cache the expand state function
+        """
         self.expand_state_num_bits_table = {}
         for s in self.params.freqs.alphabet:
             _min, _max = self.params.min_shrunk_state[s], self.params.max_shrunk_state[s]
@@ -237,11 +270,31 @@ def test_check_encoded_bitarray():
     data = DataBlock(["A", "C", "B"])
     params = tANSParams(freq, DATA_BLOCK_SIZE_BITS=5, NUM_BITS_OUT=1, RANGE_FACTOR=1)
 
+    # Lets start by printing out the lookup tables:
+    encoder = tANSEncoder(params)
+    print("*")
+    encoder._print_lookup_tables()
+
+    ## Lookup tables:
+    # --------------------
+    # base encode step table
+    # {('A', 3): 8,
+    # ('A', 4): 9,
+    # ('A', 5): 10,
+    # ('B', 3): 11,
+    # ('B', 4): 12,
+    # ('B', 5): 13,
+    # ('C', 2): 14,
+    # ('C', 3): 15}
+    # --------------------
+    # num out bits table
+    # {'A': 1, 'B': 1, 'C': 2}
+    # --------------------
+    # shrink state thresh
+    # {'A': 12, 'B': 12, 'C': 16}
+
     # NOTE: the encoded_bitstream looks like = [<data_size_bits>, <final_state_bits>,<s0_bits>, <s1_bits>, ..., <s3_bits>]
-    ## Lets manually encode to find intermediate state etc:
-    M = 8  # freq.total_freq
-    L = 8  # = Mt
-    H = 15  # = 2Mt-1
+    ## Lets manually encode to verify if the expected bitstream matches,
 
     expected_encoded_bitarray = BitArray("")
 
@@ -250,30 +303,31 @@ def test_check_encoded_bitarray():
     assert params.INITIAL_STATE == 8
 
     ## encode symbol 1 = A
-    # step-1: shrink state x to be in [3, 5]
-    x = 4  # x = x//2
+    # step-1: x < 12, so num_out_bits = 1
+    x = 4  # x = x >> 1
     expected_encoded_bitarray = BitArray("0") + expected_encoded_bitarray
 
     # step-2: rANS base encoding step
-    x = 9  # x = (x//3)*8 + 0 + (x%3)
+    x = 9  # Looking at the base encode lookup table -> ('A', 4): 9
 
     ## encode symbol 2 = C
-    # step-1: shrink state x to be in [2, 3]
-    x = 2  # x = x//4
+    # step-1: x < 16, num_out_bits = 2
+    x = 2  # x = x >> 2
     expected_encoded_bitarray = BitArray("01") + expected_encoded_bitarray
 
     # step-2: rANS base encoding step
-    x = 14  # x = (x//2)*8 + 6 + (x%2)
+    x = 14  # ('C', 2): 14,
 
     ## encode symbol 3 = B
-    # step-1: shrink state x to be in [3, 5]
-    x = 3  # x = x//4
+    # step-1: 14 >= shrink_state_thresh['B'] = 12, so
+    # num_out_bits = 1 + 1 = 2
+    x = 3  # x = x >> 2
     expected_encoded_bitarray = BitArray("10") + expected_encoded_bitarray
 
     # step-2: rANS base encoding step
-    x = 11  # x = (x//3)*8 + 3 + (x%3)
+    x = 11  # ('B', 3): 11
 
-    ## prepnd the final state to the bitarray
+    ## prepend the final state to the bitarray
     num_state_bits = 4  # log2(15)
     assert params.NUM_STATE_BITS == num_state_bits
     expected_encoded_bitarray = BitArray("1011") + expected_encoded_bitarray
@@ -284,7 +338,6 @@ def test_check_encoded_bitarray():
     ################################
 
     ## Now lets encode using the encode_block and see it the result matches
-    encoder = tANSEncoder(params)
     encoded_bitarray = encoder.encode_block(data)
 
     assert expected_encoded_bitarray == encoded_bitarray
