@@ -18,7 +18,7 @@ from core.prob_dist import Frequencies, get_mean_log_prob
 from utils.test_utils import get_random_data_block, try_lossless_compression
 from utils.misc_utils import cache, is_power_of_two
 import pprint
-from compressors.rANS import rANSParams, rANSEncoder
+from compressors.rANS import rANSParams, rANSEncoder, rANSDecoder
 
 
 @dataclass
@@ -63,8 +63,7 @@ class tANSEncoder(DataEncoder):
     def shrink_state_num_out_bits_base(self, s):
         # calculate the power of 2 lying in [freq[s], 2freq[s] - 1]
         y = get_bit_width(self.params.max_shrunk_state[s])
-        state_bits = get_bit_width(self.params.RANGE_FACTOR * self.params.freqs.total_freq)
-        num_out_bits_base = state_bits - y
+        num_out_bits_base = self.params.NUM_STATE_BITS - y
 
         # calculate the threshold to output 1 more bit
         thresh_state = (self.params.max_shrunk_state[s] + 1) << num_out_bits_base
@@ -166,58 +165,38 @@ class tANSDecoder(DataDecoder):
     def __init__(self, tans_params: tANSParams):
         self.params = tans_params
 
-    @staticmethod
-    def find_bin(cumulative_freqs_list: List, slot: int) -> int:
-        """Performs binary search over cumulative_freqs_list to locate which bin
-        the slot lies.
+        ## build lookup tables
+        self.build_rans_base_decode_table()
+        self.build_expand_state_num_bits_table()
 
-        Args:
-            cumulative_freqs_list (List): the sorted list of cumulative frequencies
-                For example: freqs_list = [2,7,3], cumulative_freqs_list [0,2,9]
-            slot (int): the value to search in the sorted list
+    def build_rans_base_decode_table(self):
+        """ """
+        rans_decoder = rANSDecoder(self.params)
+        self.base_decode_step_table = {}  # stores s, state_shrunk
+        for state in range(self.params.L, self.params.H + 1):
+            self.base_decode_step_table[state] = rans_decoder.rans_base_decode_step(state)
 
-        Returns:
-            bin: the bin in which the slot lies
-        """
-        # NOTE: side="right" corresponds to search of type a[i-1] <= t < a[i]
-        bin = np.searchsorted(cumulative_freqs_list, slot, side="right") - 1
-        return int(bin)
-
-    def rans_base_decode_step(self, state: int):
-        block_id = state // self.params.freqs.total_freq
-        slot = state % self.params.freqs.total_freq
-
-        # decode symbol
-        cum_prob_list = list(self.params.freqs.cumulative_freq_dict.values())
-        symbol_ind = self.find_bin(cum_prob_list, slot)
-        s = self.params.freqs.alphabet[symbol_ind]
-
-        # retrieve prev state
-        prev_state = (
-            block_id * self.params.freqs.frequency(s)
-            + slot
-            - self.params.freqs.cumulative_freq_dict[s]
-        )
-        return s, prev_state
-
-    def expand_state(self, state: int, encoded_bitarray: BitArray) -> Tuple[int, int]:
-        # remap the state into the acceptable range
-        num_bits = 0
-        while state < self.params.L:
-            state_remainder = bitarray_to_uint(
-                encoded_bitarray[num_bits : num_bits + self.params.NUM_BITS_OUT]
-            )
-            num_bits += self.params.NUM_BITS_OUT
-            state = (state << self.params.NUM_BITS_OUT) + state_remainder
-        return state, num_bits
+    def build_expand_state_num_bits_table(self):
+        """ """
+        self.expand_state_num_bits_table = {}
+        for s in self.params.freqs.alphabet:
+            _min, _max = self.params.min_shrunk_state[s], self.params.max_shrunk_state[s]
+            for x_shrunk in range(_min, _max + 1):
+                num_bits = self.params.NUM_STATE_BITS - get_bit_width(x_shrunk)
+                self.expand_state_num_bits_table[x_shrunk] = num_bits
 
     def decode_symbol(self, state: int, encoded_bitarray: BitArray):
         # base rANS decoding step
-        s, state = self.rans_base_decode_step(state)
+        s, state_shrunk = self.base_decode_step_table[state]
 
         # remap the state into the acceptable range
-        state, num_bits_used_by_expand_state = self.expand_state(state, encoded_bitarray)
-        return s, state, num_bits_used_by_expand_state
+        num_bits = self.expand_state_num_bits_table[state_shrunk]
+        state_remainder = 0
+        if num_bits:
+            state_remainder = bitarray_to_uint(encoded_bitarray[:num_bits])
+        state = (state_shrunk << num_bits) + state_remainder
+
+        return s, state, num_bits
 
     def decode_block(self, encoded_bitarray: BitArray):
         # get data block size
@@ -321,7 +300,7 @@ def test_tANS_coding():
     ]
     params_list = [
         tANSParams(freqs_list[0], RANGE_FACTOR=1),
-        tANSParams(freqs_list[1], RANGE_FACTOR=1 << 8),
+        tANSParams(freqs_list[1], RANGE_FACTOR=1 << 4),
         tANSParams(freqs_list[2]),
     ]
 
