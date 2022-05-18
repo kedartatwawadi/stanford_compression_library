@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import numpy as np
 from typing import Tuple, Any
 from core.data_encoder_decoder import DataDecoder, DataEncoder
@@ -5,6 +6,21 @@ from utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
 from core.data_block import DataBlock
 from core.prob_dist import Frequencies, get_mean_log_prob
 from utils.test_utils import get_random_data_block, try_lossless_compression
+
+
+@dataclass
+class ArithmeticCoderParams:
+
+    # represents the number of bits used to represent the size of the input data_block
+    DATA_BLOCK_SIZE_BITS: int = 32
+
+    # number of bits used to represent the arithmetic coder range
+    PRECISION: int = 16
+
+    def __post_init__(self):
+        self.FULL: int = 1 << self.PRECISION
+        self.HALF: int = 1 << (self.PRECISION - 1)
+        self.QTR: int = 1 << (self.PRECISION - 2)
 
 
 class ArithmeticEncoder(DataEncoder):
@@ -17,16 +33,14 @@ class ArithmeticEncoder(DataEncoder):
     - There is of course the original paper: https://web.stanford.edu/class/ee398a/handouts/papers/WittenACM87ArithmCoding.pdf
     """
 
-    def __init__(self, precision, freqs):
+    def __init__(self, params: ArithmeticCoderParams, freqs: Frequencies):
         super().__init__()
         self.freqs = freqs
+        self.params = params
 
-        # params
-        self.DATA_BLOCK_SIZE_BITS = 32  # represents the size of the data block
-        self.PRECISION = precision
-        self.FULL = 1 << (precision)
-        self.HALF = 1 << (precision - 1)
-        self.QTR = 1 << (precision - 2)
+        assert (
+            self.freqs.total_freq << 2
+        ) < self.FULL, "the frequency total is too large, which might cause stability issues. Please increase the precision (or reduce the total_freq"
 
     @classmethod
     def shrink_range(cls, freqs: Frequencies, s: Any, low: int, high: int) -> Tuple[int, int]:
@@ -54,7 +68,7 @@ class ArithmeticEncoder(DataEncoder):
 
         # initialize the low and high states
         low = 0
-        high = self.FULL
+        high = self.params.FULL
 
         # initialize the output
         encoded_bitarray = BitArray("")
@@ -64,7 +78,7 @@ class ArithmeticEncoder(DataEncoder):
         # One way is to add a character at the end which signals EOF. This requires us to
         # change the probabilities of the other symbols. Another way is to just signal the size of the
         # block. These two approaches add a bit of overhead.. the approach we use is much more transparent
-        encoded_bitarray = uint_to_bitarray(data_block.size, self.DATA_BLOCK_SIZE_BITS)
+        encoded_bitarray = uint_to_bitarray(data_block.size, self.params.DATA_BLOCK_SIZE_BITS)
 
         # initialize counter for mid-range re-adjustments
         num_mid_range_readjust = 0
@@ -82,8 +96,8 @@ class ArithmeticEncoder(DataEncoder):
             # The goal of re-normalizing is to not let the range (high - low) get smaller than self.QTR
 
             # CASE I, II -> simple cases where low, high are both in the same half
-            while (high < self.HALF) or (low > self.HALF):
-                if high < self.HALF:
+            while (high < self.params.HALF) or (low > self.params.HALF):
+                if high < self.params.HALF:
                     # output 1's corresponding to prior mid-range readjustments
                     encoded_bitarray.extend("0" + "1" * num_mid_range_readjust)
 
@@ -92,13 +106,13 @@ class ArithmeticEncoder(DataEncoder):
                     high = high << 1
                     num_mid_range_readjust = 0  # reset the mid-range readjustment counter
 
-                elif low > self.HALF:
+                elif low > self.params.HALF:
                     # output 0's corresponding to prior mid-range readjustments
                     encoded_bitarray.extend("1" + "0" * num_mid_range_readjust)
 
                     # re-adjust range, and reset params
-                    low = (low - self.HALF) << 1
-                    high = (high - self.HALF) << 1
+                    low = (low - self.params.HALF) << 1
+                    high = (high - self.params.HALF) << 1
                     num_mid_range_readjust = 0  # reset the mid-range readjustment counter
 
             # CASE III -> the more complex case where low, high straddle the midpoint
