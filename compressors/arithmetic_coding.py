@@ -10,27 +10,6 @@ import abc
 import copy
 
 
-@dataclass
-class AECParams:
-    """AEC hyper parameters
-
-    These are a couple of parameters used by the AEC encoder. more details inline
-    """
-
-    # represents the number of bits used to represent the size of the input data_block
-    DATA_BLOCK_SIZE_BITS: int = 32
-
-    # number of bits used to represent the arithmetic coder range
-    PRECISION: int = 32
-
-    def __post_init__(self):
-        self.FULL: int = 1 << self.PRECISION
-        self.HALF: int = 1 << (self.PRECISION - 1)
-        self.QTR: int = 1 << (self.PRECISION - 2)
-        self.MAX_ALLOWED_TOTAL_FREQ: int = self.QTR
-        self.MAX_BLOCK_SIZE: int = 1 << self.DATA_BLOCK_SIZE_BITS
-
-
 class FreqModelBase(abc.ABC):
     """Base Freq Model
 
@@ -109,6 +88,27 @@ class AdaptiveIIDFreqModel(FreqModelBase):
         if self.freqs_current.total_freq >= self.max_allowed_total_freq:
             for s, f in self.freqs_current.freq_dict.items():
                 self.freqs_current.freq_dict[s] = max(f // 2, 1)
+
+
+@dataclass
+class AECParams:
+    """AEC hyper parameters
+
+    These are a couple of parameters used by the AEC encoder. more details inline
+    """
+
+    # represents the number of bits used to represent the size of the input data_block
+    DATA_BLOCK_SIZE_BITS: int = 32
+
+    # number of bits used to represent the arithmetic coder range
+    PRECISION: int = 32
+
+    def __post_init__(self):
+        self.FULL: int = 1 << self.PRECISION
+        self.HALF: int = 1 << (self.PRECISION - 1)
+        self.QTR: int = 1 << (self.PRECISION - 2)
+        self.MAX_ALLOWED_TOTAL_FREQ: int = self.QTR
+        self.MAX_BLOCK_SIZE: int = 1 << self.DATA_BLOCK_SIZE_BITS
 
 
 class ArithmeticEncoder(DataEncoder):
@@ -398,15 +398,39 @@ def test_arithmetic_coding():
             encoder, decoder, freq, DATA_SIZE, encoding_optimality_precision=1e-1, seed=0
         )
 
+
+def test_adaptive_arithmetic_coding():
+    """
+    Test if AEC coding is working as expcted for different parameter settings
+    - Check if encoding/decodng is lossless
+    - Check if the compression is close to optimal
+    """
+
+    # trying out some random frequencies/aec_parameters
+    data_freqs_list = [
+        Frequencies({"A": 1, "B": 1, "C": 2}),
+        Frequencies({"A": 12, "B": 34, "C": 1, "D": 45}),
+        Frequencies({"A": 34, "B": 35, "C": 546, "D": 1, "E": 13, "F": 245}),
+        Frequencies({"A": 5, "B": 5, "C": 5, "D": 5, "E": 5, "F": 5}),
+    ]
+
+    params_list = [
+        AECParams(),
+        AECParams(),
+        AECParams(DATA_BLOCK_SIZE_BITS=12),
+        AECParams(DATA_BLOCK_SIZE_BITS=12, PRECISION=16),
+    ]
+
+    DATA_SIZE = 1000
+
     ## create adaptive coder
     for freq, params in zip(data_freqs_list, params_list):
+
+        # define initial distribution to be uniform
+        uniform_dist = Frequencies({a: 1 for a in freq.alphabet})
         # create encoder/decoder
-        encoder = ArithmeticEncoder(
-            params, Frequencies({a: 1 for a in freq.alphabet}), AdaptiveIIDFreqModel
-        )
-        decoder = ArithmeticDecoder(
-            params, Frequencies({a: 1 for a in freq.alphabet}), AdaptiveIIDFreqModel
-        )
+        encoder = ArithmeticEncoder(params, uniform_dist, AdaptiveIIDFreqModel)
+        decoder = ArithmeticDecoder(params, uniform_dist, AdaptiveIIDFreqModel)
         lossless_entropy_coder_test(
             encoder, decoder, freq, DATA_SIZE, encoding_optimality_precision=1e-1, seed=0
         )
