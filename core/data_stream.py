@@ -236,12 +236,26 @@ class TextFileDataStream(FileDataStream):
 
 
 class Uint8FileDataStream(FileDataStream):
-    """reads Uint8 numbers written to a file
+    """reads Uint8 numbers written to a file"""
 
-    FIXME: need to immplement
-    """
+    def get_symbol(self):
+        """get the next byte from the text file as 8-bit unsigned int
 
-    pass
+        Returns:
+            (int, None): the next byte, None if we reached the end of stream
+        """
+        s = self.file_obj.read(1)
+        if not s:
+            return None
+        # byteorder doesn't really matter because we just have a single byte
+        int_val = int.from_bytes(s,byteorder="big")
+        assert 0 <= int_val <= 255
+        return int_val
+
+    def write_symbol(self, s):
+        """write an 8-bit unsigned int to the text file"""
+        assert 0 <= s <= 255
+        self.file_obj.write(bytes([s]))
 
 
 #################################
