@@ -40,13 +40,15 @@ def create_random_text_file(file_path: str, file_size: int, prob_dist: Probabili
     with TextFileDataStream(file_path, "w") as fds:
         fds.write_block(data_block)
 
+
 def create_random_binary_file(file_path: str, file_size: int, prob_dist: ProbabilityDist):
     """creates a random binary file at the given path (uses "wb" instead of "w")
 
     Args:
         file_path (str): file path to which random data needs to be written
         file_size (int): The size of the random file to be generated
-        prob_dist (ProbabilityDist): the distribution to use to generate the random data
+        prob_dist (ProbabilityDist): the distribution to use to generate the random data.
+                                     The distribution must be on alphabet of bytes/u8's (0-255)
     """
     data_block = get_random_data_block(prob_dist, file_size)
     with Uint8FileDataStream(file_path, "wb") as fds:

@@ -1,4 +1,12 @@
-"""External compressors like gzip, etc. for testing/benchmarking purposes
+"""External compressors like gzip, etc. for testing/benchmarking purposes.
+
+Zlib format is described in https://datatracker.ietf.org/doc/html/rfc1950.
+It mostly relies on Deflate which is described in https://datatracker.ietf.org/doc/html/rfc1951.
+Zlib library website: https://www.zlib.net/. 
+Also see https://aws.amazon.com/blogs/opensource/improving-zlib-cloudflare-and-comparing-performance-with-other-zlib-forks/
+for information on more efficient implementations.
+
+We use the python zlib module (part of standard library) which internally calls the C library.
 """
 
 import os
@@ -39,9 +47,9 @@ class ZlibExternalEncoder(DataEncoder):
             zlib.Z_SYNC_FLUSH
         )
 
-        # might be inefficient to convert to BitArray since it will be later be
+        # FIXME: might be inefficient to convert to BitArray since it will be later be
         # converted back to bytes when writing to file
-        # also, should we worry about endianness?
+        # FIXME: also, should we worry about endianness?
 
         # at start write the compressed size because zlib decoder expects to get complete blocks
         # and cannot determine when we want to end

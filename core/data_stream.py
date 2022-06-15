@@ -248,7 +248,7 @@ class Uint8FileDataStream(FileDataStream):
         if not s:
             return None
         # byteorder doesn't really matter because we just have a single byte
-        int_val = int.from_bytes(s,byteorder="big")
+        int_val = int.from_bytes(s, byteorder="big")
         assert 0 <= int_val <= 255
         return int_val
 
@@ -314,3 +314,31 @@ def test_file_data_stream():
             fds.seek(4)
             block = fds.get_block(block_size=4)
             assert block.data_list[0] == "_"
+
+
+def test_uint8_file_data_stream():
+    """function to test file data stream"""
+
+    # create a temporary file
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        temp_file_path = os.path.join(tmpdirname, "tmp_file.txt")
+
+        # write data to the file
+        data_gt = DataBlock([5, 2, 255, 0, 43, 34])
+        with Uint8FileDataStream(temp_file_path, "wb") as fds:
+            fds.write_block(data_gt)
+
+            # try seeking to correct symbol at pos 4
+            fds.seek(4)
+            fds.write_symbol(99)
+
+        # read data from the file
+        with Uint8FileDataStream(temp_file_path, "rb") as fds:
+            block = fds.get_block(block_size=4)
+            assert block.size == 4
+            assert block.data_list == [5, 2, 255, 0]
+
+            # try seeking and reading
+            fds.seek(4)
+            block = fds.get_block(block_size=4)
+            assert block.data_list == [99, 34]
