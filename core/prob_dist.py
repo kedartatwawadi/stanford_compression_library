@@ -187,13 +187,11 @@ class Frequencies:
         return [self.freq_dict[s] for s in self.alphabet]
 
     @property
-    @cache
     def total_freq(self) -> int:
         """returns the sum of all the frequencies"""
         return np.sum(self.freq_list)
 
     @property
-    @cache
     def cumulative_freq_dict(self) -> dict:
         """return a list of sum of probabilities of symbols preceeding symbol
         for example: freq_dict = {A: 7,B: 1,C: 3}
@@ -210,7 +208,6 @@ class Frequencies:
     def frequency(self, symbol):
         return self.freq_dict[symbol]
 
-    @cache
     def get_prob_dist(self) -> ProbabilityDist:
         """_summary_
 
