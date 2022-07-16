@@ -12,6 +12,7 @@ from core.data_stream import DataStream, TextFileDataStream
 from core.encoded_stream import EncodedBlockReader, EncodedBlockWriter
 from utils.bitarray_utils import BitArray
 
+
 class DataEncoder(abc.ABC):
     """base abstract class for imeplementing any data encoder
 

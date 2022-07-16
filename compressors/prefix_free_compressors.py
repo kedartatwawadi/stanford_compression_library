@@ -182,7 +182,7 @@ class PrefixFreeTree:
 
     @staticmethod
     def _add_tree_nodes_from_code(symbol, code, root_node) -> BinaryNode:
-        """ function to add nodes to a prefix-free tree based on a codeword.
+        """function to add nodes to a prefix-free tree based on a codeword.
         Args:
             symbol: current symbol
             code: current code
@@ -203,8 +203,10 @@ class PrefixFreeTree:
             # root_node.left_child; var.id = new_id` won't work because `var` would be just `None` and not a pointer.
             # More details:
             # https://stackoverflow.com/questions/55777748/updating-none-value-does-not-reflect-in-the-object
-            if curr_node.right_child is None: curr_node.right_child = BinaryNode(id=None)
-            if curr_node.left_child is None: curr_node.left_child = BinaryNode(id=None)
+            if curr_node.right_child is None:
+                curr_node.right_child = BinaryNode(id=None)
+            if curr_node.left_child is None:
+                curr_node.left_child = BinaryNode(id=None)
 
             code_so_far.append(bit)
 
