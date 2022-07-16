@@ -91,8 +91,11 @@ class rANSParams:
 
     def __post_init__(self):
         ## define derived params
+        # M -> sum of frequencies
+        self.M = self.freqs.total_freq
+
         # the state always lies in the range [L,H]
-        self.L = self.RANGE_FACTOR * self.freqs.total_freq
+        self.L = self.RANGE_FACTOR * self.M
         self.H = self.L * (1 << self.NUM_BITS_OUT) - 1
 
         # define min max range for shrunk_state (useful during encoding)
@@ -109,6 +112,7 @@ class rANSParams:
 
         # define num bits used to represent the final state
         self.NUM_STATE_BITS = get_bit_width(self.H)
+        self.BITS_OUT_MASK = 1 << self.NUM_BITS_OUT
 
 
 class rANSEncoder(DataEncoder):
@@ -134,7 +138,7 @@ class rANSEncoder(DataEncoder):
         f = self.params.freqs.frequency(s)
         block_id = state // f
         slot = self.params.freqs.cumulative_freq_dict[s] + (state % f)
-        next_state = block_id * self.params.freqs.total_freq + slot
+        next_state = block_id * self.params.M + slot
         return next_state
 
     def shrink_state(self, state: int, next_symbol) -> Tuple[int, BitArray]:
@@ -223,8 +227,8 @@ class rANSDecoder(DataDecoder):
         return int(bin)
 
     def rans_base_decode_step(self, state: int):
-        block_id = state // self.params.freqs.total_freq
-        slot = state % self.params.freqs.total_freq
+        block_id = state // self.params.M
+        slot = state % self.params.M
 
         # decode symbol
         cum_prob_list = list(self.params.freqs.cumulative_freq_dict.values())
@@ -297,7 +301,8 @@ def test_check_encoded_bitarray():
     data = DataBlock(["A", "C", "B"])
     params = rANSParams(freq, DATA_BLOCK_SIZE_BITS=5, NUM_BITS_OUT=1, RANGE_FACTOR=1)
 
-    # NOTE: the encoded_bitstream looks like = [<data_size_bits>, <final_state_bits>,<s0_bits>, <s1_bits>, ..., <s3_bits>]
+    # NOTE: the encoded_bitstream looks like = [<data_size_bits>, <final_state_bits>,<s_n-1_bits>, <s_n-2_bits>, ..., <s0_bits>]
+    # as the bits for symbols are prepended.
     ## Lets manually encode to find intermediate state etc:
     M = 8  # freq.total_freq
     L = 8  # = Mt

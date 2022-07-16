@@ -1,6 +1,6 @@
 """tANS v1 (table ANS) implementation 
 
-NOTE: tANS v1 is ina  way cached rANS implementation. There are other variants of tANS possible
+NOTE: tANS v1 is in a  way cached rANS implementation. There are other variants of tANS possible
 See the wiki link: https://github.com/kedartatwawadi/stanford_compression_library/wiki/Asymmetric-Numeral-Systems
 for more details on the algorithm
 
@@ -35,10 +35,12 @@ class tANSParams(rANSParams):
         ## restrict some param values for tANS
         # to make the rANS cachable, the total_freq needs to be a power of 2
         assert is_power_of_two(
-            self.freqs.total_freq
-        ), "Please normalize self.freqs.total_freq to be a power of two"
+            self.M
+        ), "Please normalize self.M parameter (sum of frequencies) to be a power of two"
 
-        # NOTE: NUM_BITS_OUT != 1, probably doesn't make practical sense for tANS?
+        # NOTE: NUM_BITS_OUT != 1, probably doesn't make practical sense for tANS
+        # the reason is that, for M = total_freq, then [L, H] = [M, 2^{NUM_OUT_BITS}*M - 1]
+        # thus the table size increases exponentially in NUM_OUT_BITS, which is typically bad
         assert self.NUM_BITS_OUT == 1, "only NUM_OUT_BITS = 1 supported for now"
 
         # just a warning to limit the table sizes
@@ -175,7 +177,7 @@ class tANSEncoder(DataEncoder):
         encoded_bitarray = uint_to_bitarray(state, self.params.NUM_STATE_BITS) + encoded_bitarray
 
         # add the data_block size at the beginning
-        # NOTE: rANS decoding needs a way to indicate where to stop the decoding
+        # NOTE: tANS decoding needs a way to indicate where to stop the decoding
         # One way is to add a character at the end which signals EOF. This requires us to
         # change the probabilities of the other symbols. Another way is to just signal the size of the
         # block. These two approaches add a bit of overhead.. the approach we use is much more transparent
@@ -217,6 +219,17 @@ class tANSDecoder(DataDecoder):
             for x_shrunk in range(_min, _max + 1):
                 num_bits = self.params.NUM_STATE_BITS - get_bit_width(x_shrunk)
                 self.expand_state_num_bits_table[x_shrunk] = num_bits
+
+    def _print_lookup_tables(self):
+        """
+        function useful to visualize the tANS tables + debugging
+        """
+        print("-" * 20)
+        print("base decode step table")
+        pprint.pprint(self.base_decode_step_table)
+        print("-" * 20)
+        print("Expand state num_bits table")
+        pprint.pprint(self.expand_state_num_bits_table)
 
     def decode_symbol(self, state: int, encoded_bitarray: BitArray):
         # base rANS decoding step
@@ -264,6 +277,61 @@ class tANSDecoder(DataDecoder):
 ######################################## TESTS ##########################################
 
 
+def test_generated_lookup_tables():
+    # For a specific example to check if the lookup tables are as expected
+    freq = Frequencies({"A": 3, "B": 3, "C": 2})
+    data = DataBlock(["A", "C", "B"])
+    params = tANSParams(freq, DATA_BLOCK_SIZE_BITS=5, NUM_BITS_OUT=1, RANGE_FACTOR=1)
+
+    ####################################################################
+    # Encoder tests
+
+    ## check if the encoder lookup tables are as expected
+    # define expected tables
+    expected_base_encode_step_table = {
+        ("A", 3): 8,
+        ("A", 4): 9,
+        ("A", 5): 10,
+        ("B", 3): 11,
+        ("B", 4): 12,
+        ("B", 5): 13,
+        ("C", 2): 14,
+        ("C", 3): 15,
+    }
+    expected_shrink_state_num_out_bits_base_table = {"A": 1, "B": 1, "C": 2}
+    expected_shrink_state_thresh_table = {"A": 12, "B": 12, "C": 16}
+
+    # check if the encoder lookup tables are the same as expected
+    encoder = tANSEncoder(params)
+    assert expected_base_encode_step_table == encoder.base_encode_step_table
+    assert (
+        expected_shrink_state_num_out_bits_base_table
+        == encoder.shrink_state_num_out_bits_base_table
+    )
+    assert expected_shrink_state_thresh_table == encoder.shrink_state_thresh_table
+
+    ####################################################################
+    # Decoder tests
+
+    ## check if the encoder lookup tables are as expected
+    expected_base_decode_step_table = {
+        8: ("A", 3),
+        9: ("A", 4),
+        10: ("A", 5),
+        11: ("B", 3),
+        12: ("B", 4),
+        13: ("B", 5),
+        14: ("C", 2),
+        15: ("C", 3),
+    }
+    expected_expand_state_num_bits = {2: 2, 3: 2, 4: 1, 5: 1}
+
+    # define expected tables
+    decoder = tANSDecoder(params)
+    assert expected_base_decode_step_table == decoder.base_decode_step_table
+    assert expected_expand_state_num_bits == decoder.expand_state_num_bits_table
+
+
 def test_check_encoded_bitarray():
     # test a specific example to check if the bitstream is as expected
     freq = Frequencies({"A": 3, "B": 3, "C": 2})
@@ -272,8 +340,8 @@ def test_check_encoded_bitarray():
 
     # Lets start by printing out the lookup tables:
     encoder = tANSEncoder(params)
-    print("*")
-    encoder._print_lookup_tables()
+    # print("*")
+    # encoder._print_lookup_tables()
 
     ## Lookup tables:
     # --------------------
@@ -339,7 +407,6 @@ def test_check_encoded_bitarray():
 
     ## Now lets encode using the encode_block and see it the result matches
     encoded_bitarray = encoder.encode_block(data)
-
     assert expected_encoded_bitarray == encoded_bitarray
 
 
