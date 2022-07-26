@@ -8,7 +8,12 @@ This document uses Fano coding as described in the wiki article above.
 from typing import Any, Tuple
 from utils.bitarray_utils import BitArray
 from utils.test_utils import get_random_data_block, try_lossless_compression
-from compressors.prefix_free_compressors import PrefixFreeTree, PrefixFreeEncoder, PrefixFreeDecoder, BinaryNode
+from compressors.prefix_free_compressors import (
+    PrefixFreeTree,
+    PrefixFreeEncoder,
+    PrefixFreeDecoder,
+    BinaryNode,
+)
 from core.prob_dist import ProbabilityDist
 
 
@@ -16,7 +21,9 @@ class FanoTree(PrefixFreeTree):
     def __init__(self, prob_dist):
         self.prob_dist = prob_dist
         # sort the probability distribution
-        self.sorted_prob_dist = ProbabilityDist.get_sorted_prob_dist(prob_dist.prob_dict, descending=True)
+        self.sorted_prob_dist = ProbabilityDist.get_sorted_prob_dist(
+            prob_dist.prob_dict, descending=True
+        )
         # initialize root node of Fano Tree
         self.root_node = BinaryNode(id=None)
 
@@ -57,7 +64,6 @@ class FanoTree(PrefixFreeTree):
 
         return left_subtree, right_subtree
 
-
     @staticmethod
     def build_fano_tree(root_node, norm_sort_prob_dist) -> BinaryNode:
         """recursively build Fano Tree"""
@@ -71,8 +77,10 @@ class FanoTree(PrefixFreeTree):
         # root_node.left_child; var.id = new_id` won't work because `var` would be just `None` and not a pointer.
         # More details:
         # https://stackoverflow.com/questions/55777748/updating-none-value-does-not-reflect-in-the-object
-        if root_node.right_child is None: root_node.right_child = BinaryNode(id=None)
-        if root_node.left_child is None: root_node.left_child = BinaryNode(id=None)
+        if root_node.right_child is None:
+            root_node.right_child = BinaryNode(id=None)
+        if root_node.left_child is None:
+            root_node.left_child = BinaryNode(id=None)
 
         # Call recursion -- depth-first search
         # if only 1 symbol in either left or right tree, just assign it as a child and we don't have to call recursion
@@ -126,13 +134,13 @@ def test_fano_coding():
         ProbabilityDist({"A": 0.5, "B": 0.5}),
         ProbabilityDist({"A": 0.3, "B": 0.3, "C": 0.4}),
         ProbabilityDist({"A": 0.5, "B": 0.25, "C": 0.12, "D": 0.13}),
-        ProbabilityDist({"A": 0.9, "B": 0.1})
+        ProbabilityDist({"A": 0.9, "B": 0.1}),
     ]
     expected_codewords = [
-        {"A": BitArray('0'), "B": BitArray('1')},
-        {"A": BitArray('10'), "B": BitArray('11'), "C": BitArray('0')},
-        {"A": BitArray('0'), "B": BitArray('10'), "C": BitArray('111'), "D": BitArray('110')},
-        {"A": BitArray('0'), "B": BitArray('1')}
+        {"A": BitArray("0"), "B": BitArray("1")},
+        {"A": BitArray("10"), "B": BitArray("11"), "C": BitArray("0")},
+        {"A": BitArray("0"), "B": BitArray("10"), "C": BitArray("111"), "D": BitArray("110")},
+        {"A": BitArray("0"), "B": BitArray("1")},
     ]
 
     def test_end_to_end(prob_dist, num_samples):
