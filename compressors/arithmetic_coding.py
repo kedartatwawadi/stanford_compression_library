@@ -4,7 +4,7 @@ from typing import Tuple, Any
 from core.data_encoder_decoder import DataDecoder, DataEncoder
 from utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
 from core.data_block import DataBlock
-from core.prob_dist import Frequencies, get_mean_log_prob
+from core.prob_dist import Frequencies
 from utils.test_utils import lossless_entropy_coder_test
 import abc
 import copy
@@ -13,21 +13,21 @@ import copy
 class FreqModelBase(abc.ABC):
     """Base Freq Model
 
-    The AEC encoder can be thought of consisting of two parts:
+    The Arithmetic Entropy Coding (AEC) encoder can be thought of consisting of two parts:
     1. The probability model
     2. The "lossless coding" algorithm which uses these probabilities
 
-    Note that the probabilities/frequencies coming from the probability model are fixed in the simplest Arithmetic coding version,
-    but they can be modified as we parse each symbol.
-    This class represents a generic "probability Model", but using frequencies (and hence the name FreqModel).
-    (Frequencies are used, mainly because floating point values can be unpredictable/uncertain on different platforms.)
+    Note that the probabilities/frequencies coming from the probability model are fixed in the simplest Arithmetic coding
+    version, but they can be modified as we parse each symbol.
+    This class represents a generic "probability Model", but using frequencies (or counts), and hence the name FreqModel.
+    Frequencies are used, mainly because floating point values can be unpredictable/uncertain on different platforms.
 
     Some typical examples of Freq models are:
 
     a) FixedFreqModel -> the probability model is fixed to the initially provided one and does not change
-    b) AdaptiveIIDFreqModel -> starts with some initial probability distribution provided (the initial distribution is typically uniform)
-       The Adaptive Model then updates the model based on counts of the symbols it sees
-
+    b) AdaptiveIIDFreqModel -> starts with some initial probability distribution provided
+        (the initial distribution is typically uniform)
+        The Adaptive Model then updates the model based on counts of the symbols it sees.
 
     Args:
         freq_initial -> the frequencies used to initialize the model
@@ -47,7 +47,7 @@ class FreqModelBase(abc.ABC):
 
         Takes in as input the next symbol s and updates the
         probability distribution self.freqs (represented in terms of frequencies)
-        appropriately. (see examples below)
+        appropriately. See examples below.
         """
         raise NotImplementedError  # update the probability model here
 
@@ -114,11 +114,12 @@ class AECParams:
 class ArithmeticEncoder(DataEncoder):
     """Finite precision Arithmetic encoder
 
-    The encoder are decoders are based on the following sources:
+    The encoder and decoders are based on the following sources:
     - https://youtu.be/ouYV3rBtrTI: This series of videos on Arithmetic coding are a very gradual but a great
     way to understand them
     - Charles Bloom's blog: https://www.cbloom.com/algs/statisti.html#A5
-    - There is of course the original paper: https://web.stanford.edu/class/ee398a/handouts/papers/WittenACM87ArithmCoding.pdf
+    - There is of course the original paper:
+        https://web.stanford.edu/class/ee398a/handouts/papers/WittenACM87ArithmCoding.pdf
     """
 
     def __init__(self, params: AECParams, freq_base: Frequencies, freq_model_cls: FreqModelBase):
@@ -154,7 +155,7 @@ class ArithmeticEncoder(DataEncoder):
         """Encode block function for arithmetic coding"""
 
         # ensure data_block.size is not too big
-        err_msg = "choose a larget DATA_BLOCK_SIZE_BITS, as data_block.size is too big"
+        err_msg = "choose a larger DATA_BLOCK_SIZE_BITS, as data_block.size is too big"
         assert data_block.size < (1 << self.params.MAX_BLOCK_SIZE), err_msg
 
         # initialize the low and high states
@@ -166,20 +167,20 @@ class ArithmeticEncoder(DataEncoder):
 
         # add the data_block size at the beginning
         # NOTE: Arithmetic decoding needs a way to indicate where to stop the decoding
-        # One way is to add a character at the end which signals EOF. This requires us to
+        # One way is to add a character at the end which signals EOF (end-of-file). This requires us to
         # change the probabilities of the other symbols. Another way is to just signal the size of the
-        # block. These two approaches add a bit of overhead.. the approach we use is much more transparent
+        # block. These two approaches add a bit of overhead. We use the second approach as it is much more transparent.
         encoded_bitarray = uint_to_bitarray(data_block.size, self.params.DATA_BLOCK_SIZE_BITS)
 
         # initialize counter for mid-range re-adjustments
+        # used to ensure that the range doesn't become too small avoiding finite precision problem in AEC
         num_mid_range_readjust = 0
 
         # start the encoding
         for s in data_block.data_list:
-
             # ensure freqs.total_freq is not too big
             err_msg = """the frequency total is too large, which might cause stability issues. 
-            Please increase the precision (or reduce the total_freq"""
+            Please increase the precision (or reduce the total_freq)"""
             assert (
                 self.freq_model.freqs_current.total_freq < self.params.MAX_ALLOWED_TOTAL_FREQ
             ), err_msg
@@ -187,7 +188,7 @@ class ArithmeticEncoder(DataEncoder):
             # shrink range
             # i.e. the core Arithmetic encoding step
             low, high = ArithmeticEncoder.shrink_range(self.freq_model.freqs_current, s, low, high)
-            ## update the freq model for encoding the next symbol
+            # update the freq model for encoding the next symbol
             self.freq_model.update_model(s)
 
             # perform re-normalizing range
@@ -195,7 +196,7 @@ class ArithmeticEncoder(DataEncoder):
             # and after a few iterations things will be infeasible.
             # The goal of re-normalizing is to not let the range (high - low) get smaller than self.params.QTR
 
-            # CASE I, II -> simple cases where low, high are both in the same half
+            # CASE I, II -> simple cases where low, high are both in the same half of the range
             while (high < self.params.HALF) or (low > self.params.HALF):
                 if high < self.params.HALF:
                     # output 1's corresponding to prior mid-range readjustments
@@ -237,7 +238,7 @@ class ArithmeticEncoder(DataEncoder):
 class ArithmeticDecoder(DataDecoder):
     """Finite precision Arithmetic decoder
 
-    The encoder are decoders are based on the following sources:
+    The encoder and decoders are based on the following sources:
     - https://youtu.be/ouYV3rBtrTI: This series of videos on Arithmetic coding are a very gradual but a great
     way to understand them
     - Charles Bloom's blog: https://www.cbloom.com/algs/statisti.html#A5
@@ -344,9 +345,9 @@ class ArithmeticDecoder(DataDecoder):
                     state += bit
                 num_bits_consumed += 1
 
-        # # NOTE: we might have loaded in additional bits not added by the arithmetic encoder
-        # # (which are present in the encoded_bitarray).
-        # # This block of code determines the extra bits and subtracts it from num_bits_consumed
+        # NOTE: we might have loaded in additional bits not added by the arithmetic encoder
+        # (which are present in the encoded_bitarray).
+        # This block of code determines the extra bits and subtracts it from num_bits_consumed
         for extra_bits_read in range(self.params.PRECISION):
             state_low = (state >> extra_bits_read) << extra_bits_read
             state_high = state_low + (1 << extra_bits_read)
