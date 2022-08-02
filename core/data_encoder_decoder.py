@@ -21,13 +21,11 @@ class DataEncoder(abc.ABC):
     subclasses
     """
 
-    def __init__(self):
-        """intialize the state, which is preserved across encode_block calls"""
-        self.state = {}
-
     def reset(self):
-        """reset the state"""
-        self.state = {}
+        """reset the state if any"""
+        # NOTE: the reset function is called at the beginning of encode.
+        # this can be used to clear any state the encoder might have persisted across encode_block calls
+        pass
 
     def encode_block(self, data_block: DataBlock):
         """Abstract class to encode a given block of data
@@ -40,8 +38,7 @@ class DataEncoder(abc.ABC):
         Returns:
             encoded_bitarray (BitArray): the encoded bitarray
         """
-        # update state, return bits
-        # self.state = ...
+        # return encoded_bitarray
         raise NotImplementedError
 
     @final
@@ -101,13 +98,11 @@ class DataDecoder(abc.ABC):
     - accessing and decoding one encoded block at a time is handled by the decode function, which need not be re-imeplemnted
     """
 
-    def __init__(self):
-        """intialize the state, which is preserved across decode_block calls"""
-        self.state = {}
-
     def reset(self):
-        """reset the state"""
-        self.state = {}
+        """reset the state, if any"""
+        # NOTE: the reset function is called at the beginning of decode.
+        # this can be used to clear any state the decoder might have persisted across decode_block calls
+        pass
 
     def decode_block(self, bitarray: BitArray):
         """abstract function to decode one encoded_bitarray
@@ -121,8 +116,7 @@ class DataDecoder(abc.ABC):
             decoded_block (DataBlock), num_bits_consumed (int): returns the decoded data and how many bits were used
             the num_bits_consumed can be used appropriately if the encoded bitarray contains encoded bits from more than one encoders
         """
-        # update state, return decoded_data
-        # self.state = ...
+
         # return decoded_block, num_bits_consumed
         raise NotImplementedError
 
