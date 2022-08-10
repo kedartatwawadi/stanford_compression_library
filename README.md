@@ -1,5 +1,3 @@
-![Test Status](https://github.com/kedartatwawadi/stanford_compression_library/actions/workflows/python-app.yml/badge.svg)
-
 # Stanford Compression Library
 The goal of the library is to help with research in the area of data compression. This is not meant to be fast or efficient implementation, but rather for educational purpose
 
