@@ -113,7 +113,7 @@ class UniversalUintDecoder(DataDecoder):
 
 def test_universal_uint_encode_decode():
     """
-    Test if the encoding decoding are lossless, and we can recover the expected bitstream
+    Test if the encoding decoding are lossless
     """
     encoder = UniversalUintEncoder()
     decoder = UniversalUintDecoder()
@@ -122,29 +122,37 @@ def test_universal_uint_encode_decode():
     data_list = [0, 0, 1, 3, 4, 100]
     data_block = DataBlock(data_list)
 
+    # test encode
+    encoded_bitarray = encoder.encode_block(data_block)
+
+    # test decode
+    decoded_block, num_bits_consumed = decoder.decode_block(encoded_bitarray)
+    assert num_bits_consumed == len(encoded_bitarray), "Decoder did not consume all bits"
+
+    # compare blocks, and check if the encoding is lossless
+    assert are_blocks_equal(data_block, decoded_block), "Decoded block does not match original block"
+
+    # run tests
+
+
+def test_universal_uint_encode():
+    """
+    Test if we can recover the expected bitstream
+    """
+    encoder = UniversalUintEncoder()
+
+    # create some sample data
+    data_list = [0, 0, 1, 3, 4, 100]
+    data_block = DataBlock(data_list)
+
+    # ensure you provide expected codewords for each unique symbol in data_list
     expected_codewords = {0: BitArray("00"),
                           1: BitArray("01"),
                           3: BitArray("1011"),
                           4: BitArray("110100"),
                           100: BitArray("11111101100100")}
 
-    def test_end_to_end(data_block):
-        # test encode
-        encoded_bitarray = encoder.encode_block(data_block)
-
-        # test decode
-        decoded_block, num_bits_consumed = decoder.decode_block(encoded_bitarray)
-        assert num_bits_consumed == len(encoded_bitarray), "Decoder did not consume all bits"
-
-        # compare blocks, and check if the encoding is lossless
-        assert are_blocks_equal(data_block, decoded_block), "Decoded block does not match original block"
-
-    def test_encoded_symbol(data_block, expected_codewords):
-        # test expected codewords
-        for uint in data_block.get_alphabet():
-            encoded_bitarray = encoder.encode_symbol(uint)
-            assert encoded_bitarray == expected_codewords[uint], "Encoded bitarray does not match expected codeword"
-
-    # run tests
-    test_end_to_end(data_block)
-    test_encoded_symbol(data_block, expected_codewords)
+    for uint in data_block.get_alphabet():
+        assert expected_codewords[uint] is not None, "Provide expected codeword for each unique symbol"
+        encoded_bitarray = encoder.encode_symbol(uint)
+        assert encoded_bitarray == expected_codewords[uint], "Encoded bitarray does not match expected codeword"
