@@ -2,16 +2,16 @@
 
 We implement a very simple universal uint encoder.
 Sample encodings:
-    0 -> 100
-    1 -> 101
-    2 -> 11010
-    3 -> 11011
-    4 -> 1110100 (1110 + 100)
+    0 -> 00
+    1 -> 01
+    2 -> 1010
+    3 -> 1011
+    4 -> 110100 (110 + 100)
     ...
 
 Encoding: 
 1. for encoding x -> get binary code of x, lets call it B[x] (For example: 5 = 101)
-2. Encode len(B[x]) as unary ( eg: 4 -> 1110). 
+2. Encode len(B[x]) as unary (eg: 1->0, 2->10, 3 -> 110).
 3. The final encode is Unary(len(B[x])) + B[x]
 
 The decoding is straightforward, as the unary code indicates how many bits further to read and decode
@@ -26,11 +26,11 @@ from utils.test_utils import are_blocks_equal
 class UniversalUintEncoder(DataEncoder):
     """Universal uint encoding:
 
-    0 -> 100
-    1 -> 101
-    2 -> 11010
-    3 -> 11011
-    4 -> 1110100 (1110 + 100)
+    0 -> 00
+    1 -> 01
+    2 -> 1010
+    3 -> 1011
+    4 -> 110100 (110 + 100)
     ...
 
     NOTE: not the most efficient but still "universal"
@@ -41,7 +41,7 @@ class UniversalUintEncoder(DataEncoder):
         assert x >= 0
 
         symbol_bitarray = uint_to_bitarray(x)
-        len_bitarray = BitArray(len(symbol_bitarray) * "1" + "0")
+        len_bitarray = BitArray((len(symbol_bitarray) - 1) * "1" + "0")
         return len_bitarray + symbol_bitarray
 
     def encode_block(self, data_block: DataBlock) -> BitArray:
@@ -59,15 +59,15 @@ class UniversalUintEncoder(DataEncoder):
             encoded_bitarray += self.encode_symbol(s)
         return encoded_bitarray
 
+
 class UniversalUintDecoder(DataDecoder):
     """Universal uint Decoder
-    0 -> 100
-    1 -> 101
-    2 -> 11010
-    3 -> 11011
-    4 -> 1110100 (1110 + 100)
+    00 -> 0
+    01 -> 1
+    1010 -> 2
+    1011 -> 3
+    110100 (110 + 100) -> 4
     ...
-
     """
 
     def decode_symbol(self, encoded_bitarray):
@@ -81,11 +81,11 @@ class UniversalUintDecoder(DataDecoder):
             num_bits_consumed += 1
             if bit == 0:
                 break
-        num_ones = num_bits_consumed - 1
+        num_ones = num_bits_consumed
 
         # decode the symbol
         symbol = bitarray_to_uint(
-            encoded_bitarray[num_bits_consumed : num_bits_consumed + num_ones]
+            encoded_bitarray[num_bits_consumed: num_bits_consumed + num_ones]
         )
         num_bits_consumed += num_ones
 
@@ -110,9 +110,10 @@ class UniversalUintDecoder(DataDecoder):
 
         return DataBlock(data_list), num_bits_consumed
 
+
 def test_universal_uint_encode_decode():
     """
-    Test if the encoding decoding are lossless
+    Test if the encoding decoding are lossless, and we can recover the expected bitstream
     """
     encoder = UniversalUintEncoder()
     decoder = UniversalUintDecoder()
@@ -121,12 +122,29 @@ def test_universal_uint_encode_decode():
     data_list = [0, 0, 1, 3, 4, 100]
     data_block = DataBlock(data_list)
 
-    # test encode
-    encoded_bitarray = encoder.encode_block(data_block)
+    expected_codewords = {0: BitArray("00"),
+                          1: BitArray("01"),
+                          3: BitArray("1011"),
+                          4: BitArray("110100"),
+                          100: BitArray("11111101100100")}
 
-    # test decode
-    decoded_block, num_bits_consumed = decoder.decode_block(encoded_bitarray)
-    assert num_bits_consumed == len(encoded_bitarray)
+    def test_end_to_end(data_block):
+        # test encode
+        encoded_bitarray = encoder.encode_block(data_block)
 
-    # compare blocks, and check if the encoding is lossless
-    assert are_blocks_equal(data_block, decoded_block)
+        # test decode
+        decoded_block, num_bits_consumed = decoder.decode_block(encoded_bitarray)
+        assert num_bits_consumed == len(encoded_bitarray), "Decoder did not consume all bits"
+
+        # compare blocks, and check if the encoding is lossless
+        assert are_blocks_equal(data_block, decoded_block), "Decoded block does not match original block"
+
+    def test_encoded_symbol(data_block, expected_codewords):
+        # test expected codewords
+        for uint in data_block.get_alphabet():
+            encoded_bitarray = encoder.encode_symbol(uint)
+            assert encoded_bitarray == expected_codewords[uint], "Encoded bitarray does not match expected codeword"
+
+    # run tests
+    test_end_to_end(data_block)
+    test_encoded_symbol(data_block, expected_codewords)
