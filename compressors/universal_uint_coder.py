@@ -142,7 +142,7 @@ def test_universal_uint_encode():
     encoder = UniversalUintEncoder()
 
     # create some sample data
-    data_list = [0, 0, 1, 3, 4, 100]
+    data_list = [0, 1, 3, 4, 100]
     data_block = DataBlock(data_list)
 
     # ensure you provide expected codewords for each unique symbol in data_list
@@ -152,7 +152,7 @@ def test_universal_uint_encode():
                           4: BitArray("110100"),
                           100: BitArray("11111101100100")}
 
-    for uint in data_block.get_alphabet():
+    for uint in data_list:
         assert expected_codewords[uint] is not None, "Provide expected codeword for each unique symbol"
         encoded_bitarray = encoder.encode_symbol(uint)
         assert encoded_bitarray == expected_codewords[uint], "Encoded bitarray does not match expected codeword"
