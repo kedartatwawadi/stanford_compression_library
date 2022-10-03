@@ -33,7 +33,7 @@ class ShannonFanoEliasEncoder(PrefixFreeEncoder):
         F = cum_prob + prob / 2
 
         # compute encode length
-        encode_len = math.ceil(self.prob_dist.log_probability(symbol)) + 1
+        encode_len = math.ceil(self.prob_dist.neg_log_probability(symbol)) + 1
 
         # the encode is the binarry representation of the mid-point of the range
         _, code = float_to_bitarrays(F, encode_len)
@@ -73,7 +73,7 @@ class ShannonFanoEliasDecoder(PrefixFreeDecoder):
 
                 # FIXME: The recomputing of num_bits_consumed seems necessary, as there is a possibility
                 # that the decoder is able to infer the correct symbol by reading less than ceil(-log(prob)) + 1 bits
-                num_bits_consumed = math.ceil(self.prob_dist.log_probability(decoded_symbol)) + 1
+                num_bits_consumed = math.ceil(self.prob_dist.neg_log_probability(decoded_symbol)) + 1
                 return decoded_symbol, num_bits_consumed
 
 
