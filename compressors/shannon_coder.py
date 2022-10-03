@@ -63,7 +63,7 @@ class ShannonEncoder(PrefixFreeEncoder):
         codebook = {}
         for s in sorted_prob_dist.prob_dict:
             # get the encode length for the symbol s
-            encode_len = math.ceil(sorted_prob_dist.log_probability(s))
+            encode_len = math.ceil(sorted_prob_dist.neg_log_probability(s))
 
             # get the code as a truncated floating point representation
             _, code = float_to_bitarrays(cum_prob_dict[s], encode_len)
