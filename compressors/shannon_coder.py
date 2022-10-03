@@ -90,7 +90,7 @@ class ShannonDecoder(PrefixFreeDecoder):
         return decoded_symbol, num_bits_consumed
 
 
-def test_shannon_coding_end_to_end():
+def test_shannon_coding():
     NUM_SAMPLES = 2000
     distributions = [
         ProbabilityDist({"A": 0.5, "B": 0.5}),
