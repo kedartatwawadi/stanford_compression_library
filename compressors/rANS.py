@@ -65,7 +65,7 @@ from typing import Tuple, Any, List
 from core.data_encoder_decoder import DataDecoder, DataEncoder
 from utils.bitarray_utils import BitArray, get_bit_width, uint_to_bitarray, bitarray_to_uint
 from core.data_block import DataBlock
-from core.prob_dist import Frequencies, get_mean_log_prob
+from core.prob_dist import Frequencies, get_avg_neg_log_prob
 from utils.test_utils import get_random_data_block, try_lossless_compression
 from utils.misc_utils import cache
 
@@ -380,7 +380,7 @@ def test_rANS_coding():
         # generate random data
         prob_dist = freq.get_prob_dist()
         data_block = get_random_data_block(prob_dist, DATA_SIZE, seed=SEED)
-        avg_log_prob = get_mean_log_prob(prob_dist, data_block)
+        avg_log_prob = get_avg_neg_log_prob(prob_dist, data_block)
 
         # create encoder decoder
         encoder = rANSEncoder(rans_params)

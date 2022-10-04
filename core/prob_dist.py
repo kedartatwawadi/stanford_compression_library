@@ -141,7 +141,7 @@ class ProbabilityDistTest(unittest.TestCase):
         assert sorted_PD.prob_dict == dist
 
 
-def get_mean_log_prob(prob_dist: ProbabilityDist, data_block) -> float:
+def get_avg_neg_log_prob(prob_dist: ProbabilityDist, data_block) -> float:
     """computes the average neg_log_probability of the input data_block given the probability distribution
     prob_dist. This roughly is equal to what an optimal compressor designed for distribution
     prob_dist can achieve for the input data_block
