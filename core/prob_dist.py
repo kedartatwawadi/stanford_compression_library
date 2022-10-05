@@ -71,7 +71,7 @@ class ProbabilityDist:
         return self.prob_dict[symbol]
 
     @cache
-    def log_probability(self, symbol):
+    def neg_log_probability(self, symbol):
         return -np.log2(self.probability(symbol))
 
     @staticmethod
@@ -141,20 +141,20 @@ class ProbabilityDistTest(unittest.TestCase):
         assert sorted_PD.prob_dict == dist
 
 
-def get_mean_log_prob(prob_dist: ProbabilityDist, data_block) -> float:
-    """computes the average log_probability of the input data_block given the probability distribution
+def get_avg_neg_log_prob(prob_dist: ProbabilityDist, data_block) -> float:
+    """computes the average neg_log_probability of the input data_block given the probability distribution
     prob_dist. This roughly is equal to what an optimal compressor designed for distribution
     prob_dist can achieve for the input data_block
 
     Args:
-        prob_dist (ProbabilityDist): specified probability distribution used to compute log_probability
+        prob_dist (ProbabilityDist): specified probability distribution used to compute neg_log_probability
         data_block (DataBlock): input for which avg log probability needs to be computed
     """
 
     # get avg log probability for the input
     log_prob = 0
     for s in data_block.data_list:
-        log_prob += prob_dist.log_probability(s)
+        log_prob += prob_dist.neg_log_probability(s)
     avg_log_prob = log_prob / data_block.size
     return avg_log_prob
 

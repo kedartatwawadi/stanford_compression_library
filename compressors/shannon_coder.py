@@ -5,8 +5,29 @@ https://en.wikipedia.org/w/index.php?title=Shannon–Fano_coding&oldid=107652002
 
 This document uses cumulative probability based method for shannon coding as described in the wiki article above.
 
-More information on course wiki on why Shannon Code works:
-https://github.com/kedartatwawadi/stanford_compression_library/wiki/Shannon-Codes
+The Shannon code construction is as follows:
+
+a. Given the probabilities $p_1, p_2, \ldots, p_k$, sort them in the descending order. WLOG let $$ p_1 \geq p_2 \geq \ldots \geq p_k$$
+b. compute the cumulative probabilities $c_1, c_2, \ldots, c_k$ such that:
+   $$ \begin{aligned}
+   c_1 &= 0 \\
+   c_2 &= p_1 \\
+   c_3 &= p_1 + p_2 \\
+   &\ldots \\
+   c_k &= p_1 + p_2 + \ldots + p_{k-1}
+   \end{aligned} $$
+c. Note that we can represent any real number between $[0,1)$ in binary as $b0.b_1 b_2 b_3 \ldots $, where $b_1, b_2,
+   b_3, \ldots$ are some bits. For example:
+   $$ \begin{aligned}
+   0.5 &= b0.1 \\
+   0.25 &= b0.01 \\
+   0.3 &= b0.010101...
+   \end{aligned} $$ This is very similar to how we represent real numbers using "decimal" floating point value, but it
+   is using "binary" floating point values (This is actually similar to how computers represent floating point numbers
+   internally!)
+d. If the "binary" floating point representation is clear, then the Shannon code for symbol $r$ of codelength $ l_r =
+   \left\lceil \log_2 \frac{1}{p_r} \right\rceil $ can be obtained by simply truncating the binary floating point
+   representation of $c_r$
 """
 from typing import Any, Tuple
 from utils.bitarray_utils import float_to_bitarrays, BitArray
@@ -15,65 +36,39 @@ from compressors.prefix_free_compressors import (
     PrefixFreeEncoder,
     PrefixFreeDecoder,
     PrefixFreeTree,
-    BinaryNode,
 )
 from core.prob_dist import ProbabilityDist
 import math
-
-
-class ShannonTree(PrefixFreeTree):
-    """
-    Generates Codewords based on Shannon Coding. Allows generating PrefixFreeTree from the obtained codewords.
-    """
-
-    def __init__(self, prob_dist: ProbabilityDist):
-        self.prob_dist = prob_dist
-        # sort the probability distribution in decreasing probability and get cumulative probability which will be
-        # used for encoding
-        self.sorted_prob_dist = ProbabilityDist.get_sorted_prob_dist(
-            prob_dist.prob_dict, descending=True
-        )
-        self.cum_prob_dict = self.sorted_prob_dist.cumulative_prob_dict
-        # construct the tree and set the root_node of PrefixFreeTree base class
-        super().__init__(root_node=self.build_shannon_tree())
-
-    def _encode_symbol(self, symbol) -> BitArray:
-        # compute the mid-point corresponding to the range of the given symbol
-        cum_prob = self.cum_prob_dict[symbol]
-
-        # compute encode length
-        encode_len = math.ceil(self.prob_dist.log_probability(symbol))
-
-        # the encode is the binary representation of the cumulative probability in ascending order,
-        _, code = float_to_bitarrays(cum_prob, encode_len)
-        return code
-
-    def _generate_codewords(self):
-        codes = {}
-        for s in self.sorted_prob_dist.prob_dict:
-            code = self._encode_symbol(s)
-            codes[s] = code
-        return codes
-
-    def build_shannon_tree(self):
-        """
-        For all symbols in the alphabet, get it's code, and add it to the PrefixFreeTree.
-        """
-        codes = self._generate_codewords()
-        root_node = self._build_prefix_free_tree_from_code(codes, root_node=BinaryNode(id=None))
-        return root_node
 
 
 class ShannonEncoder(PrefixFreeEncoder):
     """
     PrefixFreeEncoder already has a encode_block function to encode the symbols once we define a encode_symbol function
     for the particular compressor.
-    PrefixFreeTree provides get_encoding_table given a PrefixFreeTree
     """
 
     def __init__(self, prob_dist: ProbabilityDist):
-        tree = ShannonTree(prob_dist)
-        self.encoding_table = tree.get_encoding_table()
+        self.prob_dist = prob_dist
+        self.encoding_table = ShannonEncoder.generate_shannon_codebook(self.prob_dist)
+
+    @classmethod
+    def generate_shannon_codebook(cls, prob_dist):
+        # sort the probability distribution in decreasing probability and get cumulative probability which will be
+        # used for encoding
+        sorted_prob_dist = ProbabilityDist.get_sorted_prob_dist(
+            prob_dist.prob_dict, descending=True
+        )
+        cum_prob_dict = sorted_prob_dist.cumulative_prob_dict
+
+        codebook = {}
+        for s in sorted_prob_dist.prob_dict:
+            # get the encode length for the symbol s
+            encode_len = math.ceil(sorted_prob_dist.neg_log_probability(s))
+
+            # get the code as a truncated floating point representation
+            _, code = float_to_bitarrays(cum_prob_dict[s], encode_len)
+            codebook[s] = code
+        return codebook
 
     def encode_symbol(self, s):
         return self.encoding_table[s]
@@ -87,7 +82,8 @@ class ShannonDecoder(PrefixFreeDecoder):
     """
 
     def __init__(self, prob_dist: ProbabilityDist):
-        self.tree = ShannonTree(prob_dist)
+        encoding_table = ShannonEncoder.generate_shannon_codebook(prob_dist)
+        self.tree = PrefixFreeTree.build_prefix_free_tree_from_code(encoding_table)
 
     def decode_symbol(self, encoded_bitarray: BitArray) -> Tuple[Any, BitArray]:
         decoded_symbol, num_bits_consumed = self.tree.decode_symbol(encoded_bitarray)

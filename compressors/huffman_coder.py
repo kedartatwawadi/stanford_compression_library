@@ -3,7 +3,7 @@ from typing import Any, Tuple
 import heapq
 from functools import total_ordering
 from compressors.prefix_free_compressors import PrefixFreeTree, PrefixFreeEncoder, PrefixFreeDecoder
-from core.prob_dist import ProbabilityDist, get_mean_log_prob
+from core.prob_dist import ProbabilityDist, get_avg_neg_log_prob
 import numpy as np
 from utils.bitarray_utils import BitArray
 from utils.test_utils import get_random_data_block, try_lossless_compression
@@ -140,7 +140,7 @@ def test_huffman_coding_dyadic():
         avg_bits = output_len / NUM_SAMPLES
 
         # get optimal codelen
-        optimal_codelen = get_mean_log_prob(prob_dist, data_block)
+        optimal_codelen = get_avg_neg_log_prob(prob_dist, data_block)
         assert is_lossless, "Lossless compression failed"
 
         np.testing.assert_almost_equal(

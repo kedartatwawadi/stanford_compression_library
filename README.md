@@ -12,6 +12,7 @@ Here is a list of algorithms implemented.
 - [Universal integer coder](compressors/universal_integer_coder.py)
 - [rANS](compressors/rANS.py)
 - [tANS](compressors/tANS.py)
+- [Typical set coder](compressors/typical_set_coder.py)
 - [zlib(external)](external_compressors/zlib_external.py)
 
 
