@@ -1,7 +1,6 @@
 attrs==21.2.0
 bitarray==2.3.6
 black==21.9b0
-certifi @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_ccvvj6f93d/croots/recipe/certifi_1663615678215/work/certifi
 click==8.0.1
 contourpy==1.0.5
 cycler==0.11.0
