@@ -119,10 +119,10 @@ class HuffmanEmpiricalDecoder(DataDecoder):
 
 
 def test_encode_decode_prob_dist():
-    prob_dist = {0: 0.44156346, 1: 0.23534656, 3: 0.0, 255: 0.32308998}
+    prob_dist = ProbabilityDist({0: 0.44156346, 1: 0.23534656, 255: 0.32308998})
     encoded_bits = encode_prob_dist(prob_dist)
     decoded_prob_dist, num_bits_read = decode_prob_dist(encoded_bits)
-    assert decoded_prob_dist == prob_dist, "decoded prob dist does not match original"
+    assert decoded_prob_dist.prob_dict == prob_dist.prob_dict, "decoded prob dist does not match original"
     assert num_bits_read == len(encoded_bits), "All encoded bits were not consumed by the decoder"
 
 
