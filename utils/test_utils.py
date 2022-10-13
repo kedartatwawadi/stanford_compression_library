@@ -7,7 +7,7 @@ from typing import Tuple
 from core.data_block import DataBlock
 from core.data_stream import TextFileDataStream, Uint8FileDataStream
 from core.data_encoder_decoder import DataDecoder, DataEncoder
-from core.prob_dist import Frequencies, ProbabilityDist, get_mean_log_prob
+from core.prob_dist import Frequencies, ProbabilityDist, get_avg_neg_log_prob
 from utils.bitarray_utils import BitArray, get_random_bitarray
 import tempfile
 import os
@@ -152,7 +152,7 @@ def lossless_entropy_coder_test(encoder: DataEncoder, decoder: DataDecoder, freq
     # generate random data
     prob_dist = freq.get_prob_dist()
     data_block = get_random_data_block(prob_dist, data_size, seed=seed)
-    avg_log_prob = get_mean_log_prob(prob_dist, data_block)
+    avg_log_prob = get_avg_neg_log_prob(prob_dist, data_block)
 
     # check if encoding/decoding is lossless
     is_lossless, encode_len, _ = try_lossless_compression(
