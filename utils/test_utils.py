@@ -7,7 +7,7 @@ from typing import Tuple
 from core.data_block import DataBlock
 from core.data_stream import TextFileDataStream, Uint8FileDataStream
 from core.data_encoder_decoder import DataDecoder, DataEncoder
-from core.prob_dist import ProbabilityDist
+from core.prob_dist import Frequencies, ProbabilityDist, get_avg_neg_log_prob
 from utils.bitarray_utils import BitArray, get_random_bitarray
 import tempfile
 import os
@@ -75,6 +75,7 @@ def try_lossless_compression(
     encoder: DataEncoder,
     decoder: DataDecoder,
     add_extra_bits_to_encoder_output: bool = False,
+    verbose: bool = False
 ) -> Tuple[bool, int, BitArray]:
     """Encodes the data_block using data_compressor and returns True if the compression was lossless
 
@@ -129,3 +130,44 @@ def try_file_lossless_compression(
 
         # check if the reconst file and input match
         return filecmp.cmp(input_file_path, reconst_file_path)
+
+    """
+    """
+def lossless_entropy_coder_test(encoder: DataEncoder, decoder: DataDecoder, freq: Frequencies, data_size: int, encoding_optimality_precision: bool = None, seed: int =0):
+    """Checks if the given entropy coder performs lossless compression and optionally if it is
+       "optimal". 
+       
+       NOTE: the notion of optimality is w.r.t to the avg_log_probability of the randomly
+       generated input.
+       Example usage is for compressors such as Huffman, AEC, rANS etc. 
+
+    Args:
+        encoder (DataEncoder): Encoder to test with
+        decoder (DataDecoder): Decoder to test lossless compression with 
+        freq (Frequencies): freq distribution used to generate random i.i.d data
+        data_size (int): the size of the data to generate
+        encoding_optimality_precision (bool, optional): Optionally (if not None) check if the average log_prob is close to the avg_codelen. Defaults to None.
+        seed (int, optional): _description_. seed to generate random data. Defaults to 0.
+    """
+    # generate random data
+    prob_dist = freq.get_prob_dist()
+    data_block = get_random_data_block(prob_dist, data_size, seed=seed)
+    avg_log_prob = get_avg_neg_log_prob(prob_dist, data_block)
+
+    # check if encoding/decoding is lossless
+    is_lossless, encode_len, _ = try_lossless_compression(
+        data_block, encoder, decoder, add_extra_bits_to_encoder_output=True
+    )
+
+    # avg codelen ignoring the bits used to signal num data elements
+    avg_codelen = (encode_len) / data_block.size
+    print(
+        f" avg_log_prob={avg_log_prob:.3f}, avg_codelen: {avg_codelen:.3f}"
+    )
+
+    # check whether arithmetic coding results are close to optimal codelen
+    if encoding_optimality_precision is not None:
+        err_msg = f"avg_codelen={avg_codelen} is not {encoding_optimality_precision} close to avg_log_prob={avg_log_prob}"
+        assert np.abs(avg_codelen - avg_log_prob) < encoding_optimality_precision, err_msg
+
+    assert is_lossless
