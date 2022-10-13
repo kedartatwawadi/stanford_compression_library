@@ -236,12 +236,26 @@ class TextFileDataStream(FileDataStream):
 
 
 class Uint8FileDataStream(FileDataStream):
-    """reads Uint8 numbers written to a file
+    """reads Uint8 numbers written to a file"""
 
-    FIXME: need to immplement
-    """
+    def get_symbol(self):
+        """get the next byte from the text file as 8-bit unsigned int
 
-    pass
+        Returns:
+            (int, None): the next byte, None if we reached the end of stream
+        """
+        s = self.file_obj.read(1)
+        if not s:
+            return None
+        # byteorder doesn't really matter because we just have a single byte
+        int_val = int.from_bytes(s, byteorder="big")
+        assert 0 <= int_val <= 255
+        return int_val
+
+    def write_symbol(self, s):
+        """write an 8-bit unsigned int to the text file"""
+        assert 0 <= s <= 255
+        self.file_obj.write(bytes([s]))
 
 
 #################################
@@ -300,3 +314,31 @@ def test_file_data_stream():
             fds.seek(4)
             block = fds.get_block(block_size=4)
             assert block.data_list[0] == "_"
+
+
+def test_uint8_file_data_stream():
+    """function to test file data stream"""
+
+    # create a temporary file
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        temp_file_path = os.path.join(tmpdirname, "tmp_file.txt")
+
+        # write data to the file
+        data_gt = DataBlock([5, 2, 255, 0, 43, 34])
+        with Uint8FileDataStream(temp_file_path, "wb") as fds:
+            fds.write_block(data_gt)
+
+            # try seeking to correct symbol at pos 4
+            fds.seek(4)
+            fds.write_symbol(99)
+
+        # read data from the file
+        with Uint8FileDataStream(temp_file_path, "rb") as fds:
+            block = fds.get_block(block_size=4)
+            assert block.size == 4
+            assert block.data_list == [5, 2, 255, 0]
+
+            # try seeking and reading
+            fds.seek(4)
+            block = fds.get_block(block_size=4)
+            assert block.data_list == [99, 34]
