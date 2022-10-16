@@ -190,7 +190,7 @@ class PrefixFreeTree:
             tree: the PrefixFreeTree
         """
 
-        def _add_tree_nodes_from_code(tree, symbol, code):
+        def _add_tree_nodes_from_code(tree: PrefixFreeTree, symbol: Any, code: BitArray):
             """function to add nodes to a prefix-free tree based on a codeword.
             Args:
                 symbol: current symbol
@@ -199,6 +199,10 @@ class PrefixFreeTree:
             """
             # initialize the curr_node
             curr_node = tree.root_node
+            
+            # NOTE -> checking if code is a BitArray 
+            # (if it is a string, the if/else conditioning don't work as expected)
+            assert isinstance(code, BitArray), "code should be a bitarray"
             for bit in code:
                 if bit:
                     # add a new right node in case it doesn't exist

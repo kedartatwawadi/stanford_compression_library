@@ -89,6 +89,16 @@ def bitarrays_to_float(uint_x_bitarray: BitArray, frac_x_bitarray: BitArray) -> 
 
 ############################## TESTS ####################################
 
+def test_basic_bitarray_operations():
+    # testing if iterating through bitarray works
+    # and if/else condition work on a bit
+    code = BitArray("01011")
+    for bit in code:
+        if bit:
+            assert bit == 1
+        else:
+            assert bit == 0
+
 
 def test_get_bit_width():
     """check if get_bit_width returns the correct value for different inputs"""
@@ -125,3 +135,4 @@ def test_float_to_bitarrays():
     assert len(frac_x_bitarray) == max_precision
     x_hat = bitarrays_to_float(uint_x_bitarray, frac_x_bitarray)
     np.testing.assert_almost_equal(x, x_hat)
+
