@@ -13,7 +13,8 @@ Here is a list of algorithms implemented.
 - [rANS](compressors/rANS.py)
 - [tANS](compressors/tANS.py)
 - [Typical set coder](compressors/typical_set_coder.py)
-- [zlib(external)](external_compressors/zlib_external.py)
+- [zlib (external)](external_compressors/zlib_external.py)
+- [zstd (external)](external_compressors/zstd_external.py)
 - [Arithmetic coder](compressors/arithmetic_coding.py)
 - [Range coder](compressors/range_coder.py)
 
