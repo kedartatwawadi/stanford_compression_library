@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 import numpy as np
-from typing import Tuple, Any
+from typing import List, Tuple, Any
 from core.data_encoder_decoder import DataDecoder, DataEncoder
 from utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
 from core.data_block import DataBlock
 from core.prob_dist import Frequencies
-from utils.test_utils import lossless_entropy_coder_test
+from utils.test_utils import lossless_entropy_coder_test, try_lossless_compression
 import abc
 import copy
 
@@ -90,6 +90,70 @@ class AdaptiveIIDFreqModel(FreqModelBase):
                 self.freqs_current.freq_dict[s] = max(f // 2, 1)
 
 
+class AdaptiveOrderKFreqModel(FreqModelBase):
+    """kth order adaptive frequency model.
+
+    Parameters:
+        alphabet: the alphabet (provided as a list)
+        k:        the order, k >= 0 (kth order means we use past k to predict next, k=0 means iid)
+
+    """
+
+    def __init__(self, alphabet: List, k: int, max_allowed_total_freq):
+        assert k >= 0
+        self.k = k
+        # map alphabet to index from 0 to len(alphabet) so we can use with numpy array
+        self.alphabet_to_idx = {alphabet[i]: i for i in range(len(alphabet))}
+        # keep freq/counts of (k+1) tuples, initialize with all 1s (uniform)
+        self.freqs_kplus1_tuple = np.ones([len(alphabet)] * (k + 1), dtype=int)
+        self.max_allowed_total_freq = max_allowed_total_freq
+        # keep track of past k symbols (i.e., alphabet index) seen. Initialize with all 0s.
+        self.past_k = [0] * k
+
+        self.alphabet = alphabet
+
+    @property
+    def freqs_current(self):
+        """Calculate the current freqs. For order 0, we just give back the freqs. For k > 0,
+        we use the past k symbols to pick out the corresponding frequencies for the (k+1)th.
+        """
+        if self.k > 0:
+            # convert self.past_k to enable indexing
+            # use np.ravel to convert to flat array
+            freqs_given_context = np.ravel(self.freqs_kplus1_tuple[tuple(self.past_k)])
+        else:
+            freqs_given_context = self.freqs_kplus1_tuple
+        # convert from list of frequencies to Frequencies object
+        return Frequencies(dict(zip(self.alphabet, freqs_given_context)))
+
+    def update_model(self, s):
+        """function to update the probability model. This basically involves update the count
+        for the most recently seen (k+1) tuple.
+
+        - Arithmetic coder requires the `total_freq` to remain below a certain value
+        If the total_freq goes beyond, then we divide all freq by 2 (keeping minimum freq to 1)
+
+        Args:
+            s (Symbol): the next symbol
+        """
+        # updates the model based on the new symbol
+        # index self.freqs_kplus1_tuple using (past_k, s) [need to map s to index]
+        self.freqs_kplus1_tuple[(*self.past_k, self.alphabet_to_idx[s])] += 1
+
+        # if k > 0, update past_k list
+        if self.k > 0:
+            self.past_k = self.past_k[1:] + [self.alphabet_to_idx[s]]
+
+        # if total_freq goes beyond a certain value, divide by 2
+        # NOTE: there can be different strategies here
+        # NOTE: we actually only need the frequencies for each (k-1) context to
+        # sum to less than max_allowed_total_freq, here we are a bit more aggressive in terms
+        # of dividing by 2 even when the total sum of all k-tuple counts exceeds
+        # max_allowed_total_freq
+        if np.sum(self.freqs_kplus1_tuple) >= self.max_allowed_total_freq:
+            self.freqs_kplus1_tuple = np.max(self.freqs_kplus1_tuple // 2, 1)
+
+
 @dataclass
 class AECParams:
     """AEC hyper parameters
@@ -122,12 +186,18 @@ class ArithmeticEncoder(DataEncoder):
         https://web.stanford.edu/class/ee398a/handouts/papers/WittenACM87ArithmCoding.pdf
     """
 
-    def __init__(self, params: AECParams, freq_base: Frequencies, freq_model_cls: FreqModelBase):
+    def __init__(
+        self, params: AECParams, freq_model_params: Frequencies, freq_model_cls: FreqModelBase
+    ):
         self.params = params
 
         # define the probability model used by the AEC
         # the model can get updated when we call update_model(s) after every step
-        self.freq_model = freq_model_cls(freq_base, params.MAX_ALLOWED_TOTAL_FREQ)
+        if isinstance(freq_model_params, tuple):
+            # if freq_model_params is a tuple, we unpack the parameters
+            self.freq_model = freq_model_cls(*freq_model_params, params.MAX_ALLOWED_TOTAL_FREQ)
+        else:
+            self.freq_model = freq_model_cls(freq_model_params, params.MAX_ALLOWED_TOTAL_FREQ)
 
     @classmethod
     def shrink_range(cls, freqs: Frequencies, s: Any, low: int, high: int) -> Tuple[int, int]:
@@ -244,9 +314,15 @@ class ArithmeticDecoder(DataDecoder):
     - Charles Bloom's blog: https://www.cbloom.com/algs/statisti.html#A5
     """
 
-    def __init__(self, params: AECParams, freq_base: Frequencies, freq_model_cls: FreqModelBase):
+    def __init__(
+        self, params: AECParams, freq_model_params: Frequencies, freq_model_cls: FreqModelBase
+    ):
         self.params = params
-        self.freq_model = freq_model_cls(freq_base, params.MAX_ALLOWED_TOTAL_FREQ)
+        if isinstance(freq_model_params, tuple):
+            # if freq_model_params is a tuple, we unpack the parameters
+            self.freq_model = freq_model_cls(*freq_model_params, params.MAX_ALLOWED_TOTAL_FREQ)
+        else:
+            self.freq_model = freq_model_cls(freq_model_params, params.MAX_ALLOWED_TOTAL_FREQ)
 
     def decode_step_core(self, low: int, high: int, state: int, freqs: Frequencies):
         """Core Arithmetic decoding function
@@ -435,3 +511,96 @@ def test_adaptive_arithmetic_coding():
         lossless_entropy_coder_test(
             encoder, decoder, freq, DATA_SIZE, encoding_optimality_precision=1e-1, seed=0
         )
+
+
+def _generate_2nd_order_markov(num_samples: int, seed: int = 0):
+    """generate a 2nd order Markov distribution for testing.
+
+    Defined on alphabet {0,1,2}, the distribution is defined like
+    X_n = X_{n-1} + X_{n-2} + Ber(1/2) mod 3
+
+    The entropy rate is 1 bit/symbol.
+
+    The stationary distribution is the uniform distribution.
+    """
+    assert num_samples >= 3
+    rng = np.random.default_rng(seed)
+    random_bits = rng.choice(2, size=num_samples - 2)
+    markov_samples = np.zeros(num_samples, dtype=np.uint8)
+    markov_samples[0] = rng.choice(3)
+    markov_samples[1] = rng.choice(3)
+    for i in range(2, num_samples):
+        markov_samples[i] = (markov_samples[i - 1] + markov_samples[i - 2] + random_bits[i - 2]) % 3
+    return DataBlock(markov_samples)
+
+
+def _test_adaptive_order_k(
+    encoder: DataEncoder,
+    decoder: DataDecoder,
+    data_block: DataBlock,
+    expected_bitrate: float,
+    encoding_optimality_precision: float,
+):
+    """Checks if the adaptive order k arithmetic coding performs lossless compression and if the performance is
+    close to the expectation.
+
+    Args:
+        encoder (DataEncoder): Encoder to test with
+        decoder (DataDecoder): Decoder to test lossless compression with
+        data_block (DataBlock): data to use for testing
+        expected_bitrate (float): the theoretically expected bitrate
+        encoding_optimality_precision (float): check that the average expected_bitrate is close to the avg_codelen
+    """
+    # check if encoding/decoding is lossless
+    is_lossless, encode_len, _ = try_lossless_compression(
+        data_block, encoder, decoder, add_extra_bits_to_encoder_output=True
+    )
+
+    # avg codelen ignoring the bits used to signal num data elements
+    avg_codelen = (encode_len) / data_block.size
+    print(f" expected_bitrate={expected_bitrate:.3f}, avg_codelen: {avg_codelen:.3f}")
+
+    # check whether arithmetic coding results are close to expected codelen
+    err_msg = f"avg_codelen={avg_codelen} is not {encoding_optimality_precision} close to expected_bitrate={expected_bitrate}"
+    assert np.abs(avg_codelen - expected_bitrate) < encoding_optimality_precision, err_msg
+
+    assert is_lossless
+
+
+def test_adaptive_order_k_arithmetic_coding():
+    """
+    Test AEC coding on 2nd order Markov
+    - Check if encoding/decodng is lossless
+    - Check if the compression is close to expected for k = 0, 1, 2, 3
+    - Verify that 0th order matches the adaptive IID exactly.
+    """
+
+    DATA_SIZE = 10000
+
+    data_block = _generate_2nd_order_markov(DATA_SIZE)
+
+    # for the source as defined in _generate_2nd_order_markov, the
+    # 0th and 1st order entropy is log_2(3) [uniform] and beyond that it is 1.
+
+    print()
+    for (model, model_params, expected_bitrate) in [
+        (AdaptiveOrderKFreqModel, ([0, 1, 2], 0), np.log2(3)),
+        (AdaptiveOrderKFreqModel, ([0, 1, 2], 1), np.log2(3)),
+        (AdaptiveOrderKFreqModel, ([0, 1, 2], 2), 1),
+        (AdaptiveOrderKFreqModel, ([0, 1, 2], 3), 1),
+    ]:
+        print("k:", model_params[1], end=",")
+        # create encoder/decoder
+        encoder = ArithmeticEncoder(AECParams(), model_params, model)
+        decoder = ArithmeticDecoder(AECParams(), model_params, model)
+        _test_adaptive_order_k(encoder, decoder, data_block, expected_bitrate, 0.1)
+
+    # verify that the 0th order exactly matches the AdaptiveIIDFreqModel
+    encoder1 = ArithmeticEncoder(AECParams(), ([0, 1, 2], 0), AdaptiveOrderKFreqModel)
+
+    # define initial distribution to be uniform
+    uniform_dist = Frequencies({0: 1, 1: 1, 2: 1})
+    # create encoder/decoder
+    encoder2 = ArithmeticEncoder(AECParams(), uniform_dist, AdaptiveIIDFreqModel)
+
+    assert encoder1.encode_block(data_block) == encoder2.encode_block(data_block)
