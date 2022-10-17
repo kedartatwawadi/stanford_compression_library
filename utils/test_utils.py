@@ -102,7 +102,7 @@ def try_lossless_compression(
 
     # test decode
     decoded_block, num_bits_consumed = decoder.decode_block(encoded_bitarray_extra)
-    assert num_bits_consumed == len(encoded_bitarray)
+    assert num_bits_consumed == len(encoded_bitarray), "Decoder did not consume all bits"
 
     # compare blocks
     return are_blocks_equal(data_block, decoded_block), num_bits_consumed, encoded_bitarray
