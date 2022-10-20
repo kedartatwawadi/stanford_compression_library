@@ -171,3 +171,34 @@ def lossless_entropy_coder_test(encoder: DataEncoder, decoder: DataDecoder, freq
         assert np.abs(avg_codelen - avg_log_prob) < encoding_optimality_precision, err_msg
 
     assert is_lossless
+
+def lossless_test_against_expected_bitrate(
+    encoder: DataEncoder,
+    decoder: DataDecoder,
+    data_block: DataBlock,
+    expected_bitrate: float,
+    encoding_optimality_precision: float,
+):
+    """Checks encoder/decoder for losslessness and also against expected bitrate.
+
+    Args:
+        encoder (DataEncoder): Encoder to test with
+        decoder (DataDecoder): Decoder to test lossless compression with
+        data_block (DataBlock): data to use for testing
+        expected_bitrate (float): the theoretically expected bitrate
+        encoding_optimality_precision (float): check that the average expected_bitrate is close to the avg_codelen
+    """
+    # check if encoding/decoding is lossless
+    is_lossless, encode_len, _ = try_lossless_compression(
+        data_block, encoder, decoder, add_extra_bits_to_encoder_output=True
+    )
+
+    # avg codelen ignoring the bits used to signal num data elements
+    avg_codelen = (encode_len) / data_block.size
+    print(f" expected_bitrate={expected_bitrate:.3f}, avg_codelen: {avg_codelen:.3f}")
+
+    # check whether arithmetic coding results are close to expected codelen
+    err_msg = f"avg_codelen={avg_codelen} is not {encoding_optimality_precision} close to expected_bitrate={expected_bitrate}"
+    assert np.abs(avg_codelen - expected_bitrate) < encoding_optimality_precision, err_msg
+
+    assert is_lossless
