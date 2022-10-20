@@ -143,7 +143,8 @@ class AdaptiveOrderKFreqModel(FreqModelBase):
         """
         # updates the model based on the new symbol
         # index self.freqs_kplus1_tuple using (past_k, s) [need to map s to index]
-        self.freqs_kplus1_tuple[(*self.past_k, self.alphabet_to_idx[s])] += 1
+        current_tuple = (*self.past_k, self.alphabet_to_idx[s])
+        self.freqs_kplus1_tuple[current_tuple] += 1
 
         # if k > 0, update past_k list
         if self.k > 0:
@@ -151,9 +152,7 @@ class AdaptiveOrderKFreqModel(FreqModelBase):
 
         # if total_freq goes beyond a certain value, divide by 2
         # NOTE: there can be different strategies here
-        # NOTE: we actually only need the frequencies for each (k-1) context to
-        # sum to less than max_allowed_total_freq, here we are a bit more aggressive in terms
-        # of dividing by 2 even when the total sum of all k-tuple counts exceeds
-        # max_allowed_total_freq
-        if np.sum(self.freqs_kplus1_tuple) >= self.max_allowed_total_freq:
-            self.freqs_kplus1_tuple = np.max(self.freqs_kplus1_tuple // 2, 1)
+        # NOTE: we only need the frequencies for each (k+1) tuple to
+        # sum to less than max_allowed_total_freq
+        if np.sum(self.freqs_kplus1_tuple[current_tuple]) >= self.max_allowed_total_freq:
+            self.freqs_kplus1_tuple[current_tuple] = np.max(self.freqs_kplus1_tuple[current_tuple] // 2, 1)
