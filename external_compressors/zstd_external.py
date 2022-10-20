@@ -25,35 +25,27 @@ from utils.test_utils import (
 )
 import zstandard
 
-
-def create_zstd_compressor_object(level: int):
-    """Create zstd compressor object with similar API as python zlib object.
-
-    Args:
-        level (int): Zstd level
-    """
-    zstd_cctx = zstandard.ZstdCompressor(level=level)
-    zstd_obj = zstd_cctx.compressobj()
-    return zstd_obj
-
-
-def create_zstd_decompressor_object():
-    """Create zstd compressor object with similar API as python zlib object."""
-    zstd_dctx = zstandard.ZstdDecompressor()
-    zstd_obj = zstd_dctx.decompressobj()
-    return zstd_obj
-
-
 class ZstdExternalEncoder(DataEncoder):
     def __init__(self, level=6):
         self.level = level
         # state stays alive across blocks so we can benefit
-        self.zstd_obj = create_zstd_compressor_object(level=self.level)
+        self.zstd_obj = ZstdExternalEncoder.create_zstd_compressor_object(level=self.level)
         self.block_size_num_bits = 32  # num bits used to encode the block size at start
 
     def reset(self):
         # start new zstd context
-        self.zstd_obj = create_zstd_compressor_object(level=self.level)
+        self.zstd_obj = ZstdExternalEncoder.create_zstd_compressor_object(level=self.level)
+
+    @staticmethod
+    def create_zstd_compressor_object(level: int):
+        """Create zstd compressor object with similar API as python zlib object.
+
+        Args:
+            level (int): Zstd level
+        """
+        zstd_cctx = zstandard.ZstdCompressor(level=level)
+        zstd_obj = zstd_cctx.compressobj()
+        return zstd_obj
 
     def encode_block(self, data_block: DataBlock):
         raw_bytes = bytes(data_block.data_list)
@@ -96,11 +88,18 @@ class ZstdExternalEncoder(DataEncoder):
 class ZstdExternalDecoder(DataDecoder):
     def __init__(self, level=6):
         self.level = level
-        self.zstd_obj = create_zstd_decompressor_object()
+        self.zstd_obj = ZstdExternalDecoder.create_zstd_decompressor_object()
         self.block_size_num_bits = 32  # num used to encode the block size at start
 
     def reset(self):
-        self.zstd_obj = create_zstd_decompressor_object()
+        self.zstd_obj = ZstdExternalDecoder.create_zstd_decompressor_object()
+
+    @staticmethod
+    def create_zstd_decompressor_object():
+        """Create zstd compressor object with similar API as python zlib object."""
+        zstd_dctx = zstandard.ZstdDecompressor()
+        zstd_obj = zstd_dctx.decompressobj()
+        return zstd_obj
 
     def decode_block(self, compressed_bitarray: BitArray):
         # first read the size of the zstd block(s)
