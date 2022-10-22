@@ -55,9 +55,6 @@ class DataEncoder(abc.ABC):
             encode_writer (EncodedBlockWriter): the writer used to write encoded bitarrays
         """
 
-        # reset the state
-        self.reset()
-
         while True:
             # create blocks form data_input
             data_block = data_stream.get_block(block_size)
@@ -133,9 +130,6 @@ class DataDecoder(abc.ABC):
             encode_reader (EncodedBlockReader): EncodedBlockReader object to read blocks of encoded bitarrays
             output_stream (DataStream): DataStream object to write decoded blocks of data
         """
-
-        # reset the state
-        self.reset()
 
         while True:
             # read the next encoded block

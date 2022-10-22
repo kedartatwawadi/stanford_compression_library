@@ -73,7 +73,9 @@ class ShannonFanoEliasDecoder(PrefixFreeDecoder):
 
                 # FIXME: The recomputing of num_bits_consumed seems necessary, as there is a possibility
                 # that the decoder is able to infer the correct symbol by reading less than ceil(-log(prob)) + 1 bits
-                num_bits_consumed = math.ceil(self.prob_dist.neg_log_probability(decoded_symbol)) + 1
+                num_bits_consumed = (
+                    math.ceil(self.prob_dist.neg_log_probability(decoded_symbol)) + 1
+                )
                 return decoded_symbol, num_bits_consumed
 
 

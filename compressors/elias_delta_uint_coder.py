@@ -86,9 +86,11 @@ class EliasDeltaUintDecoder(DataDecoder):
         n = m - 1
         num_bits_consumed += l + 1
         if n == 0:
-            y = 0
+            y = 1
         else:
-            y = bitarray_to_uint(encoded_bitarray[num_bits_consumed : num_bits_consumed + n])
+            y = bitarray_to_uint(
+                BitArray("1") + encoded_bitarray[num_bits_consumed : num_bits_consumed + n]
+            )
         num_bits_consumed += n
         x = y - 1
         return x, num_bits_consumed
@@ -121,14 +123,16 @@ def test_elias_delta_uint_encode_decode():
     decoder = EliasDeltaUintDecoder()
 
     # create some sample data
-    data_list = [0, 0, 1, 3, 4, 100]
+    data_list = [0, 0, 1, 3, 0, 0, 0, 2, 1, 4, 100]
     data_block = DataBlock(data_list)
 
-    try_lossless_compression(
+    is_lossless, _, _ = try_lossless_compression(
         data_block,
         encoder,
         decoder,
     )
+
+    assert is_lossless
 
 
 def test_elias_delta_uint_encode():
