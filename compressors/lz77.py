@@ -1,5 +1,11 @@
 """
-Simplified LZ77 encoder deriving ideas from: 
+LZ77 works by finding matches in the past and encoding the match lengths and offsets.
+Symbols not part of matches are directly stored as "literals". These streams are 
+then entropy coded. LZ77 forms the basis of popular compressors like gzip and zstd.
+Theoretically LZ77 is a universal compressor, that is, it asymptotically achieves the
+entropy rate of any stationary process.
+
+This is a simplified LZ77 encoder deriving ideas from: 
 - LZ77 modern implementation: https://glinscott.github.io/lz/index.html 
 - DEFLATE: https://www.rfc-editor.org/rfc/rfc1951 
 - ZSTD: https://github.com/facebook/zstd/blob/dev/doc/zstd_compression_format.md
@@ -55,9 +61,28 @@ Current limitations:
 3. We implement greedy parsing that takes the longest match at a given position.
    Instead we could implement more optimal parsing which tries to skip some
    bytes as literals to find a longer match in the upcoming bytes.
+4. We do not perform any special handling to limit complexity for edge cases like
+   all very long repeats which have a high complexity of finding the longest match.
 
 Given the above, note that you could still reset the encoder in order after a
 few blocks to limit memory usage.
+
+Benchmarks on a few files from https://github.com/nemequ/squash-corpus and 
+https://corpus.canterbury.ac.nz/descriptions/#cantrbry (plus a few handmade).
+
+All sizes are in bytes.
+
+| File                                | raw size | lz77 size (this) | gzip size |
+|-------------------------------------|----------|------------------|-----------|
+| bootstrap-3.3.6.min.css             |121260    |23526             |19747      |
+| eff.html                            |41684     |10935             |9670       |
+| zlib.wasm                           |86408     |43471             |37448      |
+| jquery-2.1.4.min.js                 |84345     |34447             |29569      |
+| random.bin (random bytes)           |1000000   |1004970           |1000328    |
+| repeat_As.txt                       |1000000   |208               |1004       |
+| kennedy.xls                         |1029744   |330252            |204004     |
+| alice29.txt                         |152089    |63376             |54416      |
+
 """
 
 import argparse
@@ -126,11 +151,14 @@ class LZ77Encoder(DataEncoder):
         self.window_indexed_till = 0  # pointer telling up to what point the window has been indexed
         # if window_indexed_till = 100, that means all substrings starting at 0,1,2,...,100-min_match_length+1
         # have been indexed
+
+        # if window_initialization is provided, update window and index it
         if window_initialization is not None:
             self.window = list(window_initialization)
             self.index_window_upto_pos(len(self.window))
 
     def reset(self):
+        # reset the window and the index
         self.window = []
         self.dict = {}
         self.window_indexed_till = 0
@@ -276,6 +304,7 @@ class LZ77Encoder(DataEncoder):
         while True:
             match_start_pos = pos_in_window
             match_found = False
+            # loop over start positions until we find a match
             for match_start_pos in range(
                 pos_in_window, len(self.window) - self.min_match_length + 1
             ):
@@ -283,6 +312,7 @@ class LZ77Encoder(DataEncoder):
                     self.window[match_start_pos : match_start_pos + self.min_match_length]
                 )
                 if match_substr not in self.dict:
+                    # substring not seen before, so 
                     self.index_window_upto_pos(match_start_pos + 1)
                     continue
                 else:
@@ -292,6 +322,7 @@ class LZ77Encoder(DataEncoder):
                     num_candidates_considered = 0
                     # iterate over candidate_match_positions in reverse order
                     # we basically want to look at max_num_matches_considered most recent matches
+                    # and find the longest match
                     for candidate_match_pos in reversed(candidate_match_positions):
                         match_len = self.find_match_length(candidate_match_pos, match_start_pos)
                         assert match_len >= self.min_match_length
@@ -306,6 +337,7 @@ class LZ77Encoder(DataEncoder):
                 if match_found:
                     break
                 else:
+                    # if match not found, we index the current substr
                     self.index_window_upto_pos(match_start_pos + 1)
 
             if not match_found:
@@ -333,6 +365,7 @@ class LZ77Encoder(DataEncoder):
     def encode_block(self, data_block: DataBlock):
         # first do lz77 parsing
         lz77_sequences, literals = self.lz77_parse_generate_sequences(data_block)
+        # now encode sequences and literals
         lz77_sequences_encoding = self.encode_lz77_sequences(lz77_sequences)
         literals_encoding = self.encode_literals(literals)
         return lz77_sequences_encoding + literals_encoding
@@ -376,6 +409,7 @@ class LZ77Decoder(DataDecoder):
         encoded_bitarray = encoded_bitarray[
             ENCODED_BLOCK_SIZE_HEADER_BITS : ENCODED_BLOCK_SIZE_HEADER_BITS + encoded_block_size
         ]
+        # decoded the combined list with literal counts, match lengths and offsets
         combined_decoded, num_bits_consumed_encoding = EliasDeltaUintDecoder().decode_block(
             encoded_bitarray
         )
@@ -386,6 +420,7 @@ class LZ77Decoder(DataDecoder):
         num_sequences = (len(combined_decoded) - 1) // 3
         min_match_length = combined_decoded[0]
         literal_counts = combined_decoded[1 : 1 + num_sequences]
+        # need to adjust lengths and offsets to undo the processing we did on the compressor
         match_lengths = [
             l + min_match_length
             for l in combined_decoded[1 + num_sequences : 1 + 2 * num_sequences]
@@ -407,8 +442,10 @@ class LZ77Decoder(DataDecoder):
             encoded_bitarray (BitArray): encoded bit array
         """
         num_bits_consumed = 0
+        # first read the size of the counts encoding
         counts_encoding_size = bitarray_to_uint(encoded_bitarray[:ENCODED_BLOCK_SIZE_HEADER_BITS])
         num_bits_consumed += ENCODED_BLOCK_SIZE_HEADER_BITS
+        # now decode the counts using Elias Delta
         if counts_encoding_size == 0:
             return [], num_bits_consumed  # no literals
         counts, num_bits_consumed_counts = EliasDeltaUintDecoder().decode_block(
@@ -426,6 +463,7 @@ class LZ77Decoder(DataDecoder):
             encoded_bitarray[num_bits_consumed : num_bits_consumed + ENCODED_BLOCK_SIZE_HEADER_BITS]
         )
         num_bits_consumed += ENCODED_BLOCK_SIZE_HEADER_BITS
+        # decode literals with Huffman
         decoded_literals, num_bits_consumed_literals = HuffmanDecoder(prob_dist).decode_block(
             encoded_bitarray[num_bits_consumed : num_bits_consumed + literals_huffman_encoding_size]
         )
@@ -435,6 +473,7 @@ class LZ77Decoder(DataDecoder):
 
     def execute_lz77_sequences(self, literals: List, lz77_sequences: List[LZ77Sequence]):
         """Executes the LZ77 sequences and the literals and returns the decoded bytes.
+        Execution here just means the decoding.
 
         Updates the window accordingly.
         """
