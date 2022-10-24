@@ -1,0 +1,1 @@
+# Fill this file with the seed for pokemon_data. Remove this line before running!!
