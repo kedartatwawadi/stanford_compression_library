@@ -29,7 +29,7 @@ class BinaryNode:
             """
             lines = []
             for l1, l2 in zip(lines_1, lines_2):
-                lines.append(l1 + l2)
+                lines.append(l1 + str(l2))
             return lines
 
         # form a printable id (in case it is None)
