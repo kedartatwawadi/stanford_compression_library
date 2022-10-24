@@ -1,0 +1,35 @@
+{
+  "id": 12,
+  "num": "012",
+  "name": "Butterfree",
+  "img": "http://www.serebii.net/pokemongo/pokemon/012.png",
+  "type": [
+    "Bug",
+    "Flying"
+  ],
+  "height": "1.09 m",
+  "weight": "32.0 kg",
+  "candy": "Caterpie Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.022,
+  "avg_spawns": 2.2,
+  "spawn_time": "05:23",
+  "multipliers": null,
+  "weaknesses": [
+    "Fire",
+    "Electric",
+    "Ice",
+    "Flying",
+    "Rock"
+  ],
+  "prev_evolution": [
+    {
+      "num": "010",
+      "name": "Caterpie"
+    },
+    {
+      "num": "011",
+      "name": "Metapod"
+    }
+  ]
+}

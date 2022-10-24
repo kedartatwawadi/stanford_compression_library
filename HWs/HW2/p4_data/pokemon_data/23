@@ -1,0 +1,31 @@
+{
+  "id": 23,
+  "num": "023",
+  "name": "Ekans",
+  "img": "http://www.serebii.net/pokemongo/pokemon/023.png",
+  "type": [
+    "Poison"
+  ],
+  "height": "2.01 m",
+  "weight": "6.9 kg",
+  "candy": "Ekans Candy",
+  "candy_count": 50,
+  "egg": "5 km",
+  "spawn_chance": 2.27,
+  "avg_spawns": 227,
+  "spawn_time": "12:20",
+  "multipliers": [
+    2.21,
+    2.27
+  ],
+  "weaknesses": [
+    "Ground",
+    "Psychic"
+  ],
+  "next_evolution": [
+    {
+      "num": "024",
+      "name": "Arbok"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "id": 54,
+  "num": "054",
+  "name": "Psyduck",
+  "img": "http://www.serebii.net/pokemongo/pokemon/054.png",
+  "type": [
+    "Water"
+  ],
+  "height": "0.79 m",
+  "weight": "19.6 kg",
+  "candy": "Psyduck Candy",
+  "candy_count": 50,
+  "egg": "5 km",
+  "spawn_chance": 2.54,
+  "avg_spawns": 254,
+  "spawn_time": "03:41",
+  "multipliers": [
+    2.27
+  ],
+  "weaknesses": [
+    "Electric",
+    "Grass"
+  ],
+  "next_evolution": [
+    {
+      "num": "055",
+      "name": "Golduck"
+    }
+  ]
+}

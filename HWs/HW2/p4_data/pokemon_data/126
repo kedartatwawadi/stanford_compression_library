@@ -1,0 +1,22 @@
+{
+  "id": 126,
+  "num": "126",
+  "name": "Magmar",
+  "img": "http://www.serebii.net/pokemongo/pokemon/126.png",
+  "type": [
+    "Fire"
+  ],
+  "height": "1.30 m",
+  "weight": "44.5 kg",
+  "candy": "None",
+  "egg": "10 km",
+  "spawn_chance": 0.1,
+  "avg_spawns": 10,
+  "spawn_time": "20:36",
+  "multipliers": null,
+  "weaknesses": [
+    "Water",
+    "Ground",
+    "Rock"
+  ]
+}

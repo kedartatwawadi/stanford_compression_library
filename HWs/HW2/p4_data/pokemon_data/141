@@ -1,0 +1,30 @@
+{
+  "id": 141,
+  "num": "141",
+  "name": "Kabutops",
+  "img": "http://www.serebii.net/pokemongo/pokemon/141.png",
+  "type": [
+    "Rock",
+    "Water"
+  ],
+  "height": "1.30 m",
+  "weight": "40.5 kg",
+  "candy": "Kabuto Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.0032,
+  "avg_spawns": 0.32,
+  "spawn_time": "23:40",
+  "multipliers": null,
+  "weaknesses": [
+    "Electric",
+    "Grass",
+    "Fighting",
+    "Ground"
+  ],
+  "prev_evolution": [
+    {
+      "num": "140",
+      "name": "Kabuto"
+    }
+  ]
+}

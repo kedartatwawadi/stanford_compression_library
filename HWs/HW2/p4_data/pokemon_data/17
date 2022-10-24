@@ -1,0 +1,37 @@
+{
+  "id": 17,
+  "num": "017",
+  "name": "Pidgeotto",
+  "img": "http://www.serebii.net/pokemongo/pokemon/017.png",
+  "type": [
+    "Normal",
+    "Flying"
+  ],
+  "height": "1.09 m",
+  "weight": "30.0 kg",
+  "candy": "Pidgey Candy",
+  "candy_count": 50,
+  "egg": "Not in Eggs",
+  "spawn_chance": 1.02,
+  "avg_spawns": 102,
+  "spawn_time": "01:30",
+  "multipliers": [
+    1.79
+  ],
+  "weaknesses": [
+    "Electric",
+    "Rock"
+  ],
+  "prev_evolution": [
+    {
+      "num": "016",
+      "name": "Pidgey"
+    }
+  ],
+  "next_evolution": [
+    {
+      "num": "018",
+      "name": "Pidgeot"
+    }
+  ]
+}

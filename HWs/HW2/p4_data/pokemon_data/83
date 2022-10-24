@@ -1,0 +1,22 @@
+{
+  "id": 83,
+  "num": "083",
+  "name": "Farfetch'd",
+  "img": "http://www.serebii.net/pokemongo/pokemon/083.png",
+  "type": [
+    "Normal",
+    "Flying"
+  ],
+  "height": "0.79 m",
+  "weight": "15.0 kg",
+  "candy": "None",
+  "egg": "5 km",
+  "spawn_chance": 0.0212,
+  "avg_spawns": 2.12,
+  "spawn_time": "01:09",
+  "multipliers": null,
+  "weaknesses": [
+    "Electric",
+    "Rock"
+  ]
+}

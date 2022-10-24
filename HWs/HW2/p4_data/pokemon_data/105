@@ -1,0 +1,28 @@
+{
+  "id": 105,
+  "num": "105",
+  "name": "Marowak",
+  "img": "http://www.serebii.net/pokemongo/pokemon/105.png",
+  "type": [
+    "Ground"
+  ],
+  "height": "0.99 m",
+  "weight": "45.0 kg",
+  "candy": "Cubone Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.02,
+  "avg_spawns": 2,
+  "spawn_time": "03:59",
+  "multipliers": null,
+  "weaknesses": [
+    "Water",
+    "Grass",
+    "Ice"
+  ],
+  "prev_evolution": [
+    {
+      "num": "104",
+      "name": "Cubone"
+    }
+  ]
+}

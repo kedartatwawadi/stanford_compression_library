@@ -1,0 +1,20 @@
+{
+  "id": 108,
+  "num": "108",
+  "name": "Lickitung",
+  "img": "http://www.serebii.net/pokemongo/pokemon/108.png",
+  "type": [
+    "Normal"
+  ],
+  "height": "1.19 m",
+  "weight": "65.5 kg",
+  "candy": "None",
+  "egg": "5 km",
+  "spawn_chance": 0.011,
+  "avg_spawns": 1.1,
+  "spawn_time": "02:46",
+  "multipliers": null,
+  "weaknesses": [
+    "Fighting"
+  ]
+}

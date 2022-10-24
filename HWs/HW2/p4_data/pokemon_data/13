@@ -1,0 +1,38 @@
+{
+  "id": 13,
+  "num": "013",
+  "name": "Weedle",
+  "img": "http://www.serebii.net/pokemongo/pokemon/013.png",
+  "type": [
+    "Bug",
+    "Poison"
+  ],
+  "height": "0.30 m",
+  "weight": "3.2 kg",
+  "candy": "Weedle Candy",
+  "candy_count": 12,
+  "egg": "2 km",
+  "spawn_chance": 7.12,
+  "avg_spawns": 712,
+  "spawn_time": "02:21",
+  "multipliers": [
+    1.01,
+    1.09
+  ],
+  "weaknesses": [
+    "Fire",
+    "Flying",
+    "Psychic",
+    "Rock"
+  ],
+  "next_evolution": [
+    {
+      "num": "014",
+      "name": "Kakuna"
+    },
+    {
+      "num": "015",
+      "name": "Beedrill"
+    }
+  ]
+}

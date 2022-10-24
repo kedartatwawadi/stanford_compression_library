@@ -1,0 +1,38 @@
+{
+  "id": 133,
+  "num": "133",
+  "name": "Eevee",
+  "img": "http://www.serebii.net/pokemongo/pokemon/133.png",
+  "type": [
+    "Normal"
+  ],
+  "height": "0.30 m",
+  "weight": "6.5 kg",
+  "candy": "Eevee Candy",
+  "candy_count": 25,
+  "egg": "10 km",
+  "spawn_chance": 2.75,
+  "avg_spawns": 275,
+  "spawn_time": "05:32",
+  "multipliers": [
+    2.02,
+    2.64
+  ],
+  "weaknesses": [
+    "Fighting"
+  ],
+  "next_evolution": [
+    {
+      "num": "134",
+      "name": "Vaporeon"
+    },
+    {
+      "num": "135",
+      "name": "Jolteon"
+    },
+    {
+      "num": "136",
+      "name": "Flareon"
+    }
+  ]
+}

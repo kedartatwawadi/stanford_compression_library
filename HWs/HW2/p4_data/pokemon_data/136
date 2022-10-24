@@ -1,0 +1,28 @@
+{
+  "id": 136,
+  "num": "136",
+  "name": "Flareon",
+  "img": "http://www.serebii.net/pokemongo/pokemon/136.png",
+  "type": [
+    "Fire"
+  ],
+  "height": "0.89 m",
+  "weight": "25.0 kg",
+  "candy": "Eevee Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.017,
+  "avg_spawns": 1.7,
+  "spawn_time": "07:02",
+  "multipliers": null,
+  "weaknesses": [
+    "Water",
+    "Ground",
+    "Rock"
+  ],
+  "prev_evolution": [
+    {
+      "num": "133",
+      "name": "Eevee"
+    }
+  ]
+}

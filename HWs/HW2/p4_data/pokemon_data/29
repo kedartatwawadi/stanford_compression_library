@@ -1,0 +1,35 @@
+{
+  "id": 29,
+  "num": "029",
+  "name": "Nidoran \u2640 (Female)",
+  "img": "http://www.serebii.net/pokemongo/pokemon/029.png",
+  "type": [
+    "Poison"
+  ],
+  "height": "0.41 m",
+  "weight": "7.0 kg",
+  "candy": "Nidoran \u2640 (Female) Candy",
+  "candy_count": 25,
+  "egg": "5 km",
+  "spawn_chance": 1.38,
+  "avg_spawns": 138,
+  "spawn_time": "01:51",
+  "multipliers": [
+    1.63,
+    2.48
+  ],
+  "weaknesses": [
+    "Ground",
+    "Psychic"
+  ],
+  "next_evolution": [
+    {
+      "num": "030",
+      "name": "Nidorina"
+    },
+    {
+      "num": "031",
+      "name": "Nidoqueen"
+    }
+  ]
+}

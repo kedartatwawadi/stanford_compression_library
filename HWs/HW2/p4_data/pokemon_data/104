@@ -1,0 +1,31 @@
+{
+  "id": 104,
+  "num": "104",
+  "name": "Cubone",
+  "img": "http://www.serebii.net/pokemongo/pokemon/104.png",
+  "type": [
+    "Ground"
+  ],
+  "height": "0.41 m",
+  "weight": "6.5 kg",
+  "candy": "Cubone Candy",
+  "candy_count": 50,
+  "egg": "5 km",
+  "spawn_chance": 0.61,
+  "avg_spawns": 61,
+  "spawn_time": "01:51",
+  "multipliers": [
+    1.67
+  ],
+  "weaknesses": [
+    "Water",
+    "Grass",
+    "Ice"
+  ],
+  "next_evolution": [
+    {
+      "num": "105",
+      "name": "Marowak"
+    }
+  ]
+}

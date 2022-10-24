@@ -1,0 +1,35 @@
+{
+  "id": 60,
+  "num": "060",
+  "name": "Poliwag",
+  "img": "http://www.serebii.net/pokemongo/pokemon/060.png",
+  "type": [
+    "Water"
+  ],
+  "height": "0.61 m",
+  "weight": "12.4 kg",
+  "candy": "Poliwag Candy",
+  "candy_count": 25,
+  "egg": "5 km",
+  "spawn_chance": 2.19,
+  "avg_spawns": 219,
+  "spawn_time": "03:40",
+  "multipliers": [
+    1.72,
+    1.73
+  ],
+  "weaknesses": [
+    "Electric",
+    "Grass"
+  ],
+  "next_evolution": [
+    {
+      "num": "061",
+      "name": "Poliwhirl"
+    },
+    {
+      "num": "062",
+      "name": "Poliwrath"
+    }
+  ]
+}

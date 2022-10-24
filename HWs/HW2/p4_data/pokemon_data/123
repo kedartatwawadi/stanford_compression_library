@@ -1,0 +1,25 @@
+{
+  "id": 123,
+  "num": "123",
+  "name": "Scyther",
+  "img": "http://www.serebii.net/pokemongo/pokemon/123.png",
+  "type": [
+    "Bug",
+    "Flying"
+  ],
+  "height": "1.50 m",
+  "weight": "56.0 kg",
+  "candy": "None",
+  "egg": "10 km",
+  "spawn_chance": 0.14,
+  "avg_spawns": 14,
+  "spawn_time": "05:43",
+  "multipliers": null,
+  "weaknesses": [
+    "Fire",
+    "Electric",
+    "Ice",
+    "Flying",
+    "Rock"
+  ]
+}
