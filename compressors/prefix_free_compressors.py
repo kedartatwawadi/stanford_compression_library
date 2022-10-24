@@ -199,8 +199,8 @@ class PrefixFreeTree:
             """
             # initialize the curr_node
             curr_node = tree.root_node
-            
-            # NOTE -> checking if code is a BitArray 
+
+            # NOTE -> checking if code is a BitArray
             # (if it is a string, the if/else conditioning don't work as expected)
             assert isinstance(code, BitArray), "code should be a bitarray"
             for bit in code:

@@ -23,8 +23,8 @@ class DataEncoder(abc.ABC):
 
     def reset(self):
         """reset the state if any"""
-        # NOTE: the reset function is called at the beginning of encode.
-        # this can be used to clear any state the encoder might have persisted across encode_block calls
+        # NOTE: the user can call this to clear any state the encoder might 
+        # have persisted across encode_block calls
         pass
 
     def encode_block(self, data_block: DataBlock):
@@ -54,9 +54,6 @@ class DataEncoder(abc.ABC):
             block_size (int): the block size used to chop the input data stream
             encode_writer (EncodedBlockWriter): the writer used to write encoded bitarrays
         """
-
-        # reset the state
-        self.reset()
 
         while True:
             # create blocks form data_input
@@ -100,8 +97,8 @@ class DataDecoder(abc.ABC):
 
     def reset(self):
         """reset the state, if any"""
-        # NOTE: the reset function is called at the beginning of decode.
-        # this can be used to clear any state the decoder might have persisted across decode_block calls
+        # NOTE: the user can call this to clear any state the decoder might 
+        # have persisted across decode_block calls
         pass
 
     def decode_block(self, bitarray: BitArray):
@@ -133,9 +130,6 @@ class DataDecoder(abc.ABC):
             encode_reader (EncodedBlockReader): EncodedBlockReader object to read blocks of encoded bitarrays
             output_stream (DataStream): DataStream object to write decoded blocks of data
         """
-
-        # reset the state
-        self.reset()
 
         while True:
             # read the next encoded block

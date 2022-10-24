@@ -3,6 +3,7 @@ from typing import Any, Tuple
 import heapq
 from functools import total_ordering
 from compressors.prefix_free_compressors import PrefixFreeTree, PrefixFreeEncoder, PrefixFreeDecoder
+from core.data_block import DataBlock
 from core.prob_dist import ProbabilityDist, get_avg_neg_log_prob
 import numpy as np
 from utils.bitarray_utils import BitArray
@@ -43,6 +44,14 @@ class HuffmanTree(PrefixFreeTree):
         1. Sort the prob distribution, combine last two symbols into a single symbol
         2. Continue until a single symbol is left
         """
+        # For the special case that there is a single symbol, we simply create
+        # a code that puts it as the left child of root node
+        if len(self.prob_dist.alphabet) == 1:
+            a = self.prob_dist.alphabet[0]
+            node = HuffmanNode(id=a, prob=1.0)
+            root_node = HuffmanNode(left_child=node, prob=1.0)
+            return root_node
+
         # Lets say we have symbols {1,2,3,4,5,6} with prob {p1, p2,...p6}
         # We first start by initializing a list
         # [..., HuffmanNode(id=3, prob=p3), (HuffmanNode(id=6, prob=p6),  ...]
@@ -151,3 +160,14 @@ def test_huffman_coding_dyadic():
         print(
             f"Avg Bits: {avg_bits}, optimal codelen: {optimal_codelen}, Entropy: {prob_dist.entropy}"
         )
+
+        # for the special case of single symbol alphabet, verify that it's lossless
+        # (note that entropy is not achieved in this case)
+        prob_dist = ProbabilityDist({"A": 1.0})
+        data_block = DataBlock(["A"] * NUM_SAMPLES)
+        # create encoder decoder
+        encoder = HuffmanEncoder(prob_dist)
+        decoder = HuffmanDecoder(prob_dist)
+        is_lossless, output_len, _ = try_lossless_compression(data_block, encoder, decoder)
+        assert is_lossless
+        assert output_len == NUM_SAMPLES
