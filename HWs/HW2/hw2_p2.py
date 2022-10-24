@@ -52,6 +52,12 @@ def generate_samples_aec(freq_initial, data_size):
     :param freq_initial: frequencies of symbols (see Frequencies class)
     :param data_size: number of samples to generate
     :return: DataBlock object with generated samples obtained from AEC approach
+
+    # NOTE: Although, practically we have to truncate floating point representation of u to 32 bits,
+    # think of u as infinite precision (in the ideal scenario)
+    # This approximation results in samples with empirical distribution matching the required distribution,
+    # but technically doesn't result in i.i.d samples, as we cannot possibly generate randomness with entropy more than
+    # than 32 bits, from 32 bits of input randomness.
     """
     # generate random variable from uniform distribution [0, 1)
     u = np.random.rand()
