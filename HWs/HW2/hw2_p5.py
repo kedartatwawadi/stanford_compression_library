@@ -106,8 +106,8 @@ def test_mtf_transform():
     sample_inputs = [
         "BANANA",
         "BNN~AAA",
-        "abracadabraabracadabraabracadabra"
-        "rrdd~aadrrrcccraaaaaaaaaaaabbbbbba",
+        "abracadabraabracadabraabracadabra",
+        "rrdd~aadrrrcccraaaaaaaaaaaabbbbbba"
     ]
     for sample_input in sample_inputs:
 
