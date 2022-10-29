@@ -22,10 +22,11 @@ class PickleEncoder(DataEncoder):
     def encode_block(self, data: Any):
         # pickle prob dist and convert to bytes
         pickled_bits = BitArray()
-        pickled_bits.frombytes(pickle.dumps(data))
+        bytes = pickle.dumps(data)
+        pickled_bits.frombytes(bytes)
         len_pickled = len(pickled_bits)
-        # encode length of pickle
 
+        # encode length of pickled data
         assert len_pickled < (1 << self.length_bitwidth)
         length_encoding = uint_to_bitarray(len_pickled, bit_width=self.length_bitwidth)
         return length_encoding + pickled_bits
