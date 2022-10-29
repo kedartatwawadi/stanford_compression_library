@@ -1,21 +1,22 @@
 """
-Contains some elementary baseline compressors
-1. Fixed bit width compressor 
+Contains one of the simplest compressors: 
+Fixed Bitwidth compressor -> uses a fixed bitwidth for each symbol
 """
 import tempfile
 import os
 from core.data_block import DataBlock
 from core.data_encoder_decoder import DataEncoder, DataDecoder
 from core.prob_dist import ProbabilityDist
-from utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray, get_bit_width
+from utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray
 from utils.test_utils import (
     create_random_text_file,
     try_file_lossless_compression,
     try_lossless_compression,
 )
+import numpy as np
 
 
-class AlphabetEncoder(DataEncoder):
+class TextAlphabetEncoder(DataEncoder):
     """encode the alphabet set for a block
 
     Technically, the input to the encode_block is a set and not a DataBlock,
@@ -33,6 +34,7 @@ class AlphabetEncoder(DataEncoder):
         - Encodes the size of the alphabet set using 8 bits
         - The ascii value corresponding to each alphabet is then encoded using 8 bits
         """
+
         # encode the alphabet size
         alphabet_size = len(alphabet)
         assert alphabet_size < 2 ** self.alphabet_size_bits
@@ -45,7 +47,7 @@ class AlphabetEncoder(DataEncoder):
         return bitarray
 
 
-class AlphabetDecoder(DataDecoder):
+class TextAlphabetDecoder(DataDecoder):
     """decode the encoded alphabet set"""
 
     def __init__(self):
@@ -74,12 +76,16 @@ class AlphabetDecoder(DataDecoder):
         return alphabet, num_bits_consumed
 
 
+def get_alphabet_fixed_bitwidth(alphabet_size):
+    return 1 if (alphabet_size == 1) else int(np.ceil(np.log2(alphabet_size)))
+
+
 class FixedBitwidthEncoder(DataEncoder):
     """Encode each symbol using a fixed number of bits"""
 
     def __init__(self):
         super().__init__()
-        self.alphabet_encoder = AlphabetEncoder()
+        self.alphabet_encoder = TextAlphabetEncoder()
 
     def encode_block(self, data_block: DataBlock):
         """first encode the alphabet and then each data symbol using fixed number of bits"""
@@ -90,7 +96,7 @@ class FixedBitwidthEncoder(DataEncoder):
         encoded_bitarray = self.alphabet_encoder.encode_block(alphabet)
 
         # encode data
-        symbol_bit_width = get_bit_width(len(alphabet))
+        symbol_bit_width = get_alphabet_fixed_bitwidth(len(alphabet))
         alphabet_dict = {a: i for i, a in enumerate(alphabet)}
         for s in data_block.data_list:
             encoded_bitarray += uint_to_bitarray(alphabet_dict[s], bit_width=symbol_bit_width)
@@ -101,7 +107,7 @@ class FixedBitwidthEncoder(DataEncoder):
 class FixedBitwidthDecoder(DataDecoder):
     def __init__(self):
         super().__init__()
-        self.alphabet_decoder = AlphabetDecoder()
+        self.alphabet_decoder = TextAlphabetDecoder()
 
     def decode_block(self, bitarray: BitArray):
         """Decode data encoded by FixedBitwidthDecoder
@@ -114,7 +120,7 @@ class FixedBitwidthDecoder(DataDecoder):
         alphabet, num_bits_consumed = self.alphabet_decoder.decode_block(bitarray)
 
         # decode data
-        symbol_bit_width = get_bit_width(len(alphabet))
+        symbol_bit_width = get_alphabet_fixed_bitwidth(len(alphabet))
 
         data_list = []
         while num_bits_consumed < len(bitarray):
@@ -132,8 +138,8 @@ class FixedBitwidthDecoder(DataDecoder):
 def test_alphabet_encode_decode():
     """test the alphabet compression"""
     # define encoder, decoder
-    encoder = AlphabetEncoder()
-    decoder = AlphabetDecoder()
+    encoder = TextAlphabetEncoder()
+    decoder = TextAlphabetDecoder()
 
     # create some sample data
     alphabet = ["A", "B", "C"]
@@ -150,7 +156,7 @@ def test_fixed_bitwidth_encode_decode():
     decoder = FixedBitwidthDecoder()
 
     # create some sample data
-    data_list = ["A", "B", "C", "C", "A", "C"]
+    data_list = ["A", "B", "C", "C", "A", "C", "D"]
     data_block = DataBlock(data_list)
 
     is_lossless, codelen, _ = try_lossless_compression(data_block, encoder, decoder)
