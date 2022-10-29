@@ -7,73 +7,15 @@ import os
 from core.data_block import DataBlock
 from core.data_encoder_decoder import DataEncoder, DataDecoder
 from core.prob_dist import ProbabilityDist
+from external_compressors.pickle_external import PickleDecoder, PickleEncoder
 from utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray
 from utils.test_utils import (
     create_random_text_file,
+    get_random_data_block,
     try_file_lossless_compression,
     try_lossless_compression,
 )
 import numpy as np
-
-
-class TextAlphabetEncoder(DataEncoder):
-    """encode the alphabet set for a block
-
-    Technically, the input to the encode_block is a set and not a DataBlock,
-    but we don't plan on using the "encode" function for this class anyway
-    """
-
-    def __init__(self):
-        self.alphabet_size_bits = 8  # bits used to encode size of the alphabet
-        self.alphabet_bits = 8  # bits used to encode each alphabet
-        super().__init__()
-
-    def encode_block(self, alphabet):
-        """encode the alphabet set
-
-        - Encodes the size of the alphabet set using 8 bits
-        - The ascii value corresponding to each alphabet is then encoded using 8 bits
-        """
-
-        # encode the alphabet size
-        alphabet_size = len(alphabet)
-        assert alphabet_size < 2 ** self.alphabet_size_bits
-        alphabet_size_bitarray = uint_to_bitarray(alphabet_size, self.alphabet_size_bits)
-
-        bitarray = alphabet_size_bitarray
-        for a in alphabet:
-            bitarray += uint_to_bitarray(ord(a), bit_width=self.alphabet_bits)
-
-        return bitarray
-
-
-class TextAlphabetDecoder(DataDecoder):
-    """decode the encoded alphabet set"""
-
-    def __init__(self):
-        self.alphabet_size_bits = 8
-        self.alphabet_bits = 8
-        super().__init__()
-
-    def decode_block(self, params_data_bitarray: BitArray):
-        # initialize num_bits_consumed
-        num_bits_consumed = 0
-
-        # get alphabet size
-        assert len(params_data_bitarray) >= self.alphabet_size_bits
-        alphabet_size = bitarray_to_uint(params_data_bitarray[: self.alphabet_size_bits])
-        num_bits_consumed += self.alphabet_size_bits
-
-        alphabet = []
-        for _ in range(alphabet_size):
-            symbol_bitarray = params_data_bitarray[
-                num_bits_consumed : (num_bits_consumed + self.alphabet_bits)
-            ]
-            symbol = chr(bitarray_to_uint(symbol_bitarray))
-            alphabet.append(symbol)
-            num_bits_consumed += self.alphabet_bits
-
-        return alphabet, num_bits_consumed
 
 
 def get_alphabet_fixed_bitwidth(alphabet_size):
@@ -81,16 +23,18 @@ def get_alphabet_fixed_bitwidth(alphabet_size):
 
 
 class FixedBitwidthEncoder(DataEncoder):
-    """Encode each symbol using a fixed number of bits"""
+    """
+    - Encode each symbol using a fixed number of bits
+    - Encode the alphabet using a generic pickle based encoder
+    """
 
     def __init__(self):
-        super().__init__()
-        self.alphabet_encoder = TextAlphabetEncoder()
+        self.alphabet_encoder = PickleEncoder()
 
     def encode_block(self, data_block: DataBlock):
         """first encode the alphabet and then each data symbol using fixed number of bits"""
         # get bit width
-        alphabet = data_block.get_alphabet()
+        alphabet = list(data_block.get_alphabet())
 
         # encode alphabet
         encoded_bitarray = self.alphabet_encoder.encode_block(alphabet)
@@ -106,8 +50,7 @@ class FixedBitwidthEncoder(DataEncoder):
 
 class FixedBitwidthDecoder(DataDecoder):
     def __init__(self):
-        super().__init__()
-        self.alphabet_decoder = TextAlphabetDecoder()
+        self.alphabet_decoder = PickleDecoder()
 
     def decode_block(self, bitarray: BitArray):
         """Decode data encoded by FixedBitwidthDecoder
@@ -135,6 +78,81 @@ class FixedBitwidthDecoder(DataDecoder):
 #########################################
 
 
+class TextAlphabetEncoder(DataEncoder):
+    """encode the alphabet set for a block
+
+    Technically, the input to the encode_block is a set and not a DataBlock,
+    but we don't plan on using the "encode" function for this class anyway
+    """
+
+    def __init__(self):
+        self.alphabet_size_bits = 8  # bits used to encode size of the alphabet
+        self.alphabet_bits = 8  # bits used to encode each alphabet
+
+    def encode_block(self, alphabet):
+        """encode the alphabet set
+
+        - Encodes the size of the alphabet set using 8 bits
+        - The ascii value corresponding to each alphabet is then encoded using 8 bits
+        """
+
+        # encode the alphabet size
+        alphabet_size = len(alphabet)
+        assert alphabet_size < 2 ** self.alphabet_size_bits
+        alphabet_size_bitarray = uint_to_bitarray(alphabet_size, self.alphabet_size_bits)
+
+        bitarray = alphabet_size_bitarray
+        for a in alphabet:
+            bitarray += uint_to_bitarray(ord(a), bit_width=self.alphabet_bits)
+
+        return bitarray
+
+
+class TextAlphabetDecoder(DataDecoder):
+    """decode the encoded alphabet set"""
+
+    def __init__(self):
+        self.alphabet_size_bits = 8
+        self.alphabet_bits = 8
+
+    def decode_block(self, params_data_bitarray: BitArray):
+        # initialize num_bits_consumed
+        num_bits_consumed = 0
+
+        # get alphabet size
+        assert len(params_data_bitarray) >= self.alphabet_size_bits
+        alphabet_size = bitarray_to_uint(params_data_bitarray[: self.alphabet_size_bits])
+        num_bits_consumed += self.alphabet_size_bits
+
+        alphabet = []
+        for _ in range(alphabet_size):
+            symbol_bitarray = params_data_bitarray[
+                num_bits_consumed : (num_bits_consumed + self.alphabet_bits)
+            ]
+            symbol = chr(bitarray_to_uint(symbol_bitarray))
+            alphabet.append(symbol)
+            num_bits_consumed += self.alphabet_bits
+
+        return alphabet, num_bits_consumed
+
+
+class TextFixedBitwidthEncoder(FixedBitwidthEncoder):
+    """Encode each symbol using a fixed number of bits
+    The alphabet_encoder is specific to textual/unicode characters.
+    """
+
+    def __init__(self):
+        self.alphabet_encoder = TextAlphabetEncoder()
+
+
+class TextFixedBitwidthDecoder(FixedBitwidthDecoder):
+    def __init__(self):
+        self.alphabet_decoder = TextAlphabetDecoder()
+
+
+#########################################
+
+
 def test_alphabet_encode_decode():
     """test the alphabet compression"""
     # define encoder, decoder
@@ -152,8 +170,8 @@ def test_alphabet_encode_decode():
 def test_fixed_bitwidth_encode_decode():
     """test the encode_block and decode_block functions of FixedBitWidthEncoder and FixedBitWidthDecoder"""
     # define encoder, decoder
-    encoder = FixedBitwidthEncoder()
-    decoder = FixedBitwidthDecoder()
+    encoder = TextFixedBitwidthEncoder()
+    decoder = TextFixedBitwidthDecoder()
 
     # create some sample data
     data_list = ["A", "B", "C", "C", "A", "C", "D"]
@@ -167,7 +185,23 @@ def test_fixed_bitwidth_encode_decode():
     assert codelen == len(data_list) * 2 + alphabet_bits
 
 
-def test_fixed_bitwidth_file_encode_decode():
+def test_fixed_bitwidth_encode_decode():
+    """test the encode_block and decode_block functions of FixedBitWidthEncoder and FixedBitWidthDecoder"""
+    # define encoder, decoder
+    encoder = FixedBitwidthEncoder()
+    decoder = FixedBitwidthDecoder()
+
+    # create some sample data
+    DATA_SIZE = 100000
+    prob_dist = ProbabilityDist({"A": 0.25, "B": 0.25, "C": 0.25, "D": 0.25})
+    data_block = get_random_data_block(prob_dist, DATA_SIZE, seed=0)
+
+    is_lossless, codelen, _ = try_lossless_compression(data_block, encoder, decoder)
+    assert is_lossless
+    assert (codelen / DATA_SIZE - 2.0) < 1e-2
+
+
+def test_text_fixed_bitwidth_file_encode_decode():
     """full test for FixedBitWidthEncoder and FixedBitWidthDecoder
 
     - create a sample file
@@ -176,8 +210,8 @@ def test_fixed_bitwidth_file_encode_decode():
 
     """
     # define encoder, decoder
-    encoder = FixedBitwidthEncoder()
-    decoder = FixedBitwidthDecoder()
+    encoder = TextFixedBitwidthEncoder()
+    decoder = TextFixedBitwidthDecoder()
 
     with tempfile.TemporaryDirectory() as tmpdirname:
 

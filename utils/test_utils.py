@@ -25,7 +25,7 @@ def get_random_data_block(prob_dist: ProbabilityDist, size: int, seed: int = Non
 
     rng = np.random.default_rng(seed)
     data = rng.choice(prob_dist.alphabet, size=size, p=prob_dist.prob_list)
-    return DataBlock(data)
+    return DataBlock(data.tolist())
 
 
 def create_random_text_file(file_path: str, file_size: int, prob_dist: ProbabilityDist):
