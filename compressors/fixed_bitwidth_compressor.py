@@ -1,6 +1,6 @@
 """
-Contains some elementary baseline compressors
-1. Fixed bit width compressor 
+Contains one of the simplest compressors: 
+Fixed Bitwidth compressor -> uses a fixed bitwidth for each symbol
 """
 import tempfile
 import os
@@ -13,6 +13,7 @@ from utils.test_utils import (
     try_file_lossless_compression,
     try_lossless_compression,
 )
+import numpy as np
 
 
 class AlphabetEncoder(DataEncoder):
@@ -72,6 +73,10 @@ class AlphabetDecoder(DataDecoder):
             num_bits_consumed += self.alphabet_bits
 
         return alphabet, num_bits_consumed
+
+
+def get_alphabet_fixed_bitwidth(alphabet_size):
+    return 1 if (alphabet_size == 1) else np.ceil(np.log2(alphabet_size))
 
 
 class FixedBitwidthEncoder(DataEncoder):
