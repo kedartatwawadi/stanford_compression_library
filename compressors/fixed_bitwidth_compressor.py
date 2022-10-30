@@ -43,7 +43,6 @@ class FixedBitwidthEncoder(DataEncoder):
         # encode the sequence length
         assert data_block.size < (1 << self.DATA_SIZE_BITS)
         encoded_bitarray += uint_to_bitarray(data_block.size, self.DATA_SIZE_BITS)
-        print(data_block.size)
 
         # encode data
         symbol_bit_width = get_alphabet_fixed_bitwidth(len(alphabet))
