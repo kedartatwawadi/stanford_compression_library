@@ -14,6 +14,7 @@ py==1.10.0
 pyparsing==2.4.7
 pytest==6.2.5
 regex==2021.9.24
+scipy==1.9.3
 toml==0.10.2
 tomli==1.2.1
 typing-extensions==3.10.0.2
