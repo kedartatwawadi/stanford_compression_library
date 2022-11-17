@@ -1,6 +1,9 @@
 # Stanford Compression Library
 The goal of the library is to help with research in the area of data compression. This is not meant to be fast or efficient implementation, but rather for educational purpose
 
+This library is currently being used for the course [EE274: Data Compression course, Fall 22]() at Stanford University, to augment the lectures and for homeworks: 
+1. The video lectures with the relevant lecture notes and slides are [https://stanforddatacompressionclass.github.io/Fall22/lectures/](https://stanforddatacompressionclass.github.io/Fall22/lectures/)
+2. The Homeworks are listed here: [https://stanforddatacompressionclass.github.io/notes/](https://stanforddatacompressionclass.github.io/notes/)
 
 ## Compression algorithms
 Here is a list of algorithms implemented.
@@ -16,10 +19,13 @@ Here is a list of algorithms implemented.
 - [zlib (external)](external_compressors/zlib_external.py)
 - [zstd (external)](external_compressors/zstd_external.py)
 - [Arithmetic coder](compressors/arithmetic_coding.py)
+- [Context-based Adaptive Arithmetic coder](compressors/probability_models.py)
 - [Range coder](compressors/range_coder.py)
+- [Elias Delta code](compressors/elias_delta_uint_coder.py)
+- [LZ77](compressors/lz77.py)
 
 
-NOTE -> the tests in each file should be helpful as a "usage" example of each of the compressors. More details are also available on the wiki page. 
+NOTE -> the tests in each file should be helpful as a "usage" example of each of the compressors. More details are also available in the lecture [slides](https://stanforddatacompressionclass.github.io/Fall22/lectures/), and the project wiki
 
 
 
