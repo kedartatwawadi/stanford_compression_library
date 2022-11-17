@@ -37,14 +37,13 @@ class PickleDecoder(DataDecoder):
         self.length_bitwidth = length_bitwidth
 
     def decode_block(self, bitarray: BitArray):
-        length_bitwidth = 32
-        length_encoding = bitarray[:length_bitwidth]
+        length_encoding = bitarray[:self.length_bitwidth]
         len_pickled = bitarray_to_uint(length_encoding)
         # bits to bytes
-        pickled_bytes = bitarray[length_bitwidth : length_bitwidth + len_pickled].tobytes()
+        pickled_bytes = bitarray[self.length_bitwidth : self.length_bitwidth + len_pickled].tobytes()
 
         decoded_data = pickle.loads(pickled_bytes)
-        num_bits_read = length_bitwidth + len_pickled
+        num_bits_read = self.length_bitwidth + len_pickled
         return decoded_data, num_bits_read
 
 

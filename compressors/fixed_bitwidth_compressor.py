@@ -30,6 +30,7 @@ class FixedBitwidthEncoder(DataEncoder):
 
     def __init__(self):
         self.alphabet_encoder = PickleEncoder()
+        self.DATA_SIZE_BITS = 32
 
     def encode_block(self, data_block: DataBlock):
         """first encode the alphabet and then each data symbol using fixed number of bits"""
@@ -38,6 +39,10 @@ class FixedBitwidthEncoder(DataEncoder):
 
         # encode alphabet
         encoded_bitarray = self.alphabet_encoder.encode_block(alphabet)
+
+        # encode the sequence length
+        assert data_block.size < (1 << self.DATA_SIZE_BITS)
+        encoded_bitarray += uint_to_bitarray(data_block.size, self.DATA_SIZE_BITS)
 
         # encode data
         symbol_bit_width = get_alphabet_fixed_bitwidth(len(alphabet))
@@ -51,6 +56,7 @@ class FixedBitwidthEncoder(DataEncoder):
 class FixedBitwidthDecoder(DataDecoder):
     def __init__(self):
         self.alphabet_decoder = PickleDecoder()
+        self.DATA_SIZE_BITS = 32
 
     def decode_block(self, bitarray: BitArray):
         """Decode data encoded by FixedBitwidthDecoder
@@ -62,11 +68,16 @@ class FixedBitwidthDecoder(DataDecoder):
         # get the alphabet
         alphabet, num_bits_consumed = self.alphabet_decoder.decode_block(bitarray)
 
+        # decode input data size
+        data_size = bitarray_to_uint(
+            bitarray[num_bits_consumed : (num_bits_consumed + self.DATA_SIZE_BITS)]
+        )
+        num_bits_consumed += self.DATA_SIZE_BITS
+
         # decode data
         symbol_bit_width = get_alphabet_fixed_bitwidth(len(alphabet))
-
         data_list = []
-        while num_bits_consumed < len(bitarray):
+        for _ in range(data_size):
             symbol_bitarray = bitarray[num_bits_consumed : (num_bits_consumed + symbol_bit_width)]
             ind = bitarray_to_uint(symbol_bitarray)
             data_list.append(alphabet[ind])
@@ -142,11 +153,13 @@ class TextFixedBitwidthEncoder(FixedBitwidthEncoder):
     """
 
     def __init__(self):
+        super().__init__()
         self.alphabet_encoder = TextAlphabetEncoder()
 
 
 class TextFixedBitwidthDecoder(FixedBitwidthDecoder):
     def __init__(self):
+        super().__init__()
         self.alphabet_decoder = TextAlphabetDecoder()
 
 
@@ -182,7 +195,7 @@ def test_fixed_bitwidth_encode_decode():
 
     # check if the length of the encoding was correct
     alphabet_bits = (1 + len(data_block.get_alphabet())) * 8
-    assert codelen == len(data_list) * 2 + alphabet_bits
+    assert codelen == len(data_list) * 2 + alphabet_bits + encoder.DATA_SIZE_BITS
 
 
 def test_fixed_bitwidth_encode_decode():
