@@ -195,7 +195,7 @@ def test_fixed_bitwidth_encode_decode():
 
     # check if the length of the encoding was correct
     alphabet_bits = (1 + len(data_block.get_alphabet())) * 8
-    assert codelen == len(data_list) * 2 + alphabet_bits + 32
+    assert codelen == len(data_list) * 2 + alphabet_bits + encoder.DATA_SIZE_BITS
 
 
 def test_fixed_bitwidth_encode_decode():
