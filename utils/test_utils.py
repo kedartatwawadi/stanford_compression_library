@@ -122,10 +122,10 @@ def try_file_lossless_compression(
         encoded_file_path = os.path.join(tmpdirname, "encoded_file.bin")
         reconst_file_path = os.path.join(tmpdirname, "reconst_file.txt")
 
-        # encode data using the FixedBitWidthEncoder and write to the binary file
+        # encode data using the given encoder and write to the binary file
         encoder.encode_file(input_file_path, encoded_file_path, block_size=encode_block_size)
 
-        # decode data using th eFixedBitWidthDecoder and write output to a text file
+        # decode data using the given decoder and write output to a text file
         decoder.decode_file(encoded_file_path, reconst_file_path)
 
         # check if the reconst file and input match

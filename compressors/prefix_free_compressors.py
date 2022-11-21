@@ -123,14 +123,14 @@ class PrefixFreeTree:
     def get_encoding_table(self) -> Mapping[Any, BitArray]:
         """
         Utility func to get the encoding table based on the prefix-free tree.
-        Does a BFS over the tree to return the encoding table over the whole symbol dictionary starting from root_node
+        Does a DFS over the tree to return the encoding table over the whole symbol dictionary starting from root_node
 
         Returns:
             Mapping[Any,BitArray]: the encoding_array dict
         """
         encoding_table = {}
 
-        # define the BFS function
+        # define the DFS function
         def _parse_node(node: BinaryNode, code: BitArray):
             """parse the node in DFS fashion, and get the code corresponding to
             all the leaf nodes
