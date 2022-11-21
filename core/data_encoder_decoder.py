@@ -6,7 +6,6 @@ More info in respective docstrings
 """
 
 import abc
-from typing import final
 from core.data_block import DataBlock
 from core.data_stream import DataStream, TextFileDataStream
 from core.encoded_stream import EncodedBlockReader, EncodedBlockWriter
@@ -41,7 +40,7 @@ class DataEncoder(abc.ABC):
         # return encoded_bitarray
         raise NotImplementedError
 
-    @final
+    
     def encode(self, data_stream: DataStream, block_size: int, encode_writer: EncodedBlockWriter):
         """function to encode a given data_stream
 
@@ -117,7 +116,7 @@ class DataDecoder(abc.ABC):
         # return decoded_block, num_bits_consumed
         raise NotImplementedError
 
-    @final
+    
     def decode(self, encode_reader: EncodedBlockReader, output_stream: DataStream):
         """function to decode a binary encoded stream
 
