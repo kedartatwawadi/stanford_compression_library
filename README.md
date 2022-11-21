@@ -1,9 +1,10 @@
 # Stanford Compression Library
 The goal of the library is to help with research in the area of data compression. This is not meant to be fast or efficient implementation, but rather for educational purpose
 
-This library is currently being used for the course [EE274: Data Compression course, Fall 22]() at Stanford University, to augment the lectures and for homeworks: 
-1. The video lectures with the relevant lecture notes and slides are [https://stanforddatacompressionclass.github.io/Fall22/lectures/](https://stanforddatacompressionclass.github.io/Fall22/lectures/)
-2. The Homeworks are listed here: [https://stanforddatacompressionclass.github.io/notes/](https://stanforddatacompressionclass.github.io/notes/)
+This library is currently being used for the course [EE274: Data Compression course, Fall 22](https://stanforddatacompressionclass.github.io/Fall22/) at Stanford University, to augment the lectures and for homeworks: 
+1. The course notes and HWs can be found here: [https://stanforddatacompressionclass.github.io/notes/](https://stanforddatacompressionclass.github.io/notes/)
+2. The video recordings for lectures can be found as a [Youtube Playlist](https://youtube.com/playlist?list=PLv_7iO_xlL0Jgc35Pqn7XP5VTQ5krLMOl)
+3. All lecture materials from Fall 22 version of EE 274 can be found here: [https://stanforddatacompressionclass.github.io/Fall22/lectures/](https://stanforddatacompressionclass.github.io/Fall22/lectures/)
 
 ## Compression algorithms
 Here is a list of algorithms implemented.
