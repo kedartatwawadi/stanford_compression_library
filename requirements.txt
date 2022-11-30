@@ -19,3 +19,4 @@ toml==0.10.2
 tomli==1.2.1
 typing-extensions==3.10.0.2
 zstandard==0.18.0
+networkx
