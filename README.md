@@ -1,5 +1,5 @@
 # Tabular data compression using Chow-Liu trees
-The code implemented for compressing tabular data is present in: compressors/tabular_encoder_chow_liu.py
+The code implemented for compressing tabular data is present in: **compressors/tabular_encoder_chow_liu.py**
 
 
 ## Stanford Compression Library
