@@ -15,6 +15,7 @@ from utils.test_utils import (
     lossless_entropy_coder_test,
     lossless_test_against_expected_bitrate,
 )
+import copy
 
 
 @dataclass
@@ -49,18 +50,14 @@ class ArithmeticEncoder(DataEncoder):
         https://web.stanford.edu/class/ee398a/handouts/papers/WittenACM87ArithmCoding.pdf
     """
 
-    def __init__(
-        self, params: AECParams, freq_model_params: Frequencies, freq_model_cls: FreqModelBase
-    ):
+    def __init__(self, params: AECParams, freq_model: FreqModelBase):
         self.params = params
 
         # define the probability model used by the AEC
         # the model can get updated when we call update_model(s) after every step
-        if isinstance(freq_model_params, tuple):
-            # if freq_model_params is a tuple, we unpack the parameters
-            self.freq_model = freq_model_cls(*freq_model_params, params.MAX_ALLOWED_TOTAL_FREQ)
-        else:
-            self.freq_model = freq_model_cls(freq_model_params, params.MAX_ALLOWED_TOTAL_FREQ)
+        self.freq_model = freq_model
+
+        # self.freq_model = freq_model_cls(freq_model_params, params.MAX_ALLOWED_TOTAL_FREQ)
 
     @classmethod
     def shrink_range(cls, freqs: Frequencies, s: Any, low: int, high: int) -> Tuple[int, int]:
@@ -177,15 +174,9 @@ class ArithmeticDecoder(DataDecoder):
     - Charles Bloom's blog: https://www.cbloom.com/algs/statisti.html#A5
     """
 
-    def __init__(
-        self, params: AECParams, freq_model_params: Frequencies, freq_model_cls: FreqModelBase
-    ):
+    def __init__(self, params: AECParams, freq_model: FreqModelBase):
         self.params = params
-        if isinstance(freq_model_params, tuple):
-            # if freq_model_params is a tuple, we unpack the parameters
-            self.freq_model = freq_model_cls(*freq_model_params, params.MAX_ALLOWED_TOTAL_FREQ)
-        else:
-            self.freq_model = freq_model_cls(freq_model_params, params.MAX_ALLOWED_TOTAL_FREQ)
+        self.freq_model = freq_model
 
     def decode_step_core(self, low: int, high: int, state: int, freqs: Frequencies):
         """Core Arithmetic decoding function
@@ -331,9 +322,18 @@ def test_arithmetic_coding():
 
     DATA_SIZE = 1000
     for freq, params in zip(data_freqs_list, params_list):
+
+        # create encoder/decoder model
+        # NOTE: important to make a copy, as the encoder updates the model, and we don't want to pass
+        # the update model around
+        freq_model_enc = AdaptiveIIDFreqModel(
+            freq, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ
+        )
+        freq_model_dec = copy.deepcopy(freq_model_enc)
+
         # create encoder/decoder
-        encoder = ArithmeticEncoder(params, freq, FixedFreqModel)
-        decoder = ArithmeticDecoder(params, freq, FixedFreqModel)
+        encoder = ArithmeticEncoder(params, freq_model_enc)
+        decoder = ArithmeticDecoder(params, freq_model_dec)
         lossless_entropy_coder_test(
             encoder, decoder, freq, DATA_SIZE, encoding_optimality_precision=1e-1, seed=0
         )
@@ -368,9 +368,18 @@ def test_adaptive_arithmetic_coding():
 
         # define initial distribution to be uniform
         uniform_dist = Frequencies({a: 1 for a in freq.alphabet})
-        # create encoder/decoder
-        encoder = ArithmeticEncoder(params, uniform_dist, AdaptiveIIDFreqModel)
-        decoder = ArithmeticDecoder(params, uniform_dist, AdaptiveIIDFreqModel)
+
+        # create encoder/decoder model
+        # NOTE: important to make a copy, as the encoder updates the model, and we don't want to pass
+        # the update model around
+        freq_model_enc = AdaptiveIIDFreqModel(
+            freqs_initial=uniform_dist, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ
+        )
+        freq_model_dec = copy.deepcopy(freq_model_enc)
+
+        # create enc/dec
+        encoder = ArithmeticEncoder(params, freq_model_enc)
+        decoder = ArithmeticDecoder(params, freq_model_dec)
         lossless_entropy_coder_test(
             encoder, decoder, freq, DATA_SIZE, encoding_optimality_precision=1e-1, seed=0
         )
@@ -415,24 +424,44 @@ def test_adaptive_order_k_arithmetic_coding():
     # print newline so it shows up nicely on testing
     print()
 
-    for (model, model_params, expected_bitrate) in [
-        (AdaptiveOrderKFreqModel, ([0, 1, 2], 0), np.log2(3)),
-        (AdaptiveOrderKFreqModel, ([0, 1, 2], 1), np.log2(3)),
-        (AdaptiveOrderKFreqModel, ([0, 1, 2], 2), 1),
-        (AdaptiveOrderKFreqModel, ([0, 1, 2], 3), 1),
+    for (model_params, expected_bitrate) in [
+        (([0, 1, 2], 0), np.log2(3)),
+        (([0, 1, 2], 1), np.log2(3)),
+        (([0, 1, 2], 2), 1),
+        (([0, 1, 2], 3), 1),
     ]:
+        # define AEC params
+        aec_params = AECParams()
+
+        # define encoder/decoder models
+        # NOTE: important to make a copy, as the encoder updates the model, and we don't want to pass
+        # the update model around
+        freq_model_enc = AdaptiveOrderKFreqModel(
+            alphabet=model_params[0],
+            k=model_params[1],
+            max_allowed_total_freq=aec_params.MAX_ALLOWED_TOTAL_FREQ,
+        )
+        freq_model_dec = copy.deepcopy(freq_model_enc)
         print("k:", model_params[1], end=",")
+
         # create encoder/decoder
-        encoder = ArithmeticEncoder(AECParams(), model_params, model)
-        decoder = ArithmeticDecoder(AECParams(), model_params, model)
+        encoder = ArithmeticEncoder(aec_params, freq_model_enc)
+        decoder = ArithmeticDecoder(aec_params, freq_model_dec)
+
         lossless_test_against_expected_bitrate(encoder, decoder, data_block, expected_bitrate, 0.1)
 
-    # verify that the 0th order exactly matches the AdaptiveIIDFreqModel
-    encoder1 = ArithmeticEncoder(AECParams(), ([0, 1, 2], 0), AdaptiveOrderKFreqModel)
+    ## verify that the 0th order exactly matches the AdaptiveIIDFreqModel
+    params = AECParams()
+    freq_model_orderk = AdaptiveOrderKFreqModel(
+        alphabet=[0, 1, 2], k=0, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ
+    )
+    encoder1 = ArithmeticEncoder(params, freq_model_orderk)
 
     # define initial distribution to be uniform
     uniform_dist = Frequencies({0: 1, 1: 1, 2: 1})
-    # create encoder/decoder
-    encoder2 = ArithmeticEncoder(AECParams(), uniform_dist, AdaptiveIIDFreqModel)
+    freq_model_iid = AdaptiveIIDFreqModel(
+        uniform_dist, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ
+    )
+    encoder2 = ArithmeticEncoder(params, freq_model_iid)
 
     assert encoder1.encode_block(data_block) == encoder2.encode_block(data_block)
