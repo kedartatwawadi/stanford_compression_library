@@ -2,13 +2,13 @@ from dataclasses import dataclass
 from typing import Any, Tuple
 import heapq
 from functools import total_ordering
-from compressors.prefix_free_compressors import PrefixFreeTree, PrefixFreeEncoder, PrefixFreeDecoder
-from core.data_block import DataBlock
-from core.prob_dist import ProbabilityDist, get_avg_neg_log_prob
+from stanford_compress.compressors.prefix_free_compressors import PrefixFreeTree, PrefixFreeEncoder, PrefixFreeDecoder
+from stanford_compress.core.data_block import DataBlock
+from stanford_compress.core.prob_dist import ProbabilityDist, get_avg_neg_log_prob
 import numpy as np
-from utils.bitarray_utils import BitArray
-from utils.test_utils import get_random_data_block, try_lossless_compression
-from utils.tree_utils import BinaryNode
+from stanford_compress.utils.bitarray_utils import BitArray
+from stanford_compress.utils.test_utils import get_random_data_block, try_lossless_compression
+from stanford_compress.utils.tree_utils import BinaryNode
 
 
 @dataclass

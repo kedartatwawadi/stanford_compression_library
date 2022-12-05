@@ -30,14 +30,14 @@ d. If the "binary" floating point representation is clear, then the Shannon code
    representation of $c_r$
 """
 from typing import Any, Tuple
-from utils.bitarray_utils import float_to_bitarrays, BitArray
-from utils.test_utils import get_random_data_block, try_lossless_compression
-from compressors.prefix_free_compressors import (
+from stanford_compress.utils.bitarray_utils import float_to_bitarrays, BitArray
+from stanford_compress.utils.test_utils import get_random_data_block, try_lossless_compression
+from stanford_compress.compressors.prefix_free_compressors import (
     PrefixFreeEncoder,
     PrefixFreeDecoder,
     PrefixFreeTree,
 )
-from core.prob_dist import ProbabilityDist
+from stanford_compress.core.prob_dist import ProbabilityDist
 import math
 
 

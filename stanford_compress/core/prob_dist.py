@@ -1,6 +1,6 @@
 import numpy as np
 import unittest
-from utils.misc_utils import cache
+from stanford_compress.utils.misc_utils import cache
 
 
 class ProbabilityDist:

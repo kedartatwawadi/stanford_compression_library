@@ -8,10 +8,10 @@ useful for implementing any prefix free code
 
 import abc
 from typing import Mapping, Tuple, Any
-from utils.bitarray_utils import BitArray
-from utils.tree_utils import BinaryNode
-from core.data_encoder_decoder import DataEncoder, DataDecoder
-from core.data_block import DataBlock
+from stanford_compress.utils.bitarray_utils import BitArray
+from stanford_compress.utils.tree_utils import BinaryNode
+from stanford_compress.core.data_encoder_decoder import DataEncoder, DataDecoder
+from stanford_compress.core.data_block import DataBlock
 
 
 class PrefixFreeEncoder(DataEncoder):

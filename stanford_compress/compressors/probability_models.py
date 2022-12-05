@@ -9,7 +9,7 @@ from typing import List
 
 import numpy as np
 
-from core.prob_dist import Frequencies
+from stanford_compress.core.prob_dist import Frequencies
 
 
 class FreqModelBase(abc.ABC):

@@ -17,10 +17,10 @@ Encoding:
 The decoding is straightforward, as the unary code indicates how many bits further to read and decode
 """
 
-from core.data_block import DataBlock
-from core.data_encoder_decoder import DataDecoder, DataEncoder
-from utils.bitarray_utils import uint_to_bitarray, bitarray_to_uint, BitArray
-from utils.test_utils import are_blocks_equal
+from stanford_compress.core.data_block import DataBlock
+from stanford_compress.core.data_encoder_decoder import DataDecoder, DataEncoder
+from stanford_compress.utils.bitarray_utils import uint_to_bitarray, bitarray_to_uint, BitArray
+from stanford_compress.utils.test_utils import are_blocks_equal
 
 
 class UniversalUintEncoder(DataEncoder):

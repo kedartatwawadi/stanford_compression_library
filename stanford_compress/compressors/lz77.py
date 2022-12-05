@@ -92,15 +92,15 @@ from dataclasses import dataclass
 import os
 import tempfile
 from typing import List, Tuple
-from compressors.elias_delta_uint_coder import EliasDeltaUintDecoder, EliasDeltaUintEncoder
-from compressors.huffman_coder import HuffmanDecoder, HuffmanEncoder
-from core.data_block import DataBlock
-from core.data_encoder_decoder import DataDecoder, DataEncoder
-from core.data_stream import Uint8FileDataStream
-from core.encoded_stream import EncodedBlockReader, EncodedBlockWriter
-from core.prob_dist import ProbabilityDist
-from utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray
-from utils.test_utils import (
+from stanford_compress.compressors.elias_delta_uint_coder import EliasDeltaUintDecoder, EliasDeltaUintEncoder
+from stanford_compress.compressors.huffman_coder import HuffmanDecoder, HuffmanEncoder
+from stanford_compress.core.data_block import DataBlock
+from stanford_compress.core.data_encoder_decoder import DataDecoder, DataEncoder
+from stanford_compress.core.data_stream import Uint8FileDataStream
+from stanford_compress.core.encoded_stream import EncodedBlockReader, EncodedBlockWriter
+from stanford_compress.core.prob_dist import ProbabilityDist
+from stanford_compress.utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray
+from stanford_compress.utils.test_utils import (
     create_random_binary_file,
     try_file_lossless_compression,
     try_lossless_compression,

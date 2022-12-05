@@ -1,17 +1,16 @@
 from dataclasses import dataclass
 import numpy as np
 from typing import Tuple, Any
-from compressors.probability_models import (
+from stanford_compress.compressors.probability_models import (
     AdaptiveIIDFreqModel,
     AdaptiveOrderKFreqModel,
-    FixedFreqModel,
     FreqModelBase,
 )
-from core.data_encoder_decoder import DataDecoder, DataEncoder
-from utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
-from core.data_block import DataBlock
-from core.prob_dist import Frequencies
-from utils.test_utils import (
+from stanford_compress.core.data_encoder_decoder import DataDecoder, DataEncoder
+from stanford_compress.utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
+from stanford_compress.core.data_block import DataBlock
+from stanford_compress.core.prob_dist import Frequencies
+from stanford_compress.utils.test_utils import (
     lossless_entropy_coder_test,
     lossless_test_against_expected_bitrate,
 )

@@ -4,12 +4,12 @@ Fixed Bitwidth compressor -> uses a fixed bitwidth for each symbol
 """
 import tempfile
 import os
-from core.data_block import DataBlock
-from core.data_encoder_decoder import DataEncoder, DataDecoder
-from core.prob_dist import ProbabilityDist
-from external_compressors.pickle_external import PickleDecoder, PickleEncoder
-from utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray
-from utils.test_utils import (
+from stanford_compress.core.data_block import DataBlock
+from stanford_compress.core.data_encoder_decoder import DataEncoder, DataDecoder
+from stanford_compress.core.prob_dist import ProbabilityDist
+from stanford_compress.external_compressors.pickle_external import PickleDecoder, PickleEncoder
+from stanford_compress.utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray
+from stanford_compress.utils.test_utils import (
     create_random_text_file,
     get_random_data_block,
     try_file_lossless_compression,

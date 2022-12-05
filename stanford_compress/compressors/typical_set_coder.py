@@ -16,11 +16,11 @@ these chunks are referred to as blocks (as in block coding).
 """
 
 from attr import dataclass
-from core.data_block import DataBlock
-from core.data_encoder_decoder import DataDecoder, DataEncoder
-from utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
-from utils.test_utils import get_random_data_block, try_lossless_compression
-from core.prob_dist import ProbabilityDist
+from stanford_compress.core.data_block import DataBlock
+from stanford_compress.core.data_encoder_decoder import DataDecoder, DataEncoder
+from stanford_compress.utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
+from stanford_compress.utils.test_utils import get_random_data_block, try_lossless_compression
+from stanford_compress.core.prob_dist import ProbabilityDist
 import numpy as np
 import itertools
 import random

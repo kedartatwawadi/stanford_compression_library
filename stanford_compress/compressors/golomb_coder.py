@@ -20,12 +20,12 @@ r+cutoff >= 2*cutoff and hence the first b bits are >= cutoff.
 TODO: use latex formatting?
 """
 
-from core.data_block import DataBlock
-from core.data_encoder_decoder import DataEncoder, DataDecoder
-from utils.bitarray_utils import uint_to_bitarray, bitarray_to_uint, BitArray
-from utils.test_utils import try_lossless_compression
+from stanford_compress.core.data_block import DataBlock
+from stanford_compress.core.data_encoder_decoder import DataEncoder, DataDecoder
+from stanford_compress.utils.bitarray_utils import uint_to_bitarray, bitarray_to_uint, BitArray
+from stanford_compress.utils.test_utils import try_lossless_compression
 import math
-from compressors.prefix_free_compressors import PrefixFreeEncoder, PrefixFreeDecoder
+from stanford_compress.compressors.prefix_free_compressors import PrefixFreeEncoder, PrefixFreeDecoder
 
 
 class GolombCodeParams:

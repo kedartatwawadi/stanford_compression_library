@@ -62,12 +62,12 @@ More references in the wiki article
 from dataclasses import dataclass
 import numpy as np
 from typing import Tuple, Any, List
-from core.data_encoder_decoder import DataDecoder, DataEncoder
-from utils.bitarray_utils import BitArray, get_bit_width, uint_to_bitarray, bitarray_to_uint
-from core.data_block import DataBlock
-from core.prob_dist import Frequencies, get_avg_neg_log_prob
-from utils.test_utils import get_random_data_block, try_lossless_compression
-from utils.misc_utils import cache
+from stanford_compress.core.data_encoder_decoder import DataDecoder, DataEncoder
+from stanford_compress.utils.bitarray_utils import BitArray, get_bit_width, uint_to_bitarray, bitarray_to_uint
+from stanford_compress.core.data_block import DataBlock
+from stanford_compress.core.prob_dist import Frequencies, get_avg_neg_log_prob
+from stanford_compress.utils.test_utils import get_random_data_block, try_lossless_compression
+from stanford_compress.utils.misc_utils import cache
 
 
 @dataclass

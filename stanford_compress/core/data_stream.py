@@ -2,7 +2,7 @@ import abc
 import tempfile
 import os
 import typing
-from core.data_block import DataBlock
+from stanford_compress.core.data_block import DataBlock
 
 Symbol = typing.Any
 

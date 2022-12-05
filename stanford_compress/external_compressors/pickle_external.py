@@ -11,8 +11,8 @@ so this should be only used when the metadata is small.
 
 import pickle
 from typing import Any
-from core.data_encoder_decoder import DataDecoder, DataEncoder
-from utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray
+from stanford_compress.core.data_encoder_decoder import DataDecoder, DataEncoder
+from stanford_compress.utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray
 
 
 class PickleEncoder(DataEncoder):
