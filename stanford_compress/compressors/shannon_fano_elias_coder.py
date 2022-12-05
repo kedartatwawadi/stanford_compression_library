@@ -10,7 +10,10 @@ which motivates Arithmetic coding
 
 from stanford_compress.utils.bitarray_utils import float_to_bitarrays, BitArray
 from stanford_compress.utils.test_utils import get_random_data_block, try_lossless_compression
-from stanford_compress.compressors.prefix_free_compressors import PrefixFreeEncoder, PrefixFreeDecoder
+from stanford_compress.compressors.prefix_free_compressors import (
+    PrefixFreeEncoder,
+    PrefixFreeDecoder,
+)
 from stanford_compress.core.prob_dist import ProbabilityDist
 import math
 import numpy as np

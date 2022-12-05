@@ -2,7 +2,11 @@ from dataclasses import dataclass
 from typing import Any, Tuple
 import heapq
 from functools import total_ordering
-from stanford_compress.compressors.prefix_free_compressors import PrefixFreeTree, PrefixFreeEncoder, PrefixFreeDecoder
+from stanford_compress.compressors.prefix_free_compressors import (
+    PrefixFreeTree,
+    PrefixFreeEncoder,
+    PrefixFreeDecoder,
+)
 from stanford_compress.core.data_block import DataBlock
 from stanford_compress.core.prob_dist import ProbabilityDist, get_avg_neg_log_prob
 import numpy as np

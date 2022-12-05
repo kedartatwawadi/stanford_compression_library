@@ -17,4 +17,4 @@ jobs:
         with:
             options: "--check --line-length 100 --verbose"
             src: "./stanford_compress"
-            version: "~= 21.9b0"
+            version: "~= 22.3"

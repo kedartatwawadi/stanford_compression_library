@@ -109,7 +109,7 @@ class TextAlphabetEncoder(DataEncoder):
 
         # encode the alphabet size
         alphabet_size = len(alphabet)
-        assert alphabet_size < 2 ** self.alphabet_size_bits
+        assert alphabet_size < 2**self.alphabet_size_bits
         alphabet_size_bitarray = uint_to_bitarray(alphabet_size, self.alphabet_size_bits)
 
         bitarray = alphabet_size_bitarray

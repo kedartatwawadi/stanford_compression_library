@@ -75,7 +75,7 @@ def try_lossless_compression(
     encoder: DataEncoder,
     decoder: DataDecoder,
     add_extra_bits_to_encoder_output: bool = False,
-    verbose: bool = False
+    verbose: bool = False,
 ) -> Tuple[bool, int, BitArray]:
     """Encodes the data_block using data_compressor and returns True if the compression was lossless
 
@@ -133,17 +133,26 @@ def try_file_lossless_compression(
 
     """
     """
-def lossless_entropy_coder_test(encoder: DataEncoder, decoder: DataDecoder, freq: Frequencies, data_size: int, encoding_optimality_precision: bool = None, seed: int =0):
+
+
+def lossless_entropy_coder_test(
+    encoder: DataEncoder,
+    decoder: DataDecoder,
+    freq: Frequencies,
+    data_size: int,
+    encoding_optimality_precision: bool = None,
+    seed: int = 0,
+):
     """Checks if the given entropy coder performs lossless compression and optionally if it is
-       "optimal". 
-       
+       "optimal".
+
        NOTE: the notion of optimality is w.r.t to the avg_log_probability of the randomly
        generated input.
-       Example usage is for compressors such as Huffman, AEC, rANS etc. 
+       Example usage is for compressors such as Huffman, AEC, rANS etc.
 
     Args:
         encoder (DataEncoder): Encoder to test with
-        decoder (DataDecoder): Decoder to test lossless compression with 
+        decoder (DataDecoder): Decoder to test lossless compression with
         freq (Frequencies): freq distribution used to generate random i.i.d data
         data_size (int): the size of the data to generate
         encoding_optimality_precision (bool, optional): Optionally (if not None) check if the average log_prob is close to the avg_codelen. Defaults to None.
@@ -161,9 +170,7 @@ def lossless_entropy_coder_test(encoder: DataEncoder, decoder: DataDecoder, freq
 
     # avg codelen ignoring the bits used to signal num data elements
     avg_codelen = (encode_len) / data_block.size
-    print(
-        f" avg_log_prob={avg_log_prob:.3f}, avg_codelen: {avg_codelen:.3f}"
-    )
+    print(f" avg_log_prob={avg_log_prob:.3f}, avg_codelen: {avg_codelen:.3f}")
 
     # check whether arithmetic coding results are close to optimal codelen
     if encoding_optimality_precision is not None:
@@ -171,6 +178,7 @@ def lossless_entropy_coder_test(encoder: DataEncoder, decoder: DataDecoder, freq
         assert np.abs(avg_codelen - avg_log_prob) < encoding_optimality_precision, err_msg
 
     assert is_lossless
+
 
 def lossless_test_against_expected_bitrate(
     encoder: DataEncoder,

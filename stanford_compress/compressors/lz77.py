@@ -92,7 +92,10 @@ from dataclasses import dataclass
 import os
 import tempfile
 from typing import List, Tuple
-from stanford_compress.compressors.elias_delta_uint_coder import EliasDeltaUintDecoder, EliasDeltaUintEncoder
+from stanford_compress.compressors.elias_delta_uint_coder import (
+    EliasDeltaUintDecoder,
+    EliasDeltaUintEncoder,
+)
 from stanford_compress.compressors.huffman_coder import HuffmanDecoder, HuffmanEncoder
 from stanford_compress.core.data_block import DataBlock
 from stanford_compress.core.data_encoder_decoder import DataDecoder, DataEncoder

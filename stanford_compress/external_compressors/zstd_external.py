@@ -25,6 +25,7 @@ from stanford_compress.utils.test_utils import (
 )
 import zstandard
 
+
 class ZstdExternalEncoder(DataEncoder):
     def __init__(self, level=6):
         self.level = level
