@@ -35,23 +35,23 @@ NOTE -> the tests in each file should be helpful as a "usage" example of each of
     ```
     conda create --name myenv python=3.8.2
     conda activate myenv
-    python -m pip install -r requirements.txt
+    
     ```
-- Add path to the repo to `PYTHONPATH`:
+- Install the `stanford_compress` package
     ```
-    export PYTHONPATH=$PYTHONPATH:<path_to_repo>
+    python install -e . #install the package in a editable mode
     ``` 
 
 - **Run unit tests**
 
   To run all tests:
     ```
-    find . -name "*.py" -exec py.test -s -v {} +
+    find stanford_compress -name "*.py" -exec py.test -s -v {} +
     ```
 
   To run a single test
   ```
-  py.test -s -v core/data_stream_tests.py
+  py.test -s -v stanford_compress/core/data_stream_tests.py
   ```
 
 ## Getting started with understanding the library
