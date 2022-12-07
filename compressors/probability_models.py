@@ -98,10 +98,10 @@ class AdaptiveOrderKFreqModel(FreqModelBase):
     Parameters:
         alphabet: the alphabet (provided as a list)
         k:        the order, k >= 0 (kth order means we use past k to predict next, k=0 means iid)
-
+        max_allowed_total_freq: to limit the total_freq values of the frequency model
     """
 
-    def __init__(self, alphabet: List, k: int, max_allowed_total_freq):
+    def __init__(self, alphabet: List, k: int, max_allowed_total_freq: int):
         assert k >= 0
         self.k = k
         # map alphabet to index from 0 to len(alphabet) so we can use with numpy array
