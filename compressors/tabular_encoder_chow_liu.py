@@ -18,6 +18,7 @@ from core.data_encoder_decoder import DataDecoder, DataEncoder
 from core.prob_dist import Frequencies, ProbabilityDist
 from utils.bitarray_utils import uint_to_bitarray, bitarray_to_uint, BitArray
 from compressors.arithmetic_coding import AECParams, ArithmeticEncoder, ArithmeticDecoder, FixedFreqModel
+from compressors.golomb_coder import GolombCodeParams, GolombUintEncoder, GolombUintDecoder
 from core.data_block import DataBlock
 
 def test_chow_liu_tree():
@@ -89,7 +90,7 @@ def encode_dictionary(dictionary):
 # We use a list to store the histograms for all columns
 # Return the self-entropy list used to calculate mutual information later
 # Encoding per column in order:
-# len(support set) | len(encoded_hist_of_hist) | encoded_hist_of_hist | len(marginal_hist) | encoded_marginal_hist
+# len(support set) | len(encoded_hist_of_hist) | encoded_hist_of_hist | len(encoded_marginal_hist) | encoded_marginal_hist
 def create_marginal_hist(ordered_data):
     marginal_hist_list = []
     self_entropy_list = []
@@ -121,18 +122,22 @@ def create_marginal_hist(ordered_data):
             # Encode the second column (frequencies) using AEC
             data_freq_set = DataBlock(frequencies)
             freq_freq_set = Frequencies(freq_of_freq)
-            aec_encoder = ArithmeticEncoder(AECParams(), freq_freq_set, FixedFreqModel)
+            params = AECParams()
+            freq_model_enc = AdaptiveIIDFreqModel(freq_freq_set, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
+            aec_encoder = ArithmeticEncoder(AECParams(), freq_model_enc)
             aec_encoding = aec_encoder.encode_block(data_freq_set).tobytes()
             encoding_size = len(aec_encoding).to_bytes(8, sys.byteorder)
             f.write(encoding_size)
             f.write(aec_encoding)      
         
         f.close()
-
+    # print(marginal_hist_list)
     return encoding_size, self_entropy_list
 
-
-def create_pairwise_joint_hist(ordered_data, n_feat, self_entropy_list):
+# Create the pairwise joint histogram for all columns
+# Encode both the support set and the frequencies using AEC
+# Tried encoding the support set with Golomb coding - faced accuracy issues
+def create_pairwise_joint_hist(ordered_data, n_feat, self_entropy_list, col_dict):
     # Create a pandas dataframe that contains tuples of pairwise combinations of columns
     num_pairs = n_feat*(n_feat-1)/2
     for index1 in range(n_feat):
@@ -167,11 +172,59 @@ def create_pairwise_joint_hist(ordered_data, n_feat, self_entropy_list):
     assert(len(joint_entropy_list) == num_pairs)
     assert(len(pairwise_mutual_info) == num_pairs)
 
-    # Encode the joint support set of each pairwise combination of columns
-    # Use Golomb encoding 
+    # Encode the joint support set and frequencies
+    with open(out_filename, "ab") as f:
+        for column in pairwise_columns:
+            (index1, index2) = column
+            # Get the dimensions of the joint binary support set 
+            m = len(col_dict[index1])
+            n = len(col_dict[index2])
+            joint_support_set = np.zeros((m, n))
 
-    # Encode the pairwise joint histogram - using Arithmetic encoding
+            # 1s in the indices (i, j) will correspond to that tuple being present in the support set
+            column_list = pairwise_columns[column].to_list()
+            for (idx1, idx2) in column_list:
+                joint_support_set[idx1][idx2]=1
+            
+            # print(column_list)
+            print(joint_support_set)
 
+            # Compute the distance between adjacent 1s and store in a list
+            # This comprises the input data to the AEC encoder
+            # Flatten the 2D numpy array into 1D for ease
+            joint_support_set_1d = joint_support_set.flatten()
+            f.write(len(joint_support_set_1d).to_bytes(8, sys.byteorder))
+            idx_true = np.where(joint_support_set_1d)[0]
+            idx_true = idx_true.tolist()
+            # Distances will always be of the following form
+            # Idx of the first 1 followed by distances between adjacent 1s
+            dist_arr = [idx_true[0]]
+            dist_arr.extend(np.diff(idx_true).tolist())
+            dist_arr_data = DataBlock(dist_arr)
+            dist_arr_freq = dist_arr_data.get_counts(order=0)
+
+            # Encode the frequency dist. of support set in plain text
+            dist_arr_freq_serialized = pickle.dumps(dist_arr_freq)
+            dist_arr_freq_compressed = gzip.compress(bytes(dist_arr_freq_serialized))
+            len_compressed = len(dist_arr_freq_compressed).to_bytes(8, sys.byteorder)
+            f.write(len_compressed)
+            f.write(dist_arr_freq_compressed)
+
+            # Encode the joint support set using AEC
+            dist_freq = Frequencies(dist_arr_freq)
+            params = AECParams()
+            freq_model_enc = AdaptiveIIDFreqModel(dist_freq, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
+            aec_encoder = ArithmeticEncoder(AECParams(), freq_model_enc)
+            aec_encoding = aec_encoder.encode_block(dist_arr_data).tobytes()
+            encoding_size = len(aec_encoding).to_bytes(8, sys.byteorder)
+            f.write(encoding_size)
+            f.write(aec_encoding)
+            
+
+
+            # Encode the pairwise joint histogram
+
+        f.close()
 
     # print(joint_entropy_list)
     # print(pairwise_mutual_info)
@@ -209,12 +262,12 @@ def chow_liu_encoder(data, num_features):
     enc_size_marg_hist, self_entropy_list = create_marginal_hist(ordering)
 
     # Create and encode the pairwise joint histogram
-    mutual_info = create_pairwise_joint_hist(ordering, num_features, self_entropy_list)
+    mutual_info = create_pairwise_joint_hist(ordering, num_features, self_entropy_list, dictionary)
 
     # Compute the weight of the Chow-Liu tree
 
     # Generate the Chow-Liu tree
-    construct_chow_liu_tree(mutual_info)
+    # construct_chow_liu_tree(mutual_info)
 
     # Perform pairwise encoding of columns in the dataset
 
@@ -241,7 +294,7 @@ def decode_dictionary():
 # Decode the marginal histogram for all columns
 # We use a list to store the histograms for all columns
 # Encoded column is:
-# len(support set) | len(encoded_hist_of_hist) | encoded_hist_of_hist | len(marginal_hist) | encoded_marginal_hist
+# len(support set) | len(encoded_hist_of_hist) | encoded_hist_of_hist | len(encoded_marginal_hist) | encoded_marginal_hist
 def decode_marginal_hist(pos_file, n_feat):
     marginal_hist_list = []
     with open(out_filename, "rb") as f:
@@ -262,7 +315,9 @@ def decode_marginal_hist(pos_file, n_feat):
             data_freq_bits = BitArray()
             data_freq_bits.frombytes(data_freq_set)
             freq_freq_set = Frequencies(fingerprint_deserialized)
-            aec_decoder = ArithmeticDecoder(AECParams(), freq_freq_set, FixedFreqModel)
+            params = AECParams()
+            freq_model_dec = AdaptiveIIDFreqModel(freq_freq_set, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
+            aec_decoder = ArithmeticDecoder(AECParams(), freq_model_dec)
             aec_decoding, bits_consumed = aec_decoder.decode_block(data_freq_bits)
             
             # Re-create the marginal histogram
@@ -275,6 +330,48 @@ def decode_marginal_hist(pos_file, n_feat):
     
     return pos_file, marginal_hist_list
 
+
+# Decode the pairwise joint histogram for all columns
+def decode_pairwise_joint_hist(pos_file, n_feat, dict_cols):
+    marginal_hist_list = []
+    print("Inside Golomb decoder")
+    with open(out_filename, "rb") as f:
+        f.seek(pos_file)
+        for index1 in range(n_feat):
+            for index2 in range((index1+1), n_feat):
+                # Decode the support set
+                len_support_set = int.from_bytes(f.read(8), sys.byteorder)
+                len_encoding = int.from_bytes(f.read(8), sys.byteorder)
+                data = f.read(len_encoding)
+                dist_freq_bytes = gzip.decompress(data)
+                dist_freq = Frequencies(pickle.loads(dist_freq_bytes))
+
+                dist_arr_size = int.from_bytes(f.read(8), sys.byteorder)
+                dist_arr = f.read(dist_arr_size)
+                dist_arr_bits = BitArray()
+                dist_arr_bits.frombytes(dist_arr)
+                params = AECParams()
+                freq_model_dec = AdaptiveIIDFreqModel(dist_freq, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
+                aec_decoder = ArithmeticDecoder(AECParams(), freq_model_dec)
+                aec_decoding, bits_consumed = aec_decoder.decode_block(dist_arr_bits)
+                decoded_dist_arr = aec_decoding.data_list
+                idx_true = np.concatenate(([decoded_dist_arr[0]], decoded_dist_arr[1:])).cumsum()
+                idx_true = idx_true.tolist()
+                support_set_1d = np.zeros((len_support_set, 1))
+                support_set_1d[idx_true] = 1
+                support_set_1d = support_set_1d.transpose()[0]
+                m = len(dict_cols[index1])
+                n = len(dict_cols[index2])
+                joint_support_set = support_set_1d.reshape((m, n))
+                print(joint_support_set)
+        
+        # print(marginal_hist_list)
+        # pos_file = f.tell()
+        # f.close()
+    
+    return pos_file
+
+
 def chow_liu_decoder(num_features):
     # Position to track the seeker in the compressed file
     pos_outfile = 0
@@ -283,7 +380,10 @@ def chow_liu_decoder(num_features):
     pos_outfile, dictionary_all_cols = decode_dictionary()
 
     # Decode the marginal histogram 
-    pos_outfile = decode_marginal_hist(pos_outfile, num_features)
+    pos_outfile, marginal_hist_list = decode_marginal_hist(pos_outfile, num_features)
+
+    # Decode the pairwise joint histogram
+    pos_outfile = decode_pairwise_joint_hist(pos_outfile, num_features, dictionary_all_cols)
 
    
 
