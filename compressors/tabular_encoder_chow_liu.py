@@ -32,20 +32,6 @@ def test_chow_liu_tree():
     df['x4'] = df['x3']
     filepath = "../dataset/test_chow_liu_some_correlated.csv"
     df.to_csv(filepath, index=False)
-      
-    # Generate a CSV file with highly correlated columns
-    # Salary is a function of age
-    # df = pd.DataFrame(columns=['Id','Age','Salary','Height'])
-    # df['Id'] = range(1, 26)
-    # age_data = np.random.randint(4, 40, 25)
-    # df['Age'] = age_data
-    # df['Salary'] = df['Age']*5000
-    # height_noise = 5*np.random.uniform(0, 1, 25)
-    # df['Height'] = 175 + height_noise
-    # df.loc[df['Age'] < 20, 'Height'] = 140 + (df['Age']-10)*6
-    # print(df)
-    # filepath = "../dataset/test_chow_liu_high_correlated.csv"
-    # df.to_csv(filepath, index=False)
 
 # Parse over each column in the CSV file and create the ordering
 # and dictionary 
@@ -302,6 +288,8 @@ def encode_data(ordered_data, chow_liu_tree, marginal_hist, pairwise_hist, pairw
     with open(out_filename, "ab") as f:
         for edge in data_edges_bfs:
             source, dest = edge
+            # print(source, dest)
+            # print(encoded_nodes)
             # At the very beginning, when no nodes are encoded
             if(len(encoded_nodes)==0):
                 # Encode the source column using AEC (the root node)
@@ -322,7 +310,7 @@ def encode_data(ordered_data, chow_liu_tree, marginal_hist, pairwise_hist, pairw
                 # print(source_data.data_list)
            
             # The source would already have been encoded
-            assert (source in encoded_nodes)
+            # assert (source in encoded_nodes)
             # Encode the destination column using AEC, given we know the source column
             dest_freq = Frequencies(pairwise_hist[(source, dest)])
             params = AECParams()
@@ -335,7 +323,7 @@ def encode_data(ordered_data, chow_liu_tree, marginal_hist, pairwise_hist, pairw
             f.write(dest_aec_encoding)
             encoded_nodes.add(dest)   
             # print("Encoded node: ", dest) 
-            # print("Len:, Encoded bytestream: ", len(source_aec_encoding), dest_aec_encoding)
+            # print("Len:, Encoded bytestream: ", len(dest_aec_encoding), dest_aec_encoding)
             # print("Frequency for encoding: ", pairwise_hist[(source, dest)])
             # print("Encoded data: ")
             # print(dest_data.data_list)
@@ -374,7 +362,7 @@ def chow_liu_encoder(data, num_features, num_rows):
     encode_data(ordering, chow_liu_tree, marginal_hist, pairwise_hist, pairwise_columns)
     print("-----------Finished Encoding!------------")
 
-    # print(ordering)
+    print(ordering)
 
     return chow_liu_tree
 
@@ -513,10 +501,10 @@ def decode_data(pos_file, n_feat, dict_cols, marginal_hist, pairwise_hist, chow_
     # Maintain a set of already encoded nodes
     decoded_nodes = set()
     with open(out_filename, "rb") as f:
+        f.seek(pos_file)
         for edge in data_edges_bfs:
-            f.seek(pos_file)
             source, dest = edge
-            print(source, dest)
+            # print(source, dest)
             # At the very beginning, when no nodes are encoded
             if(len(decoded_nodes)==0):
                 len_data = int.from_bytes(f.read(8), sys.byteorder)
@@ -534,9 +522,9 @@ def decode_data(pos_file, n_feat, dict_cols, marginal_hist, pairwise_hist, chow_
                 # print("Len:, Decoding bytestream: ", len_data, data_bytes)
                 # print("Frequency for decoding: ", marginal_hist[source])
                 # print("Decoded data: ")
-                print(aec_decoding.data_list)
+                # print(aec_decoding.data_list)
             
-            assert(source in decoded_nodes)
+            # assert(source in decoded_nodes)
             len_data = int.from_bytes(f.read(8), sys.byteorder)
             data_bytes = f.read(len_data)
             data_bits = BitArray()
@@ -553,7 +541,7 @@ def decode_data(pos_file, n_feat, dict_cols, marginal_hist, pairwise_hist, chow_
             # print("Len:, Decoding bytestream: ", len_data, data_bytes)
             # print("Frequency for decoding: ", pairwise_hist[(source, dest)])
             # print("Decoded data: ")
-            print(aec_decoding.data_list)
+            # print(aec_decoding.data_list)
         
         f.close()
         print(ordered_data)
@@ -593,4 +581,4 @@ if __name__ == "__main__":
     num_rows = data.shape[0]
     chow_liu_tree = chow_liu_encoder(data, num_features, num_rows)
     
-    # chow_liu_decoder(num_features, chow_liu_tree)
+    chow_liu_decoder(num_features, chow_liu_tree)
