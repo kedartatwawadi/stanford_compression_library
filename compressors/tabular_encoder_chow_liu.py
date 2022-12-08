@@ -132,7 +132,7 @@ def create_marginal_hist(ordered_data):
         
         f.close()
     # print(marginal_hist_list)
-    return encoding_size, self_entropy_list, storage_cost
+    return encoding_size, self_entropy_list, marginal_hist_list, storage_cost
 
 # Create the pairwise joint histogram for all columns
 # Encode both the support set and the frequencies using AEC
@@ -150,21 +150,20 @@ def create_pairwise_joint_hist(ordered_data, n_feat, self_entropy_list, col_dict
                 pairwise_columns = pd.concat((pairwise_columns, append_col), axis=1)
 
     assert(len(pairwise_columns.columns) == num_pairs)
-    print(pairwise_columns)
+    # print(pairwise_columns)
 
     # Now obtain the pairwise joint histogram for each pairwise combination
     # Also Calculate mutual information for all pairs of columns
     # I(X; Y) = H(X) + H(Y) − H(X, Y)
     # For now, this is the weight that we use for the edges of the Chow-Liu tree
-    pairwise_hist_list = []
+    pairwise_hist_list = {}
     joint_entropy_list = {}
     pairwise_mutual_info = {}
     for column in pairwise_columns:
         (index1, index2) = column
         pairwise_hist = pairwise_columns[column].value_counts(sort=False).to_dict()
         pairwise_hist = OrderedDict(sorted(pairwise_hist.items()))
-        print(pairwise_hist)
-        pairwise_hist_list.append(pairwise_hist)
+        pairwise_hist_list[(index1, index2)] = pairwise_hist
         pairwise_prob_dist = Frequencies(pairwise_hist).get_prob_dist()
         joint_entropy_list[(index1, index2)] = pairwise_prob_dist.entropy
 
@@ -173,6 +172,7 @@ def create_pairwise_joint_hist(ordered_data, n_feat, self_entropy_list, col_dict
 
     assert(len(joint_entropy_list) == num_pairs)
     assert(len(pairwise_mutual_info) == num_pairs)
+    # print(pairwise_columns)
 
     # Encode the joint support set and frequencies
     with open(out_filename, "ab") as f:
@@ -186,8 +186,7 @@ def create_pairwise_joint_hist(ordered_data, n_feat, self_entropy_list, col_dict
             joint_support_set = np.zeros((m, n))
 
             # 1s in the indices (i, j) will correspond to that tuple being present in the support set
-            column_list = pairwise_hist_list[col_idx].keys()
-            print(column_list)
+            column_list = pairwise_hist_list[(index1, index2)].keys()
             for (idx1, idx2) in column_list:
                 joint_support_set[idx1][idx2]=1
             
@@ -232,7 +231,7 @@ def create_pairwise_joint_hist(ordered_data, n_feat, self_entropy_list, col_dict
             
             # Encode the pairwise joint histogram
             # Encode the histogram of histogram (also called fingerprint) in plain text
-            data_freq_set = pairwise_hist_list[col_idx].values()
+            data_freq_set = pairwise_hist_list[(index1, index2)].values()
             data_freq_set = DataBlock(data_freq_set)
             freq_of_freq = data_freq_set.get_counts()
             fingerprint_serialized = pickle.dumps(freq_of_freq)
@@ -261,14 +260,15 @@ def create_pairwise_joint_hist(ordered_data, n_feat, self_entropy_list, col_dict
 
     # print(joint_entropy_list)
     # print(pairwise_mutual_info)
-    return pairwise_mutual_info, storage_cost
+    # print(pairwise_hist_list)
+    return pairwise_mutual_info, pairwise_hist_list, pairwise_columns, storage_cost
 
 
 # Construct the Chow-Liu tree
-def construct_chow_liu_tree(pairwise_mutual_info, storage_cost, num_rows):
+def construct_chow_liu_tree(pairwise_mutual_info, storage_cost, num_rows, n_feat):
     G = nx.Graph()
     # Every vertex in this graph is a feature in the original tabular data
-    for x1 in range(num_features):
+    for x1 in range(n_feat):
         G.add_node(x1)
         for x2 in range(x1):
             w = (-pairwise_mutual_info[(x2, x1)])+((1/num_rows)*storage_cost)
@@ -276,34 +276,107 @@ def construct_chow_liu_tree(pairwise_mutual_info, storage_cost, num_rows):
     chow_liu_tree = nx.minimum_spanning_tree(G)
 
     # Generate the adjanceny list
-    print(chow_liu_tree.edges.data())
+    print("Chow-Liu tree Edges: ", chow_liu_tree.edges.data())
     # Print the Chow-Liu tree
     nx.draw(chow_liu_tree, with_labels=True)
-    plt.show()
+    plt.savefig('chow-liu.png')
+    # plt.show()
 
     # Encode the Chow-Liu tree in bytes (plain text) for the decoder
+
+    return chow_liu_tree
+
+
+# Encode the ordered data representing the tabular CSV
+def encode_data(ordered_data, chow_liu_tree, marginal_hist, pairwise_hist, pairwise_columns):
+    # Get the edges of the chow_liu tree in a BFS manner 
+    data_edges_bfs = list(nx.edge_bfs(chow_liu_tree))
+
+    # Maintain a set of already encoded nodes
+    encoded_nodes = set()
+
+    # Iterate over the list of edges - every child has a single parent
+    # Encode the very first node using it's marginal histogram
+    # Then encode it's child nodes using the conditional probability (joint histogram)
+    # Use Arithmetic encoding for encoding
+    with open(out_filename, "ab") as f:
+        for edge in data_edges_bfs:
+            source, dest = edge
+            # At the very beginning, when no nodes are encoded
+            if(len(encoded_nodes)==0):
+                # Encode the source column using AEC (the root node)
+                source_freq = Frequencies(marginal_hist[source])
+                params = AECParams()
+                source_freq_model_enc = AdaptiveIIDFreqModel(source_freq, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
+                source_aec_encoder = ArithmeticEncoder(AECParams(), source_freq_model_enc)
+                source_data = DataBlock(ordered_data.iloc[:, source])
+                source_aec_encoding = source_aec_encoder.encode_block(source_data).tobytes()
+                source_encoding_size = len(source_aec_encoding).to_bytes(8, sys.byteorder)
+                f.write(source_encoding_size)
+                f.write(source_aec_encoding)
+                encoded_nodes.add(source)
+                # print("Encoded node: ", source)
+                # print("Len:, Encoded bytestream: ", len(source_aec_encoding), source_aec_encoding)
+                # print("Frequency for encoding: ", marginal_hist[source])
+                # print("Encoded data: ")
+                # print(source_data.data_list)
+           
+            # The source would already have been encoded
+            assert (source in encoded_nodes)
+            # Encode the destination column using AEC, given we know the source column
+            dest_freq = Frequencies(pairwise_hist[(source, dest)])
+            params = AECParams()
+            dest_freq_model_enc = AdaptiveIIDFreqModel(dest_freq, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
+            dest_aec_encoder = ArithmeticEncoder(AECParams(), dest_freq_model_enc)
+            dest_data = DataBlock(pairwise_columns[source, dest])
+            dest_aec_encoding = dest_aec_encoder.encode_block(dest_data).tobytes()
+            dest_encoding_size = len(dest_aec_encoding).to_bytes(8, sys.byteorder)
+            f.write(dest_encoding_size)
+            f.write(dest_aec_encoding)
+            encoded_nodes.add(dest)   
+            # print("Encoded node: ", dest) 
+            # print("Len:, Encoded bytestream: ", len(source_aec_encoding), dest_aec_encoding)
+            # print("Frequency for encoding: ", pairwise_hist[(source, dest)])
+            # print("Encoded data: ")
+            # print(dest_data.data_list)
+        
+        f.close()
+            
 
 
 def chow_liu_encoder(data, num_features, num_rows):
     # test_chow_liu_tree()
     # Create the dictionary and ordered data from the read CSV
     dictionary, ordering = create_dict_ordering(data)
+    print("-----------Created the dictionary and ordering for the dataset------------")
 
     # Encode the dictionary in plain text and write this to the compressed file
     # Encode this using gzip - | num_total_bytes_written_by_gzip | compressed_content_by_gzip |
     encode_dictionary(dictionary)
+    print("-----------Encoded the dictionary------------")
 
     # Create and encode the marginal histogram
-    enc_size_marg_hist, self_entropy_list, storage_cost1 = create_marginal_hist(ordering)
+    enc_size_marg_hist, self_entropy_list, marginal_hist, storage_cost1 = create_marginal_hist(ordering)
+    # print("Marginal Histogram: ", marginal_hist)
+    print("-----------Created & encoded the marginal histogram the dataset------------")
 
     # Create and encode the pairwise joint histogram
-    mutual_info, storage_cost2 = create_pairwise_joint_hist(ordering, num_features, self_entropy_list, dictionary)
+    mutual_info, pairwise_hist, pairwise_columns, storage_cost2 = create_pairwise_joint_hist(ordering, num_features, self_entropy_list, dictionary)
+    # print("Pairwise Histogram: ", pairwise_hist)
+    print("-----------Created & encoded the pairwise joint histogram the dataset------------")
 
     # Generate the Chow-Liu tree
     storage_cost = storage_cost1 + storage_cost2
-    construct_chow_liu_tree(mutual_info, storage_cost, num_rows)
+    chow_liu_tree = construct_chow_liu_tree(mutual_info, storage_cost, num_rows, num_features)
+    print("-----------Constructed the Chow-Liu tree------------")
 
     # Perform pairwise encoding of columns in the dataset
+    encode_data(ordering, chow_liu_tree, marginal_hist, pairwise_hist, pairwise_columns)
+    print("-----------Finished Encoding!------------")
+
+    # print(ordering)
+
+    return chow_liu_tree
 
 
 
@@ -367,8 +440,8 @@ def decode_marginal_hist(pos_file, n_feat):
 
 # Decode the pairwise joint histogram for all columns
 def decode_pairwise_joint_hist(pos_file, n_feat, dict_cols):
-    pairwise_hist_list = []
-    print("Inside Golomb decoder")
+    pairwise_hist_list = {}
+    print("Inside Decoder")
     with open(out_filename, "rb") as f:
         f.seek(pos_file)
         for index1 in range(n_feat):
@@ -422,18 +495,71 @@ def decode_pairwise_joint_hist(pos_file, n_feat, dict_cols):
                 col_idxs = non_zeros_idxs[1]
                 support_set_list = list(zip(row_idxs, col_idxs))
                 pairwise_hist = dict(zip(support_set_list, aec_decoding.data_list))
-                print(pairwise_hist)
-                pairwise_hist_list.append(pairwise_hist)
+                pairwise_hist_list[(index1, index2)] = pairwise_hist
 
                         
-        # print(marginal_hist_list)
+        # print(pairwise_hist_list)
         pos_file = f.tell()
         f.close()
     
-    return pos_file
+    return pos_file, pairwise_hist_list
 
 
-def chow_liu_decoder(num_features):
+def decode_data(pos_file, n_feat, dict_cols, marginal_hist, pairwise_hist, chow_liu_tree):
+    # Get the edges of the chow_liu tree in a BFS manner 
+    data_edges_bfs = list(nx.edge_bfs(chow_liu_tree))
+    ordered_data = pd.DataFrame(columns=list(range(n_feat)))
+
+    # Maintain a set of already encoded nodes
+    decoded_nodes = set()
+    with open(out_filename, "rb") as f:
+        for edge in data_edges_bfs:
+            f.seek(pos_file)
+            source, dest = edge
+            print(source, dest)
+            # At the very beginning, when no nodes are encoded
+            if(len(decoded_nodes)==0):
+                len_data = int.from_bytes(f.read(8), sys.byteorder)
+                data_bytes = f.read(len_data)
+                data_bits = BitArray()
+                data_bits.frombytes(data_bytes)
+                data_freq = Frequencies(marginal_hist[source])
+                params = AECParams()
+                freq_model_dec = AdaptiveIIDFreqModel(data_freq, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
+                aec_decoder = ArithmeticDecoder(AECParams(), freq_model_dec)
+                aec_decoding, bits_consumed = aec_decoder.decode_block(data_bits)
+                ordered_data[source] = aec_decoding.data_list
+                decoded_nodes.add(source)
+                # print("Decoded node: ", source)
+                # print("Len:, Decoding bytestream: ", len_data, data_bytes)
+                # print("Frequency for decoding: ", marginal_hist[source])
+                # print("Decoded data: ")
+                print(aec_decoding.data_list)
+            
+            assert(source in decoded_nodes)
+            len_data = int.from_bytes(f.read(8), sys.byteorder)
+            data_bytes = f.read(len_data)
+            data_bits = BitArray()
+            data_bits.frombytes(data_bytes)
+            data_freq = Frequencies(pairwise_hist[(source, dest)])
+            params = AECParams()
+            freq_model_dec = AdaptiveIIDFreqModel(data_freq, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
+            aec_decoder = ArithmeticDecoder(AECParams(), freq_model_dec)
+            aec_decoding, bits_consumed = aec_decoder.decode_block(data_bits)
+            source_sym, dest_sym = zip(*(aec_decoding.data_list))
+            ordered_data[dest]= dest_sym
+            decoded_nodes.add(dest)
+            # print("Decoded node: ", dest)
+            # print("Len:, Decoding bytestream: ", len_data, data_bytes)
+            # print("Frequency for decoding: ", pairwise_hist[(source, dest)])
+            # print("Decoded data: ")
+            print(aec_decoding.data_list)
+        
+        f.close()
+        print(ordered_data)
+
+
+def chow_liu_decoder(num_features, chow_liu_tree):
     # Position to track the seeker in the compressed file
     pos_outfile = 0
 
@@ -444,7 +570,9 @@ def chow_liu_decoder(num_features):
     pos_outfile, marginal_hist_list = decode_marginal_hist(pos_outfile, num_features)
 
     # Decode the pairwise joint histogram
-    pos_outfile = decode_pairwise_joint_hist(pos_outfile, num_features, dictionary_all_cols)
+    pos_outfile, pairwise_hist_list = decode_pairwise_joint_hist(pos_outfile, num_features, dictionary_all_cols)
+
+    decode_data(pos_outfile, num_features, dictionary_all_cols, marginal_hist_list, pairwise_hist_list, chow_liu_tree)
 
    
 
@@ -457,11 +585,12 @@ if __name__ == "__main__":
     data = pd.read_csv(filename, skiprows=1, header=None)
 
     out_filename = filename + ".compressed"
+    decompressed_file = filename + ".decompressed.csv"
     if os.path.exists(out_filename):
         os.remove(out_filename)
     
     num_features = len(data.columns)
     num_rows = data.shape[0]
-    chow_liu_encoder(data, num_features, num_rows)
+    chow_liu_tree = chow_liu_encoder(data, num_features, num_rows)
     
-    chow_liu_decoder(num_features)
+    # chow_liu_decoder(num_features, chow_liu_tree)
