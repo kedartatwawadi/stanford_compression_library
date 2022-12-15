@@ -85,35 +85,35 @@ def create_marginal_hist(ordered_data):
             marginal_prob_dist = Frequencies(marginal_hist).get_prob_dist()
             self_entropy_list.append(marginal_prob_dist.entropy)
 
-            # support_set = marginal_hist.keys()
-            # frequencies = marginal_hist.values()
+            support_set = marginal_hist.keys()
+            frequencies = marginal_hist.values()
 
-            # # Find the histogram of histogram
-            # df_freq = pd.DataFrame(frequencies)
-            # freq_of_freq = df_freq.iloc[:, 0].value_counts(sort=False).to_dict()
+            # Find the histogram of histogram
+            df_freq = pd.DataFrame(frequencies)
+            freq_of_freq = df_freq.iloc[:, 0].value_counts(sort=False).to_dict()
 
-            # # Encode the size of the support set in plain text
-            # f.write(len(support_set).to_bytes(8, sys.byteorder))
+            # Encode the size of the support set in plain text
+            f.write(len(support_set).to_bytes(8, sys.byteorder))
             
-            # # Encode the histogram of histogram (also called fingerprint) in plain text
-            # fingerprint_serialized = pickle.dumps(freq_of_freq)
-            # fingerprint_compressed = gzip.compress(bytes(fingerprint_serialized))
-            # len_compressed = len(fingerprint_compressed).to_bytes(8, sys.byteorder)
-            # f.write(len_compressed)
-            # f.write(fingerprint_compressed)
+            # Encode the histogram of histogram (also called fingerprint) in plain text
+            fingerprint_serialized = pickle.dumps(freq_of_freq)
+            fingerprint_compressed = gzip.compress(bytes(fingerprint_serialized))
+            len_compressed = len(fingerprint_compressed).to_bytes(8, sys.byteorder)
+            f.write(len_compressed)
+            f.write(fingerprint_compressed)
 
-            # # Encode the second column (frequencies) using AEC
-            # data_freq_set = DataBlock(frequencies)
-            # freq_freq_set = Frequencies(freq_of_freq)
-            # params = AECParams()
-            # freq_model_enc = FixedFreqModel(freq_freq_set, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
-            # aec_encoder = ArithmeticEncoder(AECParams(), freq_model_enc)
-            # aec_encoding = aec_encoder.encode_block(data_freq_set).tobytes()
-            # encoding_size = len(aec_encoding)
-            # storage_cost += len(aec_encoding) 
-            # encoding_size = encoding_size.to_bytes(8, sys.byteorder)
-            # f.write(encoding_size)
-            # f.write(aec_encoding)
+            # Encode the second column (frequencies) using AEC
+            data_freq_set = DataBlock(frequencies)
+            freq_freq_set = Frequencies(freq_of_freq)
+            params = AECParams()
+            freq_model_enc = FixedFreqModel(freq_freq_set, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
+            aec_encoder = ArithmeticEncoder(AECParams(), freq_model_enc)
+            aec_encoding = aec_encoder.encode_block(data_freq_set).tobytes()
+            encoding_size = len(aec_encoding)
+            storage_cost += len(aec_encoding) 
+            encoding_size = encoding_size.to_bytes(8, sys.byteorder)
+            f.write(encoding_size)
+            f.write(aec_encoding)
                  
         
         f.close()
@@ -274,10 +274,38 @@ def construct_chow_liu_tree(pairwise_mutual_info, storage_cost, num_rows, n_feat
 
 
 # Encode the ordered data representing the tabular CSV
-def encode_data(ordered_data, chow_liu_tree, marginal_hist, pairwise_hist, pairwise_columns):
+def encode_data(dictionary, ordered_data, chow_liu_tree, marginal_hist, pairwise_hist, pairwise_columns):
+    # print("Inside encoder@@@@@@@@@@@@@")
     # Get the edges of the chow_liu tree in a BFS manner 
     data_edges_bfs = list(nx.edge_bfs(chow_liu_tree))
 
+    # From the pairwise histogram, construct a table of conditional probabilities
+    # P(Y | X) for all the source(X)-edge(Y) combinations
+    # This will be a list of dictionary of list of dictionaries
+    # {(X1,Y1): [{}],  (X1, Y2):[].............}
+    # The value of (X1,Y1) here is a list where each element represents frequencies 
+    # for conditioning on some X=a
+    conditional_prob_all = {}
+    for edge in data_edges_bfs:
+        col1, col2 = edge
+        pairwise_freq = pairwise_hist[(col1, col2)]
+        conditional_prob_list = []
+        for x_val in dictionary[col1].keys():
+            freqs_y_given_x = {}
+            for y_val in dictionary[col2].keys():
+                # compute the conditional probability P(Y=a|X=i)
+                if((x_val, y_val) not in pairwise_freq):
+                    freqs_y_given_x[y_val] = 0
+                else:
+                    freqs_y_given_x[y_val] = pairwise_freq[(x_val, y_val)]
+            
+            assert(len(freqs_y_given_x)==len(dictionary[col2]))
+            conditional_prob_list.append(freqs_y_given_x)        
+        
+        assert(len(conditional_prob_list)==len(dictionary[col1]))
+        conditional_prob_all[(col1, col2)] = conditional_prob_list       
+
+    # print(conditional_prob_all)
     # Maintain a set of already encoded nodes
     encoded_nodes = set()
 
@@ -287,45 +315,44 @@ def encode_data(ordered_data, chow_liu_tree, marginal_hist, pairwise_hist, pairw
     # Use Arithmetic encoding for encoding
     with open(out_filename, "ab") as f:
         for edge in data_edges_bfs:
-            source, dest = edge           
-            # The source would already have been encoded
-            # assert (source in encoded_nodes)
-            # Encode the destination column using AEC, given we know the source column
-            if(source not in encoded_nodes and dest not in encoded_nodes):
-                dest_freq = Frequencies(pairwise_hist[(source, dest)])
+            source, dest = edge     
+            # Encode the source using it's marginal distribution
+            # Encode the whole source as a block
+            if(source not in encoded_nodes):
+                freq = Frequencies(marginal_hist[source])
                 params = AECParams()
-                dest_freq_model_enc = FixedFreqModel(dest_freq, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
-                dest_aec_encoder = ArithmeticEncoder(AECParams(), dest_freq_model_enc)
-                dest_data = DataBlock(pairwise_columns[source, dest])
-                dest_aec_encoding = dest_aec_encoder.encode_block(dest_data).tobytes()
-                dest_encoding_size = len(dest_aec_encoding).to_bytes(8, sys.byteorder)
-                f.write(dest_encoding_size)
-                f.write(dest_aec_encoding)
+                freq_model = FixedFreqModel(freq, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
+                aec_enc = ArithmeticEncoder(AECParams(), freq_model)
+                data = DataBlock(ordered_data[source])
+                encoding = aec_enc.encode_block(data).tobytes()
+                encoding_size = len(encoding).to_bytes(8, sys.byteorder)
+                f.write(encoding_size)
+                f.write(encoding)
                 encoded_nodes.add(source)
-                encoded_nodes.add(dest) 
-                # print("Encoded node: ", dest) 
-                # print("Len:, Encoded bytestream: ", len(dest_aec_encoding), dest_aec_encoding)
-                # print("Frequency for encoding: ", pairwise_hist[(source, dest)])
-                # print("Encoded data: ")
-                # print(dest_data.data_list)  
+            
+            # Encode the destination using conditional probabilities
+            # This is a encoding is broken over multiple blocks as we feed in frequencies
+            # that are conditioned on what the alphabet in source is
+            # Encoding is in the order of dictionary for the source data
+            conditional_prob = conditional_prob_all[(source, dest)]
+            # print(conditional_prob)
+            for x_val in dictionary[source].keys():
+                # print("Conditioning for:", x_val)
+                freq = Frequencies(conditional_prob[x_val])
+                # print(freq)
+                freq_model = FixedFreqModel(freq, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
+                aec_enc = ArithmeticEncoder(AECParams(), freq_model)
+                # Select all the rows in col1 with X=x_val
+                data = DataBlock(ordered_data[dest].loc[ordered_data[source]==x_val])
+                encoding = aec_enc.encode_block(data).tobytes()
+                encoding_size = len(encoding).to_bytes(8, sys.byteorder)
+                f.write(encoding_size)
+                f.write(encoding)
+            
+            encoded_nodes.add(dest)
             
         # For all the nodes that remain to be encoded - find their predecessor and encode them
         nodes = nx.nodes(chow_liu_tree)
-        for dest in nodes:
-            if dest not in encoded_nodes:
-                source = list(nx.neighbors(chow_liu_tree, dest))[0]
-                dest_freq = Frequencies(pairwise_hist[(source, dest)])
-                params = AECParams()
-                dest_freq_model_enc = FixedFreqModel(dest_freq, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
-                dest_aec_encoder = ArithmeticEncoder(AECParams(), dest_freq_model_enc)
-                dest_data = DataBlock(pairwise_columns[source, dest])
-                dest_aec_encoding = dest_aec_encoder.encode_block(dest_data).tobytes()
-                dest_encoding_size = len(dest_aec_encoding).to_bytes(8, sys.byteorder)
-                f.write(dest_encoding_size)
-                f.write(dest_aec_encoding)
-                # encoded_nodes.add(source)
-                encoded_nodes.add(dest) 
-        
         assert(len(encoded_nodes)==len(nodes))
         f.close()
             
@@ -334,7 +361,13 @@ def encode_data(ordered_data, chow_liu_tree, marginal_hist, pairwise_hist, pairw
 def chow_liu_encoder(data, num_features, num_rows):
     # test_chow_liu_tree()
     # Create the dictionary and ordered data from the read CSV
+    # print("Data")
+    # print(data)
     dictionary, ordering = create_dict_ordering(data)
+    # print("Dictionary")
+    # print(dictionary)
+    # print("Ordering")
+    # print(ordering)
     print("-----------Created the dictionary and ordering for the dataset------------")
 
     # Encode the dictionary in plain text and write this to the compressed file
@@ -358,7 +391,7 @@ def chow_liu_encoder(data, num_features, num_rows):
     print("-----------Constructed the Chow-Liu tree------------")
 
     # Perform pairwise encoding of columns in the dataset
-    encode_data(ordering, chow_liu_tree, marginal_hist, pairwise_hist, pairwise_columns)
+    encode_data(dictionary, ordering, chow_liu_tree, marginal_hist, pairwise_hist, pairwise_columns)
     print("-----------Finished Encoding!------------")
 
     # print(ordering)
@@ -492,58 +525,88 @@ def decode_pairwise_joint_hist(pos_file, n_feat, dict_cols):
     return pos_file, pairwise_hist_list
 
 
-def decode_data(pos_file, n_feat, dict_cols, pairwise_hist, chow_liu_tree):
+def decode_data(pos_file, n_feat, dict_cols, marginal_hist, pairwise_hist, chow_liu_tree):
     # Get the edges of the chow_liu tree in a BFS manner 
     data_edges_bfs = list(nx.edge_bfs(chow_liu_tree))
     ordered_data = pd.DataFrame(columns=list(range(n_feat)))
+
+    # From the pairwise histogram, construct a table of conditional probabilities
+    # P(Y | X) for all the source(X)-edge(Y) combinations
+    # This will be a list of dictionary of list of dictionaries
+    # {(X1,Y1): [{}],  (X1, Y2):[].............}
+    # The value of (X1,Y1) here is a list where each element represents frequencies 
+    # for conditioning on some X=a
+    conditional_prob_all = {}
+    for edge in data_edges_bfs:
+        col1, col2 = edge
+        pairwise_freq = pairwise_hist[(col1, col2)]
+        conditional_prob_list = []
+        for x_val in dict_cols[col1].keys():
+            freqs_y_given_x = {}
+            for y_val in dict_cols[col2].keys():
+                # compute the conditional probability P(Y=a|X=i)
+                if((x_val, y_val) not in pairwise_freq):
+                    freqs_y_given_x[y_val] = 0
+                else:
+                    freqs_y_given_x[y_val] = pairwise_freq[(x_val, y_val)]
+            
+            assert(len(freqs_y_given_x)==len(dict_cols[col2]))
+            conditional_prob_list.append(freqs_y_given_x)        
+        
+        assert(len(conditional_prob_list)==len(dict_cols[col1]))
+        conditional_prob_all[(col1, col2)] = conditional_prob_list       
+
+    # print(conditional_prob_all)
 
     # Maintain a set of already encoded nodes
     decoded_nodes = set()
     with open(out_filename, "rb") as f:
         f.seek(pos_file)
         for edge in data_edges_bfs:
-            source, dest = edge            
-            # assert(source in decoded_nodes)
-            if(source not in decoded_nodes and dest not in decoded_nodes):
+            source, dest = edge
+            # Decode the source using it's marginal distribution
+            # Decode the whole source as a block        
+            if(source not in decoded_nodes):
                 len_data = int.from_bytes(f.read(8), sys.byteorder)
                 data_bytes = f.read(len_data)
                 data_bits = BitArray()
                 data_bits.frombytes(data_bytes)
-                data_freq = Frequencies(pairwise_hist[(source, dest)])
+                data_freq = Frequencies(marginal_hist[source])
                 params = AECParams()
                 freq_model_dec = FixedFreqModel(data_freq, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
                 aec_decoder = ArithmeticDecoder(AECParams(), freq_model_dec)
                 aec_decoding, bits_consumed = aec_decoder.decode_block(data_bits)
-                source_sym, dest_sym = zip(*(aec_decoding.data_list))
-                ordered_data[source] = source_sym
-                ordered_data[dest]= dest_sym
+                ordered_data[source] = aec_decoding.data_list
                 decoded_nodes.add(source)
-                decoded_nodes.add(dest)
                 # print("Decoded node: ", dest)
                 # print("Len:, Decoding bytestream: ", len_data, data_bytes)
                 # print("Frequency for decoding: ", pairwise_hist[(source, dest)])
                 # print("Decoded data: ")
                 # print(aec_decoding.data_list)
-        
-        # For all the nodes that remain to be encoded - find their predecessor and encode them
-        nodes = nx.nodes(chow_liu_tree)
-        for dest in nodes:
-            if dest not in decoded_nodes:
-                source = list(nx.neighbors(chow_liu_tree, dest))[0]
+            
+            # Decode the destination using conditional probabilities
+            # To form a dest column - we need to decode in multiple passes
+            # Decoding is in the order of dictionary for the source data
+            assert(source in decoded_nodes)
+            conditional_prob = conditional_prob_all[(source, dest)]
+            for x_val in dict_cols[source].keys():
+                # print("Conditioning for:", x_val)
                 len_data = int.from_bytes(f.read(8), sys.byteorder)
                 data_bytes = f.read(len_data)
                 data_bits = BitArray()
                 data_bits.frombytes(data_bytes)
-                data_freq = Frequencies(pairwise_hist[(source, dest)])
+                freq = Frequencies(conditional_prob[x_val])
                 params = AECParams()
-                freq_model_dec = FixedFreqModel(data_freq, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
-                aec_decoder = ArithmeticDecoder(AECParams(), freq_model_dec)
+                freq_model = FixedFreqModel(freq, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
+                aec_decoder = ArithmeticDecoder(AECParams(), freq_model)
                 aec_decoding, bits_consumed = aec_decoder.decode_block(data_bits)
-                source_sym, dest_sym = zip(*(aec_decoding.data_list))
-                ordered_data[dest]= dest_sym
-                # decoded_nodes.add(source)
-                decoded_nodes.add(dest)
+                # Select all the rows in col1 with X=x_val, and change the values in col2 to decoded values
+                ordered_data[dest].loc[ordered_data[source]==x_val] = aec_decoding.data_list
 
+            decoded_nodes.add(dest)
+        
+        # For all the nodes that remain to be encoded - find their predecessor and encode them
+        nodes = nx.nodes(chow_liu_tree)
         assert(len(decoded_nodes)==len(nodes))
         f.close()
     
@@ -558,12 +621,13 @@ def chow_liu_decoder(num_features, chow_liu_tree):
     pos_outfile, dictionary_all_cols = decode_dictionary()
 
     # Decode the marginal histogram 
-    # pos_outfile, marginal_hist_list = decode_marginal_hist(pos_outfile, num_features)
+    pos_outfile, marginal_hist_list = decode_marginal_hist(pos_outfile, num_features)
+    # print(marginal_hist_list)
 
     # Decode the pairwise joint histogram
     pos_outfile, pairwise_hist_list = decode_pairwise_joint_hist(pos_outfile, num_features, dictionary_all_cols)
 
-    ordered_data = decode_data(pos_outfile, num_features, dictionary_all_cols, pairwise_hist_list, chow_liu_tree)
+    ordered_data = decode_data(pos_outfile, num_features, dictionary_all_cols, marginal_hist_list, pairwise_hist_list, chow_liu_tree)
     return ordered_data
    
 
