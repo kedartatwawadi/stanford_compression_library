@@ -21,6 +21,7 @@ from compressors.arithmetic_coding import AECParams, ArithmeticEncoder, Arithmet
 from compressors.golomb_coder import GolombCodeParams, GolombUintEncoder, GolombUintDecoder
 from core.data_block import DataBlock
 from collections import OrderedDict
+import filecmp
 
 def round_up(value, multiple=8):
     if ((multiple & 1)==0):
@@ -350,12 +351,12 @@ def chow_liu_encoder(data, num_features, num_rows):
 
     # Create and encode the marginal histogram
     self_entropy_list, marginal_hist, storage_cost1 = create_marginal_hist(ordering)
-    print("Marginal Histogram: ", marginal_hist)
+    # print("Marginal Histogram: ", marginal_hist)
     print("-----------Created & encoded the marginal histogram ------------")
 
     # Create and encode the pairwise joint histogram
     mutual_info, pairwise_hist, pairwise_columns, storage_cost2 = create_pairwise_joint_hist(ordering, num_features, self_entropy_list, dictionary)
-    print("Pairwise Histogram: ", pairwise_hist)
+    # print("Pairwise Histogram: ", pairwise_hist)
     print("-----------Created & encoded the pairwise joint histogram ------------")
 
     # Generate the Chow-Liu tree
@@ -573,7 +574,7 @@ def decode_data(full_encoded_data, pos_file, n_feat, dict_cols, marginal_hist, p
             bits_consumed = round_up(bits_consumed)
             pos_file += (bits_consumed//8)
             # Select all the rows in col1 with X=x_val, and change the values in col2 to decoded values
-            ordered_data[dest].loc[ordered_data[source]==x_val] = aec_decoding.data_list
+            ordered_data.loc[ordered_data[source]==x_val, dest] = aec_decoding.data_list
 
         decoded_nodes.add(dest)
     
@@ -581,6 +582,17 @@ def decode_data(full_encoded_data, pos_file, n_feat, dict_cols, marginal_hist, p
     G = nx.Graph(chow_liu_tree)
     nodes = nx.nodes(G)
     assert(len(decoded_nodes)==len(nodes))
+    
+    return ordered_data
+
+def invert_ordered_data(ordered_data, dictionary_all_cols):
+    for column in data:
+        # Get the dictionary for this column
+        col_dict = dictionary_all_cols[column]
+
+        # Invert the ordered data into actual data 
+        for key, val in col_dict.items():
+            ordered_data.loc[ordered_data[column]==key, column] = val  
     
     return ordered_data
 
@@ -600,22 +612,26 @@ def chow_liu_decoder(num_features, chow_liu_tree):
 
     # Decode the marginal histogram 
     pos_outfile, marginal_hist_list = decode_marginal_hist(full_encoded_data, pos_outfile, num_features)
-    print(marginal_hist_list)
+    # print(marginal_hist_list)
     print("-----------Decoded the marginal histograms ------------")
 
     # Decode the pairwise joint histogram
     pos_outfile, pairwise_hist_list = decode_pairwise_joint_hist(full_encoded_data, pos_outfile, num_features, dictionary_all_cols)
-    print(pairwise_hist_list)
+    # print(pairwise_hist_list)
     print("-----------Decoded the pairwise histograms ------------")
 
     # Decode the Chow-Liu tree
     pos_outfile, chow_liu_tree = decode_chow_liu_tree(full_encoded_data, pos_outfile)
-    print(chow_liu_tree)
+    # print(chow_liu_tree)
     print("----------- Decoded the Chow-Liu tree ------------")
 
     ordered_data = decode_data(full_encoded_data, pos_outfile, num_features, dictionary_all_cols, marginal_hist_list, pairwise_hist_list, chow_liu_tree)
     print("----------- Data Decoded! ------------")
-    return ordered_data
+
+    # Invert the ordered data
+    data = invert_ordered_data(ordered_data, dictionary_all_cols)
+
+    return data
    
 
 
@@ -634,14 +650,10 @@ if __name__ == "__main__":
     num_rows = data.shape[0]
     chow_liu_tree, ordered_data_encoder = chow_liu_encoder(data, num_features, num_rows)
     
-    ordered_data_decoder = chow_liu_decoder(num_features, chow_liu_tree)
+    data_decoder = chow_liu_decoder(num_features, chow_liu_tree)
 
-    print(ordered_data_encoder)
-    if os.path.exists(os.path.abspath("ordered_encoder.csv")):
-        os.remove("ordered_encoder.csv")
-    ordered_data_encoder.to_csv("ordered_encoder.csv")
-
-    print(ordered_data_decoder)
-    if os.path.exists(os.path.abspath("ordered_decoder.csv")):
-        os.remove("ordered_decoder.csv")
-    ordered_data_decoder.to_csv("ordered_decoder.csv")
+    # Test to make sure the decompressed and the original data read in are the same
+    if (data.equals(data_decoder)):
+        print("Yaaayyy! The data fed to the encoder and the data decoded exactly match")
+    else:
+        print("Oops! Error...The data fed to encoded and data decoded do not match")
