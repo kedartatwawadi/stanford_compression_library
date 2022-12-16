@@ -264,7 +264,6 @@ def construct_chow_liu_tree(pairwise_mutual_info, storage_cost, num_rows, n_feat
 
 # Encode the ordered data representing the tabular CSV
 def encode_data(dictionary, ordered_data, chow_liu_tree, marginal_hist, pairwise_hist, pairwise_columns):
-    # print("Inside encoder@@@@@@@@@@@@@")
     # Get the edges of the chow_liu tree in a BFS manner 
     data_edges_bfs = list(nx.edge_bfs(chow_liu_tree))
 
@@ -341,14 +340,8 @@ def encode_data(dictionary, ordered_data, chow_liu_tree, marginal_hist, pairwise
 
 def chow_liu_encoder(data, num_features, num_rows):
     # Create the dictionary and ordered data from the read CSV
-    # print("Data")
-    # print(data)
     dictionary, ordering = create_dict_ordering(data)
-    # print("Dictionary")
-    # print(dictionary)
-    # print("Ordering")
-    # print(ordering)
-    print("-----------Created the dictionary and ordering for the dataset------------")
+    print("-----------Created the dictionary and ordering ------------")
 
     # Encode the dictionary in plain text and write this to the compressed file
     # Encode this using gzip - | num_total_bytes_written_by_gzip | compressed_content_by_gzip |
@@ -358,12 +351,12 @@ def chow_liu_encoder(data, num_features, num_rows):
     # Create and encode the marginal histogram
     self_entropy_list, marginal_hist, storage_cost1 = create_marginal_hist(ordering)
     print("Marginal Histogram: ", marginal_hist)
-    print("-----------Created & encoded the marginal histogram for the dataset------------")
+    print("-----------Created & encoded the marginal histogram ------------")
 
     # Create and encode the pairwise joint histogram
     mutual_info, pairwise_hist, pairwise_columns, storage_cost2 = create_pairwise_joint_hist(ordering, num_features, self_entropy_list, dictionary)
     print("Pairwise Histogram: ", pairwise_hist)
-    print("-----------Created & encoded the pairwise joint histogram for the dataset------------")
+    print("-----------Created & encoded the pairwise joint histogram ------------")
 
     # Generate the Chow-Liu tree
     storage_cost = storage_cost1 + storage_cost2
@@ -372,9 +365,7 @@ def chow_liu_encoder(data, num_features, num_rows):
 
     # Perform pairwise encoding of columns in the dataset
     encode_data(dictionary, ordering, chow_liu_tree, marginal_hist, pairwise_hist, pairwise_columns)
-    print("-----------Finished Encoding!------------")
-
-    # print(ordering)
+    print("----------- Finished Encoding! ------------")
 
     return chow_liu_tree, ordering
 
@@ -424,9 +415,7 @@ def decode_marginal_hist(full_encoded_data, pos_file, n_feat):
         freq_model_dec = FixedFreqModel(freq_freq_set, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
         aec_decoder = ArithmeticDecoder(AECParams(), freq_model_dec)
         aec_decoding, bits_consumed = aec_decoder.decode_block(data_freq_bits)
-        print(bits_consumed)
         bits_consumed = round_up(bits_consumed)
-        print(bits_consumed)
         pos_file += (bits_consumed//8)
         
         # Re-create the marginal histogram
@@ -439,7 +428,6 @@ def decode_marginal_hist(full_encoded_data, pos_file, n_feat):
 # Decode the pairwise joint histogram for all columns
 def decode_pairwise_joint_hist(full_encoded_data, pos_file, n_feat, dict_cols):
     pairwise_hist_list = {}
-    print("Inside Decoder")
     # with open(out_filename, "rb") as f:
     #     f.seek(pos_file)
     for index1 in range(n_feat):
@@ -598,6 +586,8 @@ def decode_data(full_encoded_data, pos_file, n_feat, dict_cols, marginal_hist, p
 
 
 def chow_liu_decoder(num_features, chow_liu_tree):
+    print("----------- Decoding the dataset------------")
+
     # Position to track the seeker in the compressed file
     pos_outfile = 0
     # Read the whole binary compressed file
@@ -606,20 +596,25 @@ def chow_liu_decoder(num_features, chow_liu_tree):
 
     # Decode the dictionary from the compressed file
     pos_outfile, dictionary_all_cols = decode_dictionary(full_encoded_data)
+    print("-----------Decoded the dictionary and ordering ------------")
 
     # Decode the marginal histogram 
     pos_outfile, marginal_hist_list = decode_marginal_hist(full_encoded_data, pos_outfile, num_features)
     print(marginal_hist_list)
+    print("-----------Decoded the marginal histograms ------------")
 
     # Decode the pairwise joint histogram
     pos_outfile, pairwise_hist_list = decode_pairwise_joint_hist(full_encoded_data, pos_outfile, num_features, dictionary_all_cols)
     print(pairwise_hist_list)
+    print("-----------Decoded the pairwise histograms ------------")
 
     # Decode the Chow-Liu tree
     pos_outfile, chow_liu_tree = decode_chow_liu_tree(full_encoded_data, pos_outfile)
     print(chow_liu_tree)
+    print("----------- Decoded the Chow-Liu tree ------------")
 
     ordered_data = decode_data(full_encoded_data, pos_outfile, num_features, dictionary_all_cols, marginal_hist_list, pairwise_hist_list, chow_liu_tree)
+    print("----------- Data Decoded! ------------")
     return ordered_data
    
 
@@ -632,7 +627,6 @@ if __name__ == "__main__":
     data = pd.read_csv(filename, skiprows=1, header=None)
 
     out_filename = filename + ".compressed"
-    decompressed_file = filename + ".decompressed.csv"
     if os.path.exists(out_filename):
         os.remove(out_filename)
     
