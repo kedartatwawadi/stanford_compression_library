@@ -28,6 +28,7 @@ def round_up(value, multiple=8):
         return int(((value + multiple - 1) // multiple) * multiple)
     else:
         return int((value + multiple - 1) & ~(multiple - 1))
+    
 
 # Parse over each column in the CSV file and create the ordering
 # and dictionary 
@@ -50,9 +51,9 @@ def create_dict_ordering(data):
         # Use the dictionary that you created  
         for key, val in col_dict.items():
             data_ordering.loc[data[column]==val, column] = key  
-    
+          
     return column_dictionary, data_ordering
-    
+
 
 # Encode the dictionaries as plain text piped to gzip 
 def encode_dictionary(dictionary):
@@ -343,6 +344,7 @@ def chow_liu_encoder(data, num_features, num_rows):
     # Create the dictionary and ordered data from the read CSV
     dictionary, ordering = create_dict_ordering(data)
     print("-----------Created the dictionary and ordering ------------")
+    # print(dictionary)
 
     # Encode the dictionary in plain text and write this to the compressed file
     # Encode this using gzip - | num_total_bytes_written_by_gzip | compressed_content_by_gzip |
@@ -429,8 +431,6 @@ def decode_marginal_hist(full_encoded_data, pos_file, n_feat):
 # Decode the pairwise joint histogram for all columns
 def decode_pairwise_joint_hist(full_encoded_data, pos_file, n_feat, dict_cols):
     pairwise_hist_list = {}
-    # with open(out_filename, "rb") as f:
-    #     f.seek(pos_file)
     for index1 in range(n_feat):
         for index2 in range((index1+1), n_feat):
             # Decode the support set
@@ -456,6 +456,7 @@ def decode_pairwise_joint_hist(full_encoded_data, pos_file, n_feat, dict_cols):
             decoded_dist_arr = aec_decoding.data_list
             idx_true = np.concatenate(([decoded_dist_arr[0]], decoded_dist_arr[1:])).cumsum()
             idx_true = idx_true.tolist()
+            idx_true = [int(x) for x in idx_true]
             support_set_1d = np.zeros((len_support_set, 1))
             support_set_1d[idx_true] = 1
             support_set_1d = support_set_1d.transpose()[0]
@@ -586,15 +587,16 @@ def decode_data(full_encoded_data, pos_file, n_feat, dict_cols, marginal_hist, p
     return ordered_data
 
 def invert_ordered_data(ordered_data, dictionary_all_cols):
+    data = ordered_data.copy(deep=True)
     for column in data:
         # Get the dictionary for this column
         col_dict = dictionary_all_cols[column]
 
         # Invert the ordered data into actual data 
         for key, val in col_dict.items():
-            ordered_data.loc[ordered_data[column]==key, column] = val  
+            data.loc[ordered_data[column]==key, column] = val  
     
-    return ordered_data
+    return data
 
 
 def chow_liu_decoder(num_features, chow_liu_tree):
@@ -608,6 +610,7 @@ def chow_liu_decoder(num_features, chow_liu_tree):
 
     # Decode the dictionary from the compressed file
     pos_outfile, dictionary_all_cols = decode_dictionary(full_encoded_data)
+    # print(dictionary_all_cols)
     print("-----------Decoded the dictionary and ordering ------------")
 
     # Decode the marginal histogram 
@@ -632,8 +635,6 @@ def chow_liu_decoder(num_features, chow_liu_tree):
     data = invert_ordered_data(ordered_data, dictionary_all_cols)
 
     return data
-   
-
 
 if __name__ == "__main__":
     # Read the CSV file for our tabular database
@@ -653,7 +654,19 @@ if __name__ == "__main__":
     data_decoder = chow_liu_decoder(num_features, chow_liu_tree)
 
     # Test to make sure the decompressed and the original data read in are the same
-    if (data.equals(data_decoder)):
+    # The pandas DataFrame.equals() function doesn't seem to work 
+    # Even when testing with diff completely checks out between the two files,
+    # The function reports that the dataframes are not equal
+    # Hence using this method of testing.
+    if os.path.exists(os.path.abspath("data_encoder.csv")):
+        os.remove("data_encoder.csv")
+    data.to_csv("data_encoder.csv")
+
+    if os.path.exists(os.path.abspath("data_decoder.csv")):
+        os.remove("data_decoder.csv")
+    data_decoder.to_csv("data_decoder.csv")
+
+    if(filecmp.cmp("data_encoder.csv", "data_decoder.csv")):
         print("Yaaayyy! The data fed to the encoder and the data decoded exactly match")
     else:
-        print("Oops! Error...The data fed to encoded and data decoded do not match")
+        print("Oops! Error...The data fed to encoder and data decoded do not match")
