@@ -245,7 +245,12 @@ def construct_chow_liu_tree(pairwise_mutual_info, storage_cost, num_rows, n_feat
     print("Chow-Liu tree Edges: ", chow_liu_tree.edges.data())
     # Print the Chow-Liu tree
     nx.draw(chow_liu_tree, with_labels=True)
-    plt.savefig('chow-liu.png')
+    
+    # Get the base directory of the dataset
+    path = os.path.dirname(out_filename)
+    path = os.path.join(path, 'chow-liu.png')
+
+    plt.savefig(path)
 
     # Encode the Chow-Liu tree in bytes (plain text) for the decoder
     edges = []
