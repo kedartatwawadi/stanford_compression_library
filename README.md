@@ -42,7 +42,7 @@ NOTE -> the tests in each file should be helpful as a "usage" example of each of
     conda activate myenv
     
     ```
-- Install the `stanford_compress` package
+- Install the `scl` package
     ```
     python install -e . #install the package in a editable mode
     ``` 
@@ -51,12 +51,12 @@ NOTE -> the tests in each file should be helpful as a "usage" example of each of
 
   To run all tests:
     ```
-    find stanford_compress -name "*.py" -exec py.test -s -v {} +
+    find  scl -name "*.py" -exec py.test -s -v {} +
     ```
 
   To run a single test
   ```
-  py.test -s -v stanford_compress/core/data_stream_tests.py
+  py.test -s -v scl/core/data_stream_tests.py
   ```
 
 ## Getting started with understanding the library

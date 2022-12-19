@@ -27,4 +27,6 @@ jobs:
     - name: unit tests
       run: |
         export PYTHONPATH=$PYTHONPATH:.
-        find stanford_compress/ -name "*.py" -exec py.test -s -v {} +
+        find scl/ -name "*.py" -exec py.test -s -v {} +
+
+

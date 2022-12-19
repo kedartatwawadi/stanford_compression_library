@@ -16,5 +16,5 @@ jobs:
       - uses: psf/black@stable
         with:
             options: "--check --line-length 100 --verbose"
-            src: "./stanford_compress"
+            src: "./scl"
             version: "~= 22.3"
