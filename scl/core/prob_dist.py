@@ -49,6 +49,7 @@ class ProbabilityDist:
         return cls({a: b / sum_p for a, b in prob_dict.items()})
 
     @property
+    @cache
     def cumulative_prob_dict(self):
         """return a list of sum of probabilities of symbols preceeding symbol"""
         cum_prob_dict = {}
@@ -59,6 +60,7 @@ class ProbabilityDist:
         return cum_prob_dict
 
     @property
+    @cache
     def entropy(self):
         entropy = 0
         for _, prob in self.prob_dict.items():
