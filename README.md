@@ -8,26 +8,31 @@ This library is currently being used for the course [EE274: Data Compression cou
 
 ## Compression algorithms
 Here is a list of algorithms implemented.
+
+### Prefix-free codes
 - [Huffman codes](compressors/huffman_coder.py)
 - [Shannon codes](compressors/shannon_coder.py)
 - [Fano codes](compressors/fano_coder.py)
 - [Shannon Fano Elias](compressors/shannon_fano_elias_coder.py)
 - [Golomb codes](compressors/golomb_coder.py)
 - [Universal integer coder](compressors/universal_integer_coder.py)
+- [Elias Delta code](compressors/elias_delta_uint_coder.py)
+
+### Entropy coders
 - [rANS](compressors/rANS.py)
 - [tANS](compressors/tANS.py)
 - [Typical set coder](compressors/typical_set_coder.py)
-- [zlib (external)](external_compressors/zlib_external.py)
-- [zstd (external)](external_compressors/zstd_external.py)
 - [Arithmetic coder](compressors/arithmetic_coding.py)
 - [Context-based Adaptive Arithmetic coder](compressors/probability_models.py)
 - [Range coder](compressors/range_coder.py)
-- [Elias Delta code](compressors/elias_delta_uint_coder.py)
+
+### Universal Lossless compressors
+- [zlib (external)](external_compressors/zlib_external.py)
+- [zstd (external)](external_compressors/zstd_external.py)
 - [LZ77](compressors/lz77.py)
 
 
-NOTE -> the tests in each file should be helpful as a "usage" example of each of the compressors. More details are also available in the lecture [slides](https://stanforddatacompressionclass.github.io/Fall22/lectures/), and the project wiki
-
+NOTE -> the tests in each file should be helpful as a "usage" example of each of the compressors. More details are on the project wiki.
 
 
 ## Getting started
@@ -69,6 +74,3 @@ Note that the Github actions CI uses flake8 as a lint (see [`.github/workflows/p
 
 ## Contact
 The best way to contact the maintainers is to file an issue with your question. 
-If not please use the following email:
-- Kedar Tatwawadi: kedart@stanford.edu
-
