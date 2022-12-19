@@ -4,11 +4,11 @@ Utility functions useful for testing
 
 import filecmp
 from typing import Tuple
-from stanford_compress.core.data_block import DataBlock
-from stanford_compress.core.data_stream import TextFileDataStream, Uint8FileDataStream
-from stanford_compress.core.data_encoder_decoder import DataDecoder, DataEncoder
-from stanford_compress.core.prob_dist import Frequencies, ProbabilityDist, get_avg_neg_log_prob
-from stanford_compress.utils.bitarray_utils import BitArray, get_random_bitarray
+from scl.core.data_block import DataBlock
+from scl.core.data_stream import TextFileDataStream, Uint8FileDataStream
+from scl.core.data_encoder_decoder import DataDecoder, DataEncoder
+from scl.core.prob_dist import Frequencies, ProbabilityDist, get_avg_neg_log_prob
+from scl.utils.bitarray_utils import BitArray, get_random_bitarray
 import tempfile
 import os
 import numpy as np

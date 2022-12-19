@@ -28,10 +28,10 @@ Examples:
 
 """
 
-from stanford_compress.core.data_block import DataBlock
-from stanford_compress.core.data_encoder_decoder import DataDecoder, DataEncoder
-from stanford_compress.utils.bitarray_utils import uint_to_bitarray, bitarray_to_uint, BitArray
-from stanford_compress.utils.test_utils import are_blocks_equal, try_lossless_compression
+from scl.core.data_block import DataBlock
+from scl.core.data_encoder_decoder import DataDecoder, DataEncoder
+from scl.utils.bitarray_utils import uint_to_bitarray, bitarray_to_uint, BitArray
+from scl.utils.test_utils import are_blocks_equal, try_lossless_compression
 
 
 class EliasDeltaUintEncoder(DataEncoder):

@@ -1,5 +1,5 @@
 from typing import List, Set
-from stanford_compress.core.prob_dist import ProbabilityDist
+from scl.core.prob_dist import ProbabilityDist
 
 
 class DataBlock:

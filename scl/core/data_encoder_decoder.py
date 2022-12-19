@@ -6,10 +6,10 @@ More info in respective docstrings
 """
 
 import abc
-from stanford_compress.core.data_block import DataBlock
-from stanford_compress.core.data_stream import DataStream, TextFileDataStream
-from stanford_compress.core.encoded_stream import EncodedBlockReader, EncodedBlockWriter
-from stanford_compress.utils.bitarray_utils import BitArray
+from scl.core.data_block import DataBlock
+from scl.core.data_stream import DataStream, TextFileDataStream
+from scl.core.encoded_stream import EncodedBlockReader, EncodedBlockWriter
+from scl.utils.bitarray_utils import BitArray
 
 
 class DataEncoder(abc.ABC):
