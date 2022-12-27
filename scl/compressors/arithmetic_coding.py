@@ -52,11 +52,8 @@ class ArithmeticEncoder(DataEncoder):
     def __init__(self, params: AECParams, freq_model: FreqModelBase):
         self.params = params
 
-        # define the probability model used by the AEC
-        # the model can get updated when we call update_model(s) after every step
+        # NOTE: the model can get updated when we call update_model(s) after every step
         self.freq_model = freq_model
-
-        # self.freq_model = freq_model_cls(freq_model_params, params.MAX_ALLOWED_TOTAL_FREQ)
 
     @classmethod
     def shrink_range(cls, freqs: Frequencies, s: Any, low: int, high: int) -> Tuple[int, int]:

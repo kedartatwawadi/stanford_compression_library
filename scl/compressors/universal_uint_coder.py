@@ -34,6 +34,7 @@ class UniversalUintEncoder(DataEncoder):
     ...
 
     NOTE: not the most efficient but still "universal"
+    i.e. works for all symbols
     """
 
     def encode_symbol(self, x: int):
@@ -139,13 +140,12 @@ def test_universal_uint_encode_decode():
 
 def test_universal_uint_encode():
     """
-    Test if we can recover the expected bitstream
+    Test if the encoded_bitstream matches what we expect
     """
     encoder = UniversalUintEncoder()
 
     # create some sample data
     data_list = [0, 1, 3, 4, 100]
-    data_block = DataBlock(data_list)
 
     # ensure you provide expected codewords for each unique symbol in data_list
     expected_codewords = {
