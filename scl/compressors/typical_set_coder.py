@@ -30,7 +30,7 @@ def compute_normalized_negative_log_prob_chunk(chunk, prob_dist: ProbabilityDist
     """Compute the normalized log probability for a chunk"""
     log_prob = 0
     for symbol in chunk:
-        log_prob += -np.log2(prob_dist.probability(symbol))
+        log_prob += prob_dist.neg_log_probability(symbol)
     return log_prob / len(chunk)
 
 
