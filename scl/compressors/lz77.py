@@ -127,6 +127,194 @@ class LZ77Sequence:
     match_length: int = (0,)
     match_offset: int = (0,)
 
+class GreedyMatchFinder:
+    def __init__(self, min_match_len = DEFAULT_MIN_MATCH_LEN, max_num_matches_considered = DEFAULT_MAX_NUM_MATCHES_CONSIDERED):
+        self.min_match_len = min_match_len
+        self.max_num_matches_considered = max_num_matches_considered
+
+        # define parameters useful in the search
+        # map from substr of length min_match_length to list of positions where it occurs
+        self.substring_dict = {}
+        
+        # define a window
+        self.window = []
+        self.window_indexed_till = 0  # pointer telling up to what point the window has been indexed
+        # if window_indexed_till = 100, that means all substrings starting at 0,1,2,...,100-min_match_length+1
+        # have been indexed
+        
+        # if initial_window is provided, update window and index it
+        if initial_window is not None:
+            self.window = list(initial_window)
+            self.index_window_upto_pos(len(self.window))
+
+    def reset(self):
+        # reset the window and the index
+        self.window = []
+        self.substring_dict = {}
+        self.window_indexed_till = 0
+
+    def insert_substring_into_dict(self, substr: Tuple, start_pos: int):
+        """Insert substring into the substring_dict (mapping substring to positions where
+        it occurs in the window).
+
+        Args:
+            substr (Tuple): tuple of length min_match_length
+            start_pos (int): position of substr in window
+        """
+        if substr in self.substring_dict:
+            self.substring_dict[substr].append(start_pos)
+        else:
+            self.substring_dict[substr] = [start_pos]
+
+    def index_window_upto_pos(self, end_pos: int):
+        """Index all tuples of min_match_length in self.window[:end_pos]
+        into the substring_dict. The last tuple to be indexed will start at end_pos-min_match_length+1
+        This uses self.window_indexed_till to ensure we do not reindex things already indexed.
+
+        Args:
+            end_pos (int): end position in window to index
+        """
+        for end_pos_substr in range(self.window_indexed_till, end_pos + 1):
+            start_pos_substr = end_pos_substr - self.min_match_length
+            if start_pos_substr < 0:
+                continue
+            substr = tuple(self.window[start_pos_substr:end_pos_substr])
+            self.insert_substring_into_dict(substr, start_pos_substr)
+
+        self.window_indexed_till = max(self.window_indexed_till,end_pos + 1)
+    
+    def find_match_length(self, start_pos_1: int, start_pos_2: int):
+        """Find the match length of window starting from start_pos_1 and start_pos_2.
+           That is, largest match_length s.t.
+           window[start_pos_1:start_pos_1+match_length]==window[start_pos_2:start_pos_2+match_length]
+           Note that matching sections are allowed to overlap
+
+        Args:
+            start_pos_1 (int)
+            start_pos_2 (int)
+
+        Returns:
+            int: match length
+        """
+        match_length = 0
+        while start_pos_1 + match_length < len(self.window) and start_pos_2 + match_length < len(
+            self.window
+        ):
+            if self.window[start_pos_1 + match_length] != self.window[start_pos_2 + match_length]:
+                break
+            else:
+                match_length += 1
+        return match_length
+
+    def find_best_match(self, curr_pos):
+        """
+        """
+
+        # NOTE: we only care about matches longer than self.min_match_length
+        best_match_pos = None
+        best_match_length = 0
+
+        match_substr = tuple(self.window[curr_pos: curr_pos+ self.min_match_length])
+        if match_substr in self.substring_dict:
+            candidate_match_positions = self.substring_dict[match_substr]
+
+            # iterate over candidate_match_positions in reverse order
+            # we basically want to look at max_num_matches_considered most recent matches
+            # and find the longest match
+            candidate_match_positions = reversed(candidate_match_positions)[:self.max_num_matches_considered]
+            for match_pos in candidate_match_positions:
+                match_len = self.find_match_length(match_pos, curr_pos)
+
+                # NOTE: this should be true as we are using min_match_length sized substrings in the substring_dict
+                assert match_len >= self.min_match_length
+                if match_len > best_match_length:
+                    best_match_length = match_len
+                    best_match_pos = match_pos
+        return best_match_length, best_match_pos
+
+    def get_next_lz77_sequence(self, pos_in_window):
+        # loop over start positions until we find a match
+        match_end_pos = len(self.window) - self.min_match_length + 1
+        for curr_pos in range(pos_in_window, match_end_pos):
+            match_len, match_pos = self.find_best_match(curr_pos)
+            
+            if match_len > 0:
+                end_pos = curr_pos + match_len
+                self.index_window_upto_pos(end_pos)
+                break # yayy, found a match!
+            else:
+                self.index_window_upto_pos(curr_pos + 1)
+        
+        # create the LZ77 sequence, and add to the literals
+        if match_len == 0: #match not found
+            literal_count = self.window[pos_in_window:]
+            best_match_offset = 
+            best_match_len = 
+        else:
+            literal_count = self.window[pos_in_window:match_start_pos]
+            best_match_offset = 
+            best_match_len = 
+
+        
+        lz77_seq = LZ77Sequence(literal_count, best_match_length, match_offset)
+        return lz77_seq
+
+    def lz77_parse_and_generate_sequences(self, data_block: DataBlock):
+        """Parse data using LZ77 and returns the LZ77 sequences and literals.
+
+        Updates the window accordingly.
+
+        Args:
+            data_list (list of bytes (int)): input data
+        """
+        lz77_sequences = []
+        literals = []
+
+        # put the entire data block in the window at once, we will find matches later
+        self.window += data_block.data_list
+
+        # now go over the window starting at pos_in_window and try to find matches
+        # in the past
+        # We keep going until we can't find a match anymore
+        while True:
+            match_start_pos = pos_in_window
+            match_found = False
+            # loop over start positions until we find a match
+            match_end_pos = len(self.window) - self.min_match_length + 1
+            for curr_pos in range(pos_in_window, match_end_pos):
+                match_len, match_pos = self.find_best_match(curr_pos)
+                if match_len > 0:
+                    break # yayy, found a match!
+            
+                # add substrings to the self.substring_dict
+                end_pos = curr_pos + match_len
+                if match_len == 0:
+                    self.index_window_upto_pos(match_start_pos + 1)
+                else:
+                    self.index_window_upto_pos(match_start_pos + 1)
+
+            if not match_found:
+                # no match found anywhere so put everything else as a literal and break
+                literals += self.window[pos_in_window:]
+                # make sure entire window is indexed
+                self.index_window_upto_pos(len(self.window))
+                break
+            else:
+                # match was found so we appropriately insert into literals and sequences
+                # first put part from pos_in_window to match_start_pos in literals
+                literal_count = match_start_pos - pos_in_window
+                literals += self.window[pos_in_window:match_start_pos]
+                # compute the offset
+                match_offset = match_start_pos - best_match_pos
+                lz77_sequences.append(LZ77Sequence(literal_count, best_match_length, match_offset))
+                match_end_pos = match_start_pos + best_match_length
+                # index the covered portion into the substring_dict
+                self.index_window_upto_pos(match_end_pos)
+                # update position in window
+                pos_in_window = match_end_pos
+
+        return lz77_sequences, literals          
+
 
 class LZ77Encoder(DataEncoder):
     def __init__(
@@ -168,34 +356,6 @@ class LZ77Encoder(DataEncoder):
         self.substring_dict = {}
         self.window_indexed_till = 0
 
-    def insert_substring_into_dict(self, substr: Tuple, start_pos: int):
-        """Insert substring into the substring_dict (mapping substring to positions where
-        it occurs in the window).
-
-        Args:
-            substr (Tuple): tuple of length min_match_length
-            start_pos (int): position of substr in window
-        """
-        if substr in self.substring_dict:
-            self.substring_dict[substr].append(start_pos)
-        else:
-            self.substring_dict[substr] = [start_pos]
-
-    def index_window_upto_pos(self, end_pos: int):
-        """Index all tuples of min_match_length in self.window[:end_pos]
-        into the substring_dict. The last tuple to be indexed will start at end_pos-min_match_length+1
-        This uses self.window_indexed_till to ensure we do not reindex things already indexed.
-
-        Args:
-            end_pos (int): end position in window to index
-        """
-        for end_pos_substr in range(self.window_indexed_till, end_pos + 1):
-            start_pos_substr = end_pos_substr - self.min_match_length
-            if start_pos_substr < 0:
-                continue
-            substr = tuple(self.window[start_pos_substr:end_pos_substr])
-            self.insert_substring_into_dict(substr, start_pos_substr)
-        self.window_indexed_till = end_pos + 1
 
     def encode_lz77_sequences(self, lz77_sequences: LZ77Sequence):
         """Perform entropy encoding of the LZ77 sequences and return the encoded bitarray.
@@ -264,29 +424,6 @@ class LZ77Encoder(DataEncoder):
             # if no counts (i.e., no literals) just transmit 0
             return uint_to_bitarray(0, ENCODED_BLOCK_SIZE_HEADER_BITS)
 
-    def find_match_length(self, start_pos_1: int, start_pos_2: int):
-        """Find the match length of window starting from start_pos_1 and start_pos_2.
-           That is, largest match_length s.t.
-           window[start_pos_1:start_pos_1+match_length]==window[start_pos_2:start_pos_2+match_length]
-           Note that matching sections are allowed to overlap
-
-        Args:
-            start_pos_1 (int)
-            start_pos_2 (int)
-
-        Returns:
-            int: match length
-        """
-        match_length = 0
-        while start_pos_1 + match_length < len(self.window) and start_pos_2 + match_length < len(
-            self.window
-        ):
-            if self.window[start_pos_1 + match_length] != self.window[start_pos_2 + match_length]:
-                break
-            else:
-                match_length += 1
-        return match_length
-
     def lz77_parse_and_generate_sequences(self, data_block: DataBlock):
         """Parse data using LZ77 and returns the LZ77 sequences and literals.
 
@@ -295,21 +432,26 @@ class LZ77Encoder(DataEncoder):
         Args:
             data_list (list of bytes (int)): input data
         """
+
+        # initialize empty literal, lz77_sequences arrays
         lz77_sequences = []
         literals = []
 
+        # define the curr position in window, until which encoding is complete
+        # (or lz77 sequences have been generated)
         pos_in_window = len(self.window)
 
         # put the entire data block in the window at once, we will find matches later
         self.window += data_block.data_list
 
         # now go over the window starting at pos_in_window and try to find matches
-        # in the past
-        # We keep going until we can't find a match anymore
+        # in the past. We keep going until we can't find a match anymore
         while True:
-            match_start_pos = pos_in_window
             match_found = False
+            
+
             # loop over start positions until we find a match
+            match_start_pos = pos_in_window
             for match_start_pos in range(
                 pos_in_window, len(self.window) - self.min_match_length + 1
             ):
@@ -321,6 +463,8 @@ class LZ77Encoder(DataEncoder):
                     self.index_window_upto_pos(match_start_pos + 1)
                     continue
                 else:
+
+                    # look at candidate positions matching the match_substr in the past
                     candidate_match_positions = self.substring_dict[match_substr]
                     best_match_pos = None
                     best_match_length = 0
@@ -330,6 +474,9 @@ class LZ77Encoder(DataEncoder):
                     # and find the longest match
                     for candidate_match_pos in reversed(candidate_match_positions):
                         match_len = self.find_match_length(candidate_match_pos, match_start_pos)
+
+                        # ensure the match_len is larger than self.min_match_length
+                        # (this should be true, as our dictionary is storing matches of size min_match_length)
                         assert match_len >= self.min_match_length
                         if match_len > best_match_length:
                             best_match_length = match_len
