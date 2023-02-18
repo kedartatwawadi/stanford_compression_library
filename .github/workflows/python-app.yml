@@ -26,7 +26,6 @@ jobs:
         pip install -e .
     - name: unit tests
       run: |
-        export PYTHONPATH=$PYTHONPATH:.
         find scl/ -name "*.py" -exec py.test -s -v {} +
 
 
