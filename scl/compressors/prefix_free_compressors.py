@@ -233,7 +233,7 @@ def test_build_prefix_free_tree_from_code():
         "A": BitArray("0"),
         "B": BitArray("10"),
         "C": BitArray("110"),
-        "D": BitArray(""),
+        "D": BitArray("1110"),
     }
     tree = PrefixFreeTree.build_prefix_free_tree_from_code(encoding_table_gt)
 
