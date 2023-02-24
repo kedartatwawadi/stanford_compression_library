@@ -45,7 +45,7 @@ NOTE -> the tests in each file should be helpful as a "usage" example of each of
     ```
 - Install the `scl` package
     ```
-    python install -e . #install the package in a editable mode
+    pip install -e . #install the package in a editable mode
     ``` 
 
 - **Run unit tests**
