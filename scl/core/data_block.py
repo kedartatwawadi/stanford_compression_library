@@ -1,6 +1,5 @@
-from typing import List, Mapping, Set
-from core.prob_dist import ProbabilityDist
-import unittest
+from typing import List, Set
+from scl.core.prob_dist import ProbabilityDist
 
 
 class DataBlock:

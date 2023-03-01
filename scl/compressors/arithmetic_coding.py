@@ -1,17 +1,16 @@
 from dataclasses import dataclass
 import numpy as np
 from typing import Tuple, Any
-from compressors.probability_models import (
+from scl.compressors.probability_models import (
     AdaptiveIIDFreqModel,
     AdaptiveOrderKFreqModel,
-    FixedFreqModel,
     FreqModelBase,
 )
-from core.data_encoder_decoder import DataDecoder, DataEncoder
-from utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
-from core.data_block import DataBlock
-from core.prob_dist import Frequencies
-from utils.test_utils import (
+from scl.core.data_encoder_decoder import DataDecoder, DataEncoder
+from scl.utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
+from scl.core.data_block import DataBlock
+from scl.core.prob_dist import Frequencies
+from scl.utils.test_utils import (
     lossless_entropy_coder_test,
     lossless_test_against_expected_bitrate,
 )
@@ -53,11 +52,8 @@ class ArithmeticEncoder(DataEncoder):
     def __init__(self, params: AECParams, freq_model: FreqModelBase):
         self.params = params
 
-        # define the probability model used by the AEC
-        # the model can get updated when we call update_model(s) after every step
+        # NOTE: the model can get updated when we call update_model(s) after every step
         self.freq_model = freq_model
-
-        # self.freq_model = freq_model_cls(freq_model_params, params.MAX_ALLOWED_TOTAL_FREQ)
 
     @classmethod
     def shrink_range(cls, freqs: Frequencies, s: Any, low: int, high: int) -> Tuple[int, int]:

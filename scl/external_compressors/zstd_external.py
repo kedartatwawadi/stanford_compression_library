@@ -12,18 +12,19 @@ We use the python zstandard module which internally calls the C library.
 
 import os
 import tempfile
-from core.data_block import DataBlock
-from core.data_encoder_decoder import DataDecoder, DataEncoder
-from core.data_stream import TextFileDataStream, Uint8FileDataStream
-from core.encoded_stream import EncodedBlockReader, EncodedBlockWriter
-from core.prob_dist import ProbabilityDist
-from utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray
-from utils.test_utils import (
+from scl.core.data_block import DataBlock
+from scl.core.data_encoder_decoder import DataDecoder, DataEncoder
+from scl.core.data_stream import Uint8FileDataStream
+from scl.core.encoded_stream import EncodedBlockReader, EncodedBlockWriter
+from scl.core.prob_dist import ProbabilityDist
+from scl.utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray
+from scl.utils.test_utils import (
     create_random_binary_file,
     try_file_lossless_compression,
     try_lossless_compression,
 )
 import zstandard
+
 
 class ZstdExternalEncoder(DataEncoder):
     def __init__(self, level=6):

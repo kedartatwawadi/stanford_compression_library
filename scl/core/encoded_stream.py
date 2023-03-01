@@ -7,7 +7,7 @@ The EncodedBlockWriter and EncodedBlockReader handle adding/removing these block
 care about the encoded_bitarray. More information in the respective docstrings.
 """
 
-from utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
+from scl.utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
 import tempfile
 import os
 

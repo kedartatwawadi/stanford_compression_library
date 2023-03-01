@@ -8,10 +8,10 @@ useful for implementing any prefix free code
 
 import abc
 from typing import Mapping, Tuple, Any
-from utils.bitarray_utils import BitArray
-from utils.tree_utils import BinaryNode
-from core.data_encoder_decoder import DataEncoder, DataDecoder
-from core.data_block import DataBlock
+from scl.utils.bitarray_utils import BitArray
+from scl.utils.tree_utils import BinaryNode
+from scl.core.data_encoder_decoder import DataEncoder, DataDecoder
+from scl.core.data_block import DataBlock
 
 
 class PrefixFreeEncoder(DataEncoder):
@@ -26,7 +26,7 @@ class PrefixFreeEncoder(DataEncoder):
         Returns:
             BitArray: the encoding for one particular symbol
         """
-        pass
+        pass  # return encoded_bitarray
 
     def encode_block(self, data_block: DataBlock) -> BitArray:
         """
@@ -43,6 +43,8 @@ class PrefixFreeEncoder(DataEncoder):
         """
 
         encoded_bitarray = BitArray("")
+
+        # loop over each symbol in the input and concatenate the bitstreams
         for s in data_block.data_list:
             encoded_bitarray += self.encode_symbol(s)
         return encoded_bitarray
@@ -92,9 +94,7 @@ class PrefixFreeTree:
 
     Root node is the pointer to root of the tree with appropriate pointers to the children.
     It subclasses from BinaryNode class in utils/tree_utils which provide a basic binary node with
-    left child, right child and id per node pointers.
-
-    Any subclassing class needs to set the root_node appropriately.
+    left child, right child and id per node pointers. Any subclassing class needs to set the root_node appropriately.
 
     The class also provides method for utilizing the fact that the given tree is PrefixFree and hence we can utilize
     the tree structure to encode and decode. These functions can be used to encode and decode once subclassing function
@@ -131,7 +131,7 @@ class PrefixFreeTree:
         encoding_table = {}
 
         # define the DFS function
-        def _parse_node(node: BinaryNode, code: BitArray):
+        def _parse_node_dfs(node: BinaryNode, code: BitArray):
             """parse the node in DFS fashion, and get the code corresponding to
             all the leaf nodes
 
@@ -144,13 +144,13 @@ class PrefixFreeTree:
                 encoding_table[node.id] = code
 
             if node.left_child is not None:
-                _parse_node(node.left_child, code + BitArray("0"))
+                _parse_node_dfs(node.left_child, code + BitArray("0"))
 
             if node.right_child is not None:
-                _parse_node(node.right_child, code + BitArray("1"))
+                _parse_node_dfs(node.right_child, code + BitArray("1"))
 
         # call the parsing function on the root node
-        _parse_node(self.root_node, BitArray(""))
+        _parse_node_dfs(self.root_node, BitArray(""))
 
         return encoding_table
 
@@ -222,3 +222,23 @@ class PrefixFreeTree:
         for s in codes:
             _add_tree_nodes_from_code(tree, s, codes[s])
         return tree
+
+
+def test_build_prefix_free_tree_from_code():
+    """
+    A test to check if the tree built from a set of codes is correct
+    """
+
+    encoding_table_gt = {
+        "A": BitArray("0"),
+        "B": BitArray("10"),
+        "C": BitArray("110"),
+        "D": BitArray("1110"),
+    }
+    tree = PrefixFreeTree.build_prefix_free_tree_from_code(encoding_table_gt)
+
+    # test if the obtained encoding table is correct
+    encoding_table_from_tree = tree.get_encoding_table()
+    for s in encoding_table_gt:
+        assert s in encoding_table_from_tree
+        assert encoding_table_gt[s] == encoding_table_from_tree[s]

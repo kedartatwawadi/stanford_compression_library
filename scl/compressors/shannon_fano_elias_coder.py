@@ -8,10 +8,13 @@ which motivates Arithmetic coding
 
 """
 
-from utils.bitarray_utils import float_to_bitarrays, BitArray
-from utils.test_utils import get_random_data_block, try_lossless_compression
-from compressors.prefix_free_compressors import PrefixFreeEncoder, PrefixFreeDecoder
-from core.prob_dist import ProbabilityDist
+from scl.utils.bitarray_utils import float_to_bitarrays, BitArray
+from scl.utils.test_utils import get_random_data_block, try_lossless_compression
+from scl.compressors.prefix_free_compressors import (
+    PrefixFreeEncoder,
+    PrefixFreeDecoder,
+)
+from scl.core.prob_dist import ProbabilityDist
 import math
 import numpy as np
 

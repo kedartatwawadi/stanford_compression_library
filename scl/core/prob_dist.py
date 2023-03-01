@@ -1,6 +1,6 @@
 import numpy as np
 import unittest
-from utils.misc_utils import cache
+from scl.utils.misc_utils import cache
 
 
 class ProbabilityDist:
@@ -70,7 +70,6 @@ class ProbabilityDist:
     def probability(self, symbol):
         return self.prob_dict[symbol]
 
-    @cache
     def neg_log_probability(self, symbol):
         return -np.log2(self.probability(symbol))
 

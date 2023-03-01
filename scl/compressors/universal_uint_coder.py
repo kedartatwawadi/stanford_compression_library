@@ -17,10 +17,10 @@ Encoding:
 The decoding is straightforward, as the unary code indicates how many bits further to read and decode
 """
 
-from core.data_block import DataBlock
-from core.data_encoder_decoder import DataDecoder, DataEncoder
-from utils.bitarray_utils import uint_to_bitarray, bitarray_to_uint, BitArray
-from utils.test_utils import are_blocks_equal
+from scl.core.data_block import DataBlock
+from scl.core.data_encoder_decoder import DataDecoder, DataEncoder
+from scl.utils.bitarray_utils import uint_to_bitarray, bitarray_to_uint, BitArray
+from scl.utils.test_utils import are_blocks_equal
 
 
 class UniversalUintEncoder(DataEncoder):
@@ -34,6 +34,7 @@ class UniversalUintEncoder(DataEncoder):
     ...
 
     NOTE: not the most efficient but still "universal"
+    i.e. works for all symbols
     """
 
     def encode_symbol(self, x: int):
@@ -139,13 +140,12 @@ def test_universal_uint_encode_decode():
 
 def test_universal_uint_encode():
     """
-    Test if we can recover the expected bitstream
+    Test if the encoded_bitstream matches what we expect
     """
     encoder = UniversalUintEncoder()
 
     # create some sample data
     data_list = [0, 1, 3, 4, 100]
-    data_block = DataBlock(data_list)
 
     # ensure you provide expected codewords for each unique symbol in data_list
     expected_codewords = {

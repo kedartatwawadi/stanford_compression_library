@@ -38,14 +38,14 @@ higher frequency precision (23 bit vs. 16 bit when using 32 bit ints).
 """
 
 from dataclasses import dataclass
-from core.data_block import DataBlock
-from core.data_encoder_decoder import DataDecoder, DataEncoder
-from utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray
-from core.prob_dist import Frequencies
+from scl.core.data_block import DataBlock
+from scl.core.data_encoder_decoder import DataDecoder, DataEncoder
+from scl.utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray
+from scl.core.prob_dist import Frequencies
 import numpy as np
 from typing import Tuple, Any
-from utils.test_utils import lossless_entropy_coder_test
-from utils.test_utils import get_random_data_block, try_lossless_compression
+from scl.utils.test_utils import lossless_entropy_coder_test
+from scl.utils.test_utils import get_random_data_block, try_lossless_compression
 
 # TODO - consider working with numpy's sized integer types. I fear Python types obfuscate
 # some of the considerations even though we try to implement here as one would do in C.

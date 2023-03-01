@@ -6,10 +6,10 @@ More info in respective docstrings
 """
 
 import abc
-from core.data_block import DataBlock
-from core.data_stream import DataStream, TextFileDataStream
-from core.encoded_stream import EncodedBlockReader, EncodedBlockWriter
-from utils.bitarray_utils import BitArray
+from scl.core.data_block import DataBlock
+from scl.core.data_stream import DataStream, TextFileDataStream
+from scl.core.encoded_stream import EncodedBlockReader, EncodedBlockWriter
+from scl.utils.bitarray_utils import BitArray
 
 
 class DataEncoder(abc.ABC):
@@ -22,7 +22,7 @@ class DataEncoder(abc.ABC):
 
     def reset(self):
         """reset the state if any"""
-        # NOTE: the user can call this to clear any state the encoder might 
+        # NOTE: the user can call this to clear any state the encoder might
         # have persisted across encode_block calls
         pass
 
@@ -40,7 +40,6 @@ class DataEncoder(abc.ABC):
         # return encoded_bitarray
         raise NotImplementedError
 
-    
     def encode(self, data_stream: DataStream, block_size: int, encode_writer: EncodedBlockWriter):
         """function to encode a given data_stream
 
@@ -96,7 +95,7 @@ class DataDecoder(abc.ABC):
 
     def reset(self):
         """reset the state, if any"""
-        # NOTE: the user can call this to clear any state the decoder might 
+        # NOTE: the user can call this to clear any state the decoder might
         # have persisted across decode_block calls
         pass
 
@@ -116,7 +115,6 @@ class DataDecoder(abc.ABC):
         # return decoded_block, num_bits_consumed
         raise NotImplementedError
 
-    
     def decode(self, encode_reader: EncodedBlockReader, output_stream: DataStream):
         """function to decode a binary encoded stream
 

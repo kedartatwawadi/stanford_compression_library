@@ -62,12 +62,17 @@ More references in the wiki article
 from dataclasses import dataclass
 import numpy as np
 from typing import Tuple, Any, List
-from core.data_encoder_decoder import DataDecoder, DataEncoder
-from utils.bitarray_utils import BitArray, get_bit_width, uint_to_bitarray, bitarray_to_uint
-from core.data_block import DataBlock
-from core.prob_dist import Frequencies, get_avg_neg_log_prob
-from utils.test_utils import get_random_data_block, try_lossless_compression
-from utils.misc_utils import cache
+from scl.core.data_encoder_decoder import DataDecoder, DataEncoder
+from scl.utils.bitarray_utils import (
+    BitArray,
+    get_bit_width,
+    uint_to_bitarray,
+    bitarray_to_uint,
+)
+from scl.core.data_block import DataBlock
+from scl.core.prob_dist import Frequencies, get_avg_neg_log_prob
+from scl.utils.test_utils import get_random_data_block, try_lossless_compression
+from scl.utils.misc_utils import cache
 
 
 @dataclass

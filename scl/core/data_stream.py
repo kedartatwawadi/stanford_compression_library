@@ -2,7 +2,7 @@ import abc
 import tempfile
 import os
 import typing
-from core.data_block import DataBlock
+from scl.core.data_block import DataBlock
 
 Symbol = typing.Any
 

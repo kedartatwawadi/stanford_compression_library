@@ -16,11 +16,11 @@ these chunks are referred to as blocks (as in block coding).
 """
 
 from attr import dataclass
-from core.data_block import DataBlock
-from core.data_encoder_decoder import DataDecoder, DataEncoder
-from utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
-from utils.test_utils import get_random_data_block, try_lossless_compression
-from core.prob_dist import ProbabilityDist
+from scl.core.data_block import DataBlock
+from scl.core.data_encoder_decoder import DataDecoder, DataEncoder
+from scl.utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
+from scl.utils.test_utils import get_random_data_block, try_lossless_compression
+from scl.core.prob_dist import ProbabilityDist
 import numpy as np
 import itertools
 import random
@@ -30,7 +30,7 @@ def compute_normalized_negative_log_prob_chunk(chunk, prob_dist: ProbabilityDist
     """Compute the normalized log probability for a chunk"""
     log_prob = 0
     for symbol in chunk:
-        log_prob += -np.log2(prob_dist.probability(symbol))
+        log_prob += prob_dist.neg_log_probability(symbol)
     return log_prob / len(chunk)
 
 

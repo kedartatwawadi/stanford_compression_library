@@ -11,8 +11,8 @@ so this should be only used when the metadata is small.
 
 import pickle
 from typing import Any
-from core.data_encoder_decoder import DataDecoder, DataEncoder
-from utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray
+from scl.core.data_encoder_decoder import DataDecoder, DataEncoder
+from scl.utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray
 
 
 class PickleEncoder(DataEncoder):
@@ -37,10 +37,12 @@ class PickleDecoder(DataDecoder):
         self.length_bitwidth = length_bitwidth
 
     def decode_block(self, bitarray: BitArray):
-        length_encoding = bitarray[:self.length_bitwidth]
+        length_encoding = bitarray[: self.length_bitwidth]
         len_pickled = bitarray_to_uint(length_encoding)
         # bits to bytes
-        pickled_bytes = bitarray[self.length_bitwidth : self.length_bitwidth + len_pickled].tobytes()
+        pickled_bytes = bitarray[
+            self.length_bitwidth : self.length_bitwidth + len_pickled
+        ].tobytes()
 
         decoded_data = pickle.loads(pickled_bytes)
         num_bits_read = self.length_bitwidth + len_pickled

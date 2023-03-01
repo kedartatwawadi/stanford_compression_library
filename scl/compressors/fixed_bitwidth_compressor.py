@@ -4,12 +4,12 @@ Fixed Bitwidth compressor -> uses a fixed bitwidth for each symbol
 """
 import tempfile
 import os
-from core.data_block import DataBlock
-from core.data_encoder_decoder import DataEncoder, DataDecoder
-from core.prob_dist import ProbabilityDist
-from external_compressors.pickle_external import PickleDecoder, PickleEncoder
-from utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray
-from utils.test_utils import (
+from scl.core.data_block import DataBlock
+from scl.core.data_encoder_decoder import DataEncoder, DataDecoder
+from scl.core.prob_dist import ProbabilityDist
+from scl.external_compressors.pickle_external import PickleDecoder, PickleEncoder
+from scl.utils.bitarray_utils import BitArray, bitarray_to_uint, uint_to_bitarray
+from scl.utils.test_utils import (
     create_random_text_file,
     get_random_data_block,
     try_file_lossless_compression,
@@ -109,7 +109,7 @@ class TextAlphabetEncoder(DataEncoder):
 
         # encode the alphabet size
         alphabet_size = len(alphabet)
-        assert alphabet_size < 2 ** self.alphabet_size_bits
+        assert alphabet_size < 2**self.alphabet_size_bits
         alphabet_size_bitarray = uint_to_bitarray(alphabet_size, self.alphabet_size_bits)
 
         bitarray = alphabet_size_bitarray

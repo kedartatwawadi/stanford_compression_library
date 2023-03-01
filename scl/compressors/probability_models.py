@@ -9,7 +9,7 @@ from typing import List
 
 import numpy as np
 
-from core.prob_dist import Frequencies
+from scl.core.prob_dist import Frequencies
 
 
 class FreqModelBase(abc.ABC):
@@ -155,4 +155,6 @@ class AdaptiveOrderKFreqModel(FreqModelBase):
         # NOTE: we only need the frequencies for each (k+1) tuple to
         # sum to less than max_allowed_total_freq
         if np.sum(self.freqs_kplus1_tuple[current_tuple]) >= self.max_allowed_total_freq:
-            self.freqs_kplus1_tuple[current_tuple] = np.max(self.freqs_kplus1_tuple[current_tuple] // 2, 1)
+            self.freqs_kplus1_tuple[current_tuple] = np.max(
+                self.freqs_kplus1_tuple[current_tuple] // 2, 1
+            )

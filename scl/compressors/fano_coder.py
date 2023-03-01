@@ -6,15 +6,15 @@ https://en.wikipedia.org/w/index.php?title=Shannon–Fano_coding&oldid=107652002
 This document uses Fano coding as described in the wiki article above.
 """
 from typing import Any, Tuple
-from utils.bitarray_utils import BitArray
-from utils.test_utils import get_random_data_block, try_lossless_compression
-from compressors.prefix_free_compressors import (
+from scl.utils.bitarray_utils import BitArray
+from scl.utils.test_utils import get_random_data_block, try_lossless_compression
+from scl.compressors.prefix_free_compressors import (
     PrefixFreeTree,
     PrefixFreeEncoder,
     PrefixFreeDecoder,
     BinaryNode,
 )
-from core.prob_dist import ProbabilityDist
+from scl.core.prob_dist import ProbabilityDist
 
 
 class FanoTree(PrefixFreeTree):
