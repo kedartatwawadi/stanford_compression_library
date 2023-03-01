@@ -39,7 +39,7 @@ NOTE -> the tests in each file should be helpful as a "usage" example of each of
 ## Getting started
 - Create conda environment and install required packages:
     ```
-    conda create --name myenv python=3.8.2
+    conda create --name myenv python=3.8
     conda activate myenv
     
     ```
