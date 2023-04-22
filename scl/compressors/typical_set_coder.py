@@ -15,7 +15,7 @@ Note: a single data_block contains several of these n-length chunks, and in lite
 these chunks are referred to as blocks (as in block coding).
 """
 
-from attr import dataclass
+from dataclasses import dataclass
 from scl.core.data_block import DataBlock
 from scl.core.data_encoder_decoder import DataDecoder, DataEncoder
 from scl.utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
