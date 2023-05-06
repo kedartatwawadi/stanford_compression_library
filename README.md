@@ -71,7 +71,7 @@ Run a formatter before submitting PR
 black <dir/file> --line-length 100
 ```
 
-Note that the Github actions CI uses flake8 as a lint (see [`.github/workflows/python-app.yml`](.github/workflows/python-app.yml)), which is compatible with the `black` formatter as discussed [here](https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html#flake8).
-
-## Contact
+Note that the Github actions CI uses black, so the PR will fail if black is not used. (see [`.github/workflows/black.yml`](.github/workflows/black.yml)),  
+#
+# Contact
 The best way to contact the maintainers is to file an issue with your question. 
