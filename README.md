@@ -2,9 +2,9 @@
 The goal of the library is to help with research in the area of data compression. This is not meant to be fast or efficient implementation, but rather for educational purpose
 
 This library is currently being used for the course [EE274: Data Compression course, Fall 22](https://stanforddatacompressionclass.github.io/Fall22/) at Stanford University, to augment the lectures and for homeworks: 
-3. [EE274 Lecture materials (slides etc)](https://stanforddatacompressionclass.github.io/Fall22/lectures/)
-1. [EE274 Course notes (in progress)](https://stanforddatacompressionclass.github.io/notes/)
-2. The video recordings for lectures can be found as a [Youtube Playlist](https://youtube.com/playlist?list=PLv_7iO_xlL0Jgc35Pqn7XP5VTQ5krLMOl)
+1. [EE274 Lecture materials (slides etc)](https://stanforddatacompressionclass.github.io/Fall22/lectures/)
+2. [EE274 Course notes (in progress)](https://stanforddatacompressionclass.github.io/notes/)
+3. The video recordings for lectures can be found as a [Youtube Playlist](https://youtube.com/playlist?list=PLv_7iO_xlL0Jgc35Pqn7XP5VTQ5krLMOl)
 
 
 ## Compression algorithms
