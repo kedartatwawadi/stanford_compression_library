@@ -11,26 +11,26 @@ This library is currently being used for the course [EE274: Data Compression cou
 Here is a list of algorithms implemented.
 
 ### Prefix-free codes
-- [Huffman codes](compressors/huffman_coder.py)
-- [Shannon codes](compressors/shannon_coder.py)
-- [Fano codes](compressors/fano_coder.py)
-- [Shannon Fano Elias](compressors/shannon_fano_elias_coder.py)
-- [Golomb codes](compressors/golomb_coder.py)
-- [Universal integer coder](compressors/universal_integer_coder.py)
-- [Elias Delta code](compressors/elias_delta_uint_coder.py)
+- [Huffman codes](scl/compressors/huffman_coder.py)
+- [Shannon codes](scl/compressors/shannon_coder.py)
+- [Fano codes](scl/compressors/fano_coder.py)
+- [Shannon Fano Elias](scl/compressors/shannon_fano_elias_coder.py)
+- [Golomb codes](scl/compressors/golomb_coder.py)
+- [Universal integer coder](scl/compressors/universal_integer_coder.py)
+- [Elias Delta code](scl/compressors/elias_delta_uint_coder.py)
 
 ### Entropy coders
-- [rANS](compressors/rANS.py)
-- [tANS](compressors/tANS.py)
-- [Typical set coder](compressors/typical_set_coder.py)
-- [Arithmetic coder](compressors/arithmetic_coding.py)
-- [Context-based Adaptive Arithmetic coder](compressors/probability_models.py)
-- [Range coder](compressors/range_coder.py)
+- [rANS](scl/compressors/rANS.py)
+- [tANS](scl/compressors/tANS.py)
+- [Typical set coder](scl/compressors/typical_set_coder.py)
+- [Arithmetic coder](scl/compressors/arithmetic_coding.py)
+- [Context-based Adaptive Arithmetic coder](scl/compressors/probability_models.py)
+- [Range coder](scl/compressors/range_coder.py)
 
-### Universal Lossless compressors
-- [zlib (external)](external_compressors/zlib_external.py)
-- [zstd (external)](external_compressors/zstd_external.py)
-- [LZ77](compressors/lz77.py)
+### Universal lossless compressors
+- [zlib (external)](scl/external_compressors/zlib_external.py)
+- [zstd (external)](scl/external_compressors/zstd_external.py)
+- [LZ77](scl/compressors/lz77.py)
 
 
 NOTE -> the tests in each file should be helpful as a "usage" example of each of the compressors. More details are on the project wiki.
@@ -41,7 +41,6 @@ NOTE -> the tests in each file should be helpful as a "usage" example of each of
     ```
     conda create --name myenv python=3.8
     conda activate myenv
-    
     ```
 - Install the `scl` package
     ```
@@ -52,7 +51,7 @@ NOTE -> the tests in each file should be helpful as a "usage" example of each of
 
   To run all tests:
     ```
-    find  scl -name "*.py" -exec py.test -s -v {} +
+    find scl -name "*.py" -exec py.test -s -v {} +
     ```
 
   To run a single test
