@@ -16,7 +16,7 @@ Here is a list of algorithms implemented.
 - [Fano codes](scl/compressors/fano_coder.py)
 - [Shannon Fano Elias](scl/compressors/shannon_fano_elias_coder.py)
 - [Golomb codes](scl/compressors/golomb_coder.py)
-- [Universal integer coder](scl/compressors/universal_integer_coder.py)
+- [Universal integer coder](scl/compressors/universal_uint_coder.py)
 - [Elias Delta code](scl/compressors/elias_delta_uint_coder.py)
 
 ### Entropy coders
