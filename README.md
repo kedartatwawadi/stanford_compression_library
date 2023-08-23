@@ -56,7 +56,7 @@ NOTE -> the tests in each file should be helpful as a "usage" example of each of
 
   To run a single test
   ```
-  py.test -s -v scl/core/data_stream_tests.py
+  py.test -s -v scl/core/data_stream.py
   ```
 
 ## Getting started with understanding the library
