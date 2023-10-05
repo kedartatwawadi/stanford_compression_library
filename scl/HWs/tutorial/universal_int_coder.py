@@ -3,11 +3,11 @@
 Extends `compressors/universal_uint_coder.py` to handle signed integers
 """
 
-from core.data_block import DataBlock
-from core.data_encoder_decoder import DataDecoder, DataEncoder
-from utils.bitarray_utils import BitArray
-from utils.test_utils import are_blocks_equal
-from compressors.universal_uint_coder import UniversalUintEncoder, UniversalUintDecoder
+from scl.core.data_block import DataBlock
+from scl.core.data_encoder_decoder import DataDecoder, DataEncoder
+from scl.utils.bitarray_utils import BitArray
+from scl.utils.test_utils import are_blocks_equal
+from scl.compressors.universal_uint_coder import UniversalUintEncoder, UniversalUintDecoder
 
 
 class UniversalIntegerEncoder(DataEncoder):
