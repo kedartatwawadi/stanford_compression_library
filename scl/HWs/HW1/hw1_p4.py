@@ -39,8 +39,9 @@ class ShannonTreeEncoder(PrefixFreeEncoder):
 
         ############################################################
         # ADD CODE HERE
-        # NOTE:
-        # - The utility functions encoding_table.values(), bitarray_to_uint, uint_to_bitarray might be useful
+        # NOTE: 
+        # - The utility functions ProbabilityDist.neg_log_probability
+        # - scl.utils.bitarray_utils.uint_to_bitarray and scl.utils.bitarray_utils.bitarry_to_uint might be useful
 
         raise NotImplementedError
 
