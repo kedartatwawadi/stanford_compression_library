@@ -42,6 +42,11 @@ NOTE -> the tests in each file should be helpful as a "usage" example of each of
     conda create --name myenv python=3.8
     conda activate myenv
     ```
+- Clone the repo
+    ```
+    git clone https://github.com/kedartatwawadi/stanford_compression_library.git
+    cd stanford_compression_library
+    ```
 - Install the `scl` package
     ```
     pip install -e . #install the package in a editable mode
