@@ -123,6 +123,7 @@ class LZ77Sequence:
     match_length: int = (0,)
     match_offset: int = (0,)
 
+
 class EmpiricalIntHuffmanEncoder(DataEncoder):
     """Perform entropy encoding of the values and return the encoded bitarray.
 
@@ -132,6 +133,7 @@ class EmpiricalIntHuffmanEncoder(DataEncoder):
     We apply Huffman coding for the values and also store the counts to enable the
     decoder to construct the same Huffman tree.
     """
+
     def __init__(self, alphabet_size):
         self.alphabet_size = alphabet_size
 
@@ -170,6 +172,7 @@ class EmpiricalIntHuffmanEncoder(DataEncoder):
             # if no counts (i.e., no values) just transmit 0
             return uint_to_bitarray(0, ENCODED_BLOCK_SIZE_HEADER_BITS)
 
+
 class EmpiricalIntHuffmanDecoder(DataDecoder):
     def __init__(self, alphabet_size):
         self.alphabet_size = alphabet_size
@@ -177,9 +180,7 @@ class EmpiricalIntHuffmanDecoder(DataDecoder):
     def decode_block(self, encoded_bitarray: BitArray):
         num_bits_consumed = 0
         # first read the size of the counts (i.e., frequencies) encoding
-        counts_encoding_size = bitarray_to_uint(
-            encoded_bitarray[:ENCODED_BLOCK_SIZE_HEADER_BITS]
-        )
+        counts_encoding_size = bitarray_to_uint(encoded_bitarray[:ENCODED_BLOCK_SIZE_HEADER_BITS])
         num_bits_consumed += ENCODED_BLOCK_SIZE_HEADER_BITS
         # now decode the counts using Elias Delta
         if counts_encoding_size == 0:
@@ -227,6 +228,7 @@ class LogScaleBinnedIntegerEncoder(DataEncoder):
     parameter to keep things simple. In addition we use Huffman like gzip whereas
     zstd uses FSE (tANS).
     """
+
     def __init__(self, offset=0, max_num_bins=32):
         self.offset = offset
         self.max_num_bins = max_num_bins + self.offset
@@ -261,17 +263,21 @@ class LogScaleBinnedIntegerEncoder(DataEncoder):
 
         return bins_encoding + residuals_encoding
 
+
 class LogScaleBinnedIntegerDecoder(DataDecoder):
     """
     Decodes a list of non-negative integers encoded by LogScaleBinnedIntegerEncoder.
     """
+
     def __init__(self, offset=0, max_num_bins=32):
         self.offset = offset
         self.max_num_bins = max_num_bins + self.offset
         self.empirical_huffman_decoder = EmpiricalIntHuffmanDecoder(alphabet_size=self.max_num_bins)
 
     def decode_block(self, encoded_bitarray: BitArray):
-        bins_decoded, num_bits_consumed = self.empirical_huffman_decoder.decode_block(encoded_bitarray)
+        bins_decoded, num_bits_consumed = self.empirical_huffman_decoder.decode_block(
+            encoded_bitarray
+        )
         bins_decoded = bins_decoded.data_list
         encoded_bitarray = encoded_bitarray[num_bits_consumed:]
         decoded = []
@@ -312,7 +318,9 @@ class LZ77StreamsEncoder(DataEncoder):
         Args:
             encoded_bitarray (BitArray): encoded bit array
         """
-        log_scale_binned_coder = LogScaleBinnedIntegerEncoder(offset=self.log_scale_binned_coder_offset)
+        log_scale_binned_coder = LogScaleBinnedIntegerEncoder(
+            offset=self.log_scale_binned_coder_offset
+        )
         encoded_bitarray = BitArray()
         encoded_bitarray += log_scale_binned_coder.encode_block(
             DataBlock([l.literal_count for l in lz77_sequences])
@@ -333,7 +341,9 @@ class LZ77StreamsEncoder(DataEncoder):
         Args:
             encoded_bitarray (BitArray): encoded bit array
         """
-        encoded_bitarray = EmpiricalIntHuffmanEncoder(alphabet_size=256).encode_block(DataBlock(literals))
+        encoded_bitarray = EmpiricalIntHuffmanEncoder(alphabet_size=256).encode_block(
+            DataBlock(literals)
+        )
         return encoded_bitarray
 
     def encode_block(self, lz77_sequences: List[LZ77Sequence], literals: List):
@@ -346,6 +356,7 @@ class LZ77StreamsEncoder(DataEncoder):
         lz77_sequences_encoding = self.encode_lz77_sequences(lz77_sequences)
         literals_encoding = self.encode_literals(literals)
         return lz77_sequences_encoding + literals_encoding
+
 
 class LZ77StreamsDecoder(DataDecoder):
     def __init__(self, log_scale_binned_coder_offset=16):
@@ -363,18 +374,26 @@ class LZ77StreamsDecoder(DataDecoder):
         Args:
             encoded_bitarray (BitArray): encoded bit array
         """
-        log_scale_binned_coder = LogScaleBinnedIntegerDecoder(offset=self.log_scale_binned_coder_offset)
+        log_scale_binned_coder = LogScaleBinnedIntegerDecoder(
+            offset=self.log_scale_binned_coder_offset
+        )
         num_bits_consumed = 0
         # first decode literal counts
-        literal_counts, num_bits_consumed_literal_counts = log_scale_binned_coder.decode_block(encoded_bitarray)
+        literal_counts, num_bits_consumed_literal_counts = log_scale_binned_coder.decode_block(
+            encoded_bitarray
+        )
         encoded_bitarray = encoded_bitarray[num_bits_consumed_literal_counts:]
         num_bits_consumed += num_bits_consumed_literal_counts
         # next decode match lengths
-        match_lengths, num_bits_consumed_match_lengths = log_scale_binned_coder.decode_block(encoded_bitarray)
+        match_lengths, num_bits_consumed_match_lengths = log_scale_binned_coder.decode_block(
+            encoded_bitarray
+        )
         encoded_bitarray = encoded_bitarray[num_bits_consumed_match_lengths:]
         num_bits_consumed += num_bits_consumed_match_lengths
         # next decode match offsets
-        match_offsets, num_bits_consumed_match_offsets = log_scale_binned_coder.decode_block(encoded_bitarray)
+        match_offsets, num_bits_consumed_match_offsets = log_scale_binned_coder.decode_block(
+            encoded_bitarray
+        )
         encoded_bitarray = encoded_bitarray[num_bits_consumed_match_offsets:]
         num_bits_consumed += num_bits_consumed_match_offsets
         lz77_sequences = [
@@ -390,7 +409,9 @@ class LZ77StreamsDecoder(DataDecoder):
         Args:
             encoded_bitarray (BitArray): encoded bit array
         """
-        literals, num_bits_consumed = EmpiricalIntHuffmanDecoder(alphabet_size=256).decode_block(encoded_bitarray)
+        literals, num_bits_consumed = EmpiricalIntHuffmanDecoder(alphabet_size=256).decode_block(
+            encoded_bitarray
+        )
         return literals.data_list, num_bits_consumed
 
     def decode_block(self, encoded_bitarray: BitArray):
@@ -405,6 +426,7 @@ class LZ77StreamsDecoder(DataDecoder):
         num_bits_consumed = num_bits_consumed_sequences + num_bits_consumed_literals
 
         return (lz77_sequences, literals), num_bits_consumed
+
 
 class LZ77Encoder(DataEncoder):
     def __init__(
@@ -644,7 +666,9 @@ class LZ77Decoder(DataDecoder):
 
     def decode_block(self, encoded_bitarray: BitArray):
         # first entropy decode the lz77 sequences and the literals
-        (lz77_sequences, literals), num_bits_consumed = self.streams_decoder.decode_block(encoded_bitarray)
+        (lz77_sequences, literals), num_bits_consumed = self.streams_decoder.decode_block(
+            encoded_bitarray
+        )
 
         # now execute the sequences to decode
         decoded_block = DataBlock(self.execute_lz77_sequences(literals, lz77_sequences))
@@ -663,30 +687,39 @@ class LZ77Decoder(DataDecoder):
             with Uint8FileDataStream(output_file_path, "wb") as fds:
                 self.decode(reader, fds)
 
+
 def test_empirical_int_huffman_encoder_decoder():
     import random
+
     encoder = EmpiricalIntHuffmanEncoder(alphabet_size=45)
     decoder = EmpiricalIntHuffmanDecoder(alphabet_size=45)
     data_list = [random.randint(0, 44) for _ in range(1000)]
     data_block = DataBlock(data_list)
     is_lossless, _, _ = try_lossless_compression(
-                data_block, encoder, decoder, add_extra_bits_to_encoder_output=True
+        data_block, encoder, decoder, add_extra_bits_to_encoder_output=True
     )
     assert is_lossless
+
 
 def test_log_scale_binned_integer_encoder_decoder():
     """
     Test that log scale binned integer encoder and decoder are inverses of each other
     """
     import random
+
     encoder = LogScaleBinnedIntegerEncoder(offset=10)
     decoder = LogScaleBinnedIntegerDecoder(offset=10)
-    data_list = [0,1,5,9,10,11,12]+[random.randint(0, 20) for _ in range(100)] + [random.randint(0, 1000) for _ in range(100)]
+    data_list = (
+        [0, 1, 5, 9, 10, 11, 12]
+        + [random.randint(0, 20) for _ in range(100)]
+        + [random.randint(0, 1000) for _ in range(100)]
+    )
     data_block = DataBlock(data_list)
     is_lossless, _, _ = try_lossless_compression(
-                data_block, encoder, decoder, add_extra_bits_to_encoder_output=True
+        data_block, encoder, decoder, add_extra_bits_to_encoder_output=True
     )
     assert is_lossless
+
 
 def test_lz77_encode_decode():
     initial_window = [0, 0, 1, 1, 1]
