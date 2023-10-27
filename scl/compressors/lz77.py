@@ -137,6 +137,9 @@ class EmpiricalIntHuffmanEncoder(DataEncoder):
 
     def encode_block(self, data_block: DataBlock):
         vals = data_block.data_list
+        # verify that all values are in the range 0 to alphabet_size-1
+        assert all([val >= 0 and val < self.alphabet_size for val in vals])
+
         # first encode the values with empirical Huffman code
         counts = DataBlock(vals).get_counts()
         if len(counts) > 0:
@@ -660,6 +663,16 @@ class LZ77Decoder(DataDecoder):
             with Uint8FileDataStream(output_file_path, "wb") as fds:
                 self.decode(reader, fds)
 
+def test_empirical_int_huffman_encoder_decoder():
+    import random
+    encoder = EmpiricalIntHuffmanEncoder(alphabet_size=45)
+    decoder = EmpiricalIntHuffmanDecoder(alphabet_size=45)
+    data_list = [random.randint(0, 44) for _ in range(1000)]
+    data_block = DataBlock(data_list)
+    is_lossless, _, _ = try_lossless_compression(
+                data_block, encoder, decoder, add_extra_bits_to_encoder_output=True
+    )
+    assert is_lossless
 
 def test_log_scale_binned_integer_encoder_decoder():
     """
