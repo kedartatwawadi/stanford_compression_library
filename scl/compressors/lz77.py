@@ -251,7 +251,7 @@ class LogScaleBinnedIntegerEncoder(DataEncoder):
                         f"Value {val} is too large to be encoded with {self.max_num_bins} bins"
                     )
                 bins.append(log_val_plus_1 + self.offset)
-                residuals.append(val_plus_1 - 2 ** log_val_plus_1)
+                residuals.append(val_plus_1 - 2**log_val_plus_1)
                 residual_num_bits.append(log_val_plus_1)
 
         bins_encoding = self.empirical_huffman_encoder.encode_block(DataBlock(bins))
@@ -294,7 +294,7 @@ class LogScaleBinnedIntegerDecoder(DataDecoder):
                     residual = bitarray_to_uint(encoded_bitarray[:num_bits])
                 num_bits_consumed += num_bits
                 encoded_bitarray = encoded_bitarray[num_bits:]
-                decoded.append(self.offset + 2 ** log_val_plus_1 + residual - 1)
+                decoded.append(self.offset + 2**log_val_plus_1 + residual - 1)
         return DataBlock(decoded), num_bits_consumed
 
 
