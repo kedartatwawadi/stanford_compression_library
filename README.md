@@ -31,6 +31,7 @@ Here is a list of algorithms implemented.
 - [zlib (external)](scl/external_compressors/zlib_external.py)
 - [zstd (external)](scl/external_compressors/zstd_external.py)
 - [LZ77](scl/compressors/lz77.py)
+- [LZ77 (sliding window version)](scl/compressors/lz77_sliding_window.py)
 
 
 NOTE -> the tests in each file should be helpful as a "usage" example of each of the compressors. More details are on the project wiki.
