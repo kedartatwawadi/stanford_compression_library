@@ -1,0 +1,28 @@
+{
+  "id": 59,
+  "num": "059",
+  "name": "Arcanine",
+  "img": "http://www.serebii.net/pokemongo/pokemon/059.png",
+  "type": [
+    "Fire"
+  ],
+  "height": "1.91 m",
+  "weight": "155.0 kg",
+  "candy": "Growlithe Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.017,
+  "avg_spawns": 1.7,
+  "spawn_time": "03:11",
+  "multipliers": null,
+  "weaknesses": [
+    "Water",
+    "Ground",
+    "Rock"
+  ],
+  "prev_evolution": [
+    {
+      "num": "058",
+      "name": "Growlithe"
+    }
+  ]
+}

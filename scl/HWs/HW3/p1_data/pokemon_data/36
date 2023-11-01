@@ -1,0 +1,26 @@
+{
+  "id": 36,
+  "num": "036",
+  "name": "Clefable",
+  "img": "http://www.serebii.net/pokemongo/pokemon/036.png",
+  "type": [
+    "Normal"
+  ],
+  "height": "1.30 m",
+  "weight": "40.0 kg",
+  "candy": "Clefairy Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.012,
+  "avg_spawns": 1.2,
+  "spawn_time": "03:29",
+  "multipliers": null,
+  "weaknesses": [
+    "Fighting"
+  ],
+  "prev_evolution": [
+    {
+      "num": "035",
+      "name": "Clefairy"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "id": 91,
+  "num": "091",
+  "name": "Cloyster",
+  "img": "http://www.serebii.net/pokemongo/pokemon/091.png",
+  "type": [
+    "Water",
+    "Ice"
+  ],
+  "height": "1.50 m",
+  "weight": "132.5 kg",
+  "candy": "Shellder Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.015,
+  "avg_spawns": 1.5,
+  "spawn_time": "02:33",
+  "multipliers": null,
+  "weaknesses": [
+    "Electric",
+    "Grass",
+    "Fighting",
+    "Rock"
+  ],
+  "prev_evolution": [
+    {
+      "num": "090",
+      "name": "Shellder"
+    }
+  ]
+}

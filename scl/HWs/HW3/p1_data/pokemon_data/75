@@ -1,0 +1,42 @@
+{
+  "id": 75,
+  "num": "075",
+  "name": "Graveler",
+  "img": "http://www.serebii.net/pokemongo/pokemon/075.png",
+  "type": [
+    "Rock",
+    "Ground"
+  ],
+  "height": "0.99 m",
+  "weight": "105.0 kg",
+  "candy": "Geodude Candy",
+  "candy_count": 100,
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.071,
+  "avg_spawns": 7.1,
+  "spawn_time": "04:53",
+  "multipliers": [
+    1.64,
+    1.72
+  ],
+  "weaknesses": [
+    "Water",
+    "Grass",
+    "Ice",
+    "Fighting",
+    "Ground",
+    "Steel"
+  ],
+  "prev_evolution": [
+    {
+      "num": "074",
+      "name": "Geodude"
+    }
+  ],
+  "next_evolution": [
+    {
+      "num": "076",
+      "name": "Golem"
+    }
+  ]
+}

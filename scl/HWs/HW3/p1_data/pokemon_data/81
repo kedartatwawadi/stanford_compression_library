@@ -1,0 +1,32 @@
+{
+  "id": 81,
+  "num": "081",
+  "name": "Magnemite",
+  "img": "http://www.serebii.net/pokemongo/pokemon/081.png",
+  "type": [
+    "Electric"
+  ],
+  "height": "0.30 m",
+  "weight": "6.0 kg",
+  "candy": "Magnemite Candy",
+  "candy_count": 50,
+  "egg": "5 km",
+  "spawn_chance": 0.71,
+  "avg_spawns": 71,
+  "spawn_time": "04:04",
+  "multipliers": [
+    2.16,
+    2.17
+  ],
+  "weaknesses": [
+    "Fire",
+    "Water",
+    "Ground"
+  ],
+  "next_evolution": [
+    {
+      "num": "082",
+      "name": "Magneton"
+    }
+  ]
+}

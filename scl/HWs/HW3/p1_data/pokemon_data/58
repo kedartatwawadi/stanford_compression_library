@@ -1,0 +1,32 @@
+{
+  "id": 58,
+  "num": "058",
+  "name": "Growlithe",
+  "img": "http://www.serebii.net/pokemongo/pokemon/058.png",
+  "type": [
+    "Fire"
+  ],
+  "height": "0.71 m",
+  "weight": "19.0 kg",
+  "candy": "Growlithe Candy",
+  "candy_count": 50,
+  "egg": "5 km",
+  "spawn_chance": 0.92,
+  "avg_spawns": 92,
+  "spawn_time": "03:57",
+  "multipliers": [
+    2.31,
+    2.36
+  ],
+  "weaknesses": [
+    "Water",
+    "Ground",
+    "Rock"
+  ],
+  "next_evolution": [
+    {
+      "num": "059",
+      "name": "Arcanine"
+    }
+  ]
+}

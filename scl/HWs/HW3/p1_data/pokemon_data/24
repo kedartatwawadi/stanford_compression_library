@@ -1,0 +1,27 @@
+{
+  "id": 24,
+  "num": "024",
+  "name": "Arbok",
+  "img": "http://www.serebii.net/pokemongo/pokemon/024.png",
+  "type": [
+    "Poison"
+  ],
+  "height": "3.51 m",
+  "weight": "65.0 kg",
+  "candy": "Ekans Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.072,
+  "avg_spawns": 7.2,
+  "spawn_time": "01:50",
+  "multipliers": null,
+  "weaknesses": [
+    "Ground",
+    "Psychic"
+  ],
+  "prev_evolution": [
+    {
+      "num": "023",
+      "name": "Ekans"
+    }
+  ]
+}

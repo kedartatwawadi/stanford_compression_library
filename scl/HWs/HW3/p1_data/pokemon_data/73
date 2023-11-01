@@ -1,0 +1,29 @@
+{
+  "id": 73,
+  "num": "073",
+  "name": "Tentacruel",
+  "img": "http://www.serebii.net/pokemongo/pokemon/073.png",
+  "type": [
+    "Water",
+    "Poison"
+  ],
+  "height": "1.60 m",
+  "weight": "55.0 kg",
+  "candy": "Tentacool Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.082,
+  "avg_spawns": 8.2,
+  "spawn_time": "23:36",
+  "multipliers": null,
+  "weaknesses": [
+    "Electric",
+    "Ground",
+    "Psychic"
+  ],
+  "prev_evolution": [
+    {
+      "num": "072",
+      "name": "Tentacool"
+    }
+  ]
+}

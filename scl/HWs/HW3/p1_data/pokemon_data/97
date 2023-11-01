@@ -1,0 +1,28 @@
+{
+  "id": 97,
+  "num": "097",
+  "name": "Hypno",
+  "img": "http://www.serebii.net/pokemongo/pokemon/097.png",
+  "type": [
+    "Psychic"
+  ],
+  "height": "1.60 m",
+  "weight": "75.6 kg",
+  "candy": "Drowzee Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.1,
+  "avg_spawns": 10,
+  "spawn_time": "02:17",
+  "multipliers": null,
+  "weaknesses": [
+    "Bug",
+    "Ghost",
+    "Dark"
+  ],
+  "prev_evolution": [
+    {
+      "num": "096",
+      "name": "Drowzee"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "id": 125,
+  "num": "125",
+  "name": "Electabuzz",
+  "img": "http://www.serebii.net/pokemongo/pokemon/125.png",
+  "type": [
+    "Electric"
+  ],
+  "height": "1.09 m",
+  "weight": "30.0 kg",
+  "candy": "None",
+  "egg": "10 km",
+  "spawn_chance": 0.074,
+  "avg_spawns": 7.4,
+  "spawn_time": "04:28",
+  "multipliers": null,
+  "weaknesses": [
+    "Ground"
+  ]
+}

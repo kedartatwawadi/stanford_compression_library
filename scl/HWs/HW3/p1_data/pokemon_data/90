@@ -1,0 +1,30 @@
+{
+  "id": 90,
+  "num": "090",
+  "name": "Shellder",
+  "img": "http://www.serebii.net/pokemongo/pokemon/090.png",
+  "type": [
+    "Water"
+  ],
+  "height": "0.30 m",
+  "weight": "4.0 kg",
+  "candy": "Shellder Candy",
+  "candy_count": 50,
+  "egg": "5 km",
+  "spawn_chance": 0.52,
+  "avg_spawns": 52,
+  "spawn_time": "07:39",
+  "multipliers": [
+    2.65
+  ],
+  "weaknesses": [
+    "Electric",
+    "Grass"
+  ],
+  "next_evolution": [
+    {
+      "num": "091",
+      "name": "Cloyster"
+    }
+  ]
+}

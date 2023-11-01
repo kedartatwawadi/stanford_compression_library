@@ -1,0 +1,31 @@
+{
+  "id": 121,
+  "num": "121",
+  "name": "Starmie",
+  "img": "http://www.serebii.net/pokemongo/pokemon/121.png",
+  "type": [
+    "Water",
+    "Psychic"
+  ],
+  "height": "1.09 m",
+  "weight": "80.0 kg",
+  "candy": "Staryu Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.034,
+  "avg_spawns": 3.4,
+  "spawn_time": "06:57",
+  "multipliers": null,
+  "weaknesses": [
+    "Electric",
+    "Grass",
+    "Bug",
+    "Ghost",
+    "Dark"
+  ],
+  "prev_evolution": [
+    {
+      "num": "120",
+      "name": "Staryu"
+    }
+  ]
+}

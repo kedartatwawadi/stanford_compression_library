@@ -1,0 +1,30 @@
+{
+  "id": 88,
+  "num": "088",
+  "name": "Grimer",
+  "img": "http://www.serebii.net/pokemongo/pokemon/088.png",
+  "type": [
+    "Poison"
+  ],
+  "height": "0.89 m",
+  "weight": "30.0 kg",
+  "candy": "Grimer Candy",
+  "candy_count": 50,
+  "egg": "5 km",
+  "spawn_chance": 0.052,
+  "avg_spawns": 5.2,
+  "spawn_time": "15:11",
+  "multipliers": [
+    2.44
+  ],
+  "weaknesses": [
+    "Ground",
+    "Psychic"
+  ],
+  "next_evolution": [
+    {
+      "num": "089",
+      "name": "Muk"
+    }
+  ]
+}

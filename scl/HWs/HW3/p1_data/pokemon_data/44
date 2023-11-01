@@ -1,0 +1,39 @@
+{
+  "id": 44,
+  "num": "044",
+  "name": "Gloom",
+  "img": "http://www.serebii.net/pokemongo/pokemon/044.png",
+  "type": [
+    "Grass",
+    "Poison"
+  ],
+  "height": "0.79 m",
+  "weight": "8.6 kg",
+  "candy": "Oddish Candy",
+  "candy_count": 100,
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.064,
+  "avg_spawns": 6.4,
+  "spawn_time": "11:33",
+  "multipliers": [
+    1.49
+  ],
+  "weaknesses": [
+    "Fire",
+    "Ice",
+    "Flying",
+    "Psychic"
+  ],
+  "prev_evolution": [
+    {
+      "num": "043",
+      "name": "Oddish"
+    }
+  ],
+  "next_evolution": [
+    {
+      "num": "045",
+      "name": "Vileplume"
+    }
+  ]
+}

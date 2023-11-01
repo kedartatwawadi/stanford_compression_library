@@ -1,0 +1,29 @@
+{
+  "id": 52,
+  "num": "052",
+  "name": "Meowth",
+  "img": "http://www.serebii.net/pokemongo/pokemon/052.png",
+  "type": [
+    "Normal"
+  ],
+  "height": "0.41 m",
+  "weight": "4.2 kg",
+  "candy": "Meowth Candy",
+  "candy_count": 50,
+  "egg": "5 km",
+  "spawn_chance": 0.86,
+  "avg_spawns": 86,
+  "spawn_time": "02:54",
+  "multipliers": [
+    1.98
+  ],
+  "weaknesses": [
+    "Fighting"
+  ],
+  "next_evolution": [
+    {
+      "num": "053",
+      "name": "Persian"
+    }
+  ]
+}

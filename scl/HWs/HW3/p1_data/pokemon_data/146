@@ -1,0 +1,23 @@
+{
+  "id": 146,
+  "num": "146",
+  "name": "Moltres",
+  "img": "http://www.serebii.net/pokemongo/pokemon/146.png",
+  "type": [
+    "Fire",
+    "Flying"
+  ],
+  "height": "2.01 m",
+  "weight": "60.0 kg",
+  "candy": "None",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0,
+  "avg_spawns": 0,
+  "spawn_time": "N/A",
+  "multipliers": null,
+  "weaknesses": [
+    "Water",
+    "Electric",
+    "Rock"
+  ]
+}

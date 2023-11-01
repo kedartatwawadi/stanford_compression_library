@@ -1,0 +1,28 @@
+{
+  "id": 51,
+  "num": "051",
+  "name": "Dugtrio",
+  "img": "http://www.serebii.net/pokemongo/pokemon/051.png",
+  "type": [
+    "Ground"
+  ],
+  "height": "0.71 m",
+  "weight": "33.3 kg",
+  "candy": "Dugtrio",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.014,
+  "avg_spawns": 1.4,
+  "spawn_time": "12:37",
+  "multipliers": null,
+  "weaknesses": [
+    "Water",
+    "Grass",
+    "Ice"
+  ],
+  "prev_evolution": [
+    {
+      "num": "050",
+      "name": "Diglett"
+    }
+  ]
+}
