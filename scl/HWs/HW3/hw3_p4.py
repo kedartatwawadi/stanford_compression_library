@@ -34,6 +34,17 @@ def pseudo_random_LFSR_generator(data_size, tap, noise_prob=0, seed=0):
     return output_sequence
 
 
+def convert_float_prob_to_int(p, M=1000):
+    """
+    Convert a float probability to an integer probability
+    :param p: float probability
+    :param M: multiplier
+    :return: integer probability
+    """
+    assert 0 <= p <= 1, "p must be between 0 and 1"
+    return int(p * M)
+
+
 class NoisyLFSRFreqModel:
     """
     A frequency model for a noisy LFSR
@@ -66,6 +77,7 @@ class NoisyLFSRFreqModel:
         # (e.g., 1000 for 0.001) and probabilities are invariant to the total frequency, so you can set the
         # total frequency to any value you want. For the autograder purposes, you can assume noise_prob to be in
         # multiples of 0.001 (e.g., 0.001, 0.002, 0.003, etc.), i.e. noise_prob = 0.001 * noise_prob_int.
+        # You can also use the helper function `convert_float_prob_to_int` to convert a float probability to a valid int
         raise NotImplementedError
         ###############################
 
