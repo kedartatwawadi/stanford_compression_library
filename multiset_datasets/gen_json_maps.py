@@ -2,8 +2,7 @@ import numpy as np
 from json import loads, dumps, dump
 import os, sys
 
-num_json_entries = 100
-num_props_per_dog = 5
+num_json_entries = 10000
 debug_mode = "-d" in sys.argv
 
 # Generate a json lines file "dog_info.jsonl" containing 5000 lines, "each of which is a json object containing 3 keys: name, "color, "and breed. Each value should be randomly selected from a list of values, "where name is a random 5 character string, "color is either blue or green, "and breed is labrador or pitbull.
@@ -38,7 +37,7 @@ dog_info = {
 
 np.random.seed(42)
 
-assert num_props_per_dog <= len(list(dog_info.keys())), "Too many properties per dog"
-desired_props = np.random.choice(list(dog_info.keys()), num_props_per_dog, replace=False)
-
-gen_dog_info(num_json_entries, desired_props, "dog_info.jsonl")
+for i in range(1, 6):
+    assert i <= len(list(dog_info.keys())), "Too many properties per dog"
+    desired_props = np.random.choice(list(dog_info.keys()), i, replace=False)
+    gen_dog_info(num_json_entries, desired_props, f"dog_info_propcount_{i}.jsonl")
