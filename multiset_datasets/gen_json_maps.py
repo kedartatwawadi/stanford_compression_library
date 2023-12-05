@@ -4,6 +4,10 @@ import os, sys
 
 num_json_entries = 10000
 debug_mode = "-d" in sys.argv
+outdir = "./json_maps/"
+
+if not os.path.exists(outdir):
+    os.makedirs(outdir, exist_ok=True)
 
 # Generate a json lines file "dog_info.jsonl" containing 5000 lines, "each of which is a json object containing 3 keys: name, "color, "and breed. Each value should be randomly selected from a list of values, "where name is a random 5 character string, "color is either blue or green, "and breed is labrador or pitbull.
 
@@ -40,4 +44,4 @@ np.random.seed(42)
 for i in range(1, 6):
     assert i <= len(list(dog_info.keys())), "Too many properties per dog"
     desired_props = np.random.choice(list(dog_info.keys()), i, replace=False)
-    gen_dog_info(num_json_entries, desired_props, f"dog_info_propcount_{i}.jsonl")
+    gen_dog_info(num_json_entries, desired_props, f"{outdir}/dog_info_propcount_{i}.jsonl")
