@@ -4,14 +4,13 @@ import os
 num_floats = int(1e2)
 
 # half-prec floats, double-prec floats, and long doubles
-list_of_float_types = [np.float16, np.float32, np.float64, np.float128] 
+list_of_float_types = [np.float16, np.float32, np.float64] 
 outdir = "./float_data/"
 
 type_map = {
     np.float16: "half_prec",
     np.float32: "single_prec",
     np.float64: "double_prec",
-    np.float128: "long_double",
 }
 
 if not os.path.exists(outdir):
@@ -22,7 +21,7 @@ def gen_floats(float_types, negative_proportion, fname_base):
 
     for t in float_types:
         rs.set_state(start_state)
-        values = rs.rand(num_floats).astype(np.float128)
+        values = rs.rand(num_floats)
         signs = rs.choice([-1, 1], p=[negative_proportion, 1-negative_proportion], size=num_floats)
         values = np.multiply(values, signs)
 
