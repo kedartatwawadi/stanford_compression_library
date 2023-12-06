@@ -54,6 +54,7 @@ class MultiSetNode(object):
         self.size += 1
 
     def remove(self, item: Any):
+        assert not self.empty
         if self.size == 1:
             self.value = None
             self.left = None
@@ -61,6 +62,8 @@ class MultiSetNode(object):
             self.size = 0
             assert self.empty
             return
+
+        # print(f"Removing {item} from {self}", item < self.value, item > self.value, self.left, self.right, self.value, self.value.value)
 
         if item < self.value:
             self.left.remove(item)
@@ -125,12 +128,12 @@ class MultiSetNode(object):
         return str(Counter(self.to_iterable()))
 
     def __iter__(self):
-        if self.left:
+        if self.left is not None:
             yield from self.left
 
         yield from [self.value] * self.frequency
 
-        if self.right:
+        if self.right is not None:
             yield from self.right
 
     def __len__(self):
@@ -153,3 +156,32 @@ class MultiSetNode(object):
 
     def __eq__(self, other):
         return sorted(self.to_iterable()) == sorted(other.to_iterable())
+
+    def __gt__(self, other):
+        return sorted(self.to_iterable()) > sorted(other.to_iterable())
+
+    def __lt__(self, other):
+        return sorted(self.to_iterable()) < sorted(other.to_iterable())
+
+    def __hash__(self):
+        return hash(tuple(self.to_iterable()))
+
+    def __bool__(self):
+        return not self.empty
+
+    def verify(self):
+        if self.empty:
+            return
+
+        assert self.value is not None
+        if isinstance(self.value, MultiSetNode):
+            self.value.verify()
+        if self.left:
+            assert self.left.value is not None
+            assert self.left.value < self.value
+            self.left.verify()
+        if self.right:
+            assert self.right.value is not None
+            assert self.right.value > self.value
+            self.right.verify()
+        return True
