@@ -5,7 +5,29 @@ from scl.utils.gen_json_maps import gen_dog_info
 from scl.utils.gen_floats import gen_floats
 from math import log2, factorial, ceil
 import json
+
+# Progress bar and timer
 from tqdm import tqdm
+from timeit import default_timer
+
+# Plotting utils
+import matplotlib.pyplot as plt
+
+# Set global plotting format options
+plt.rcParams["font.size"] = 18
+
+plt.rcParams["xtick.major.width"] = 2.0
+plt.rcParams["ytick.major.width"] = 2.0
+plt.rcParams["axes.linewidth"] = 2.0
+plt.rcParams["axes.labelweight"] = "bold"
+plt.rcParams["axes.titleweight"] = "bold"
+
+plt.rcParams["lines.linewidth"] = 1
+plt.rcParams["lines.markersize"] = 10
+
+plt.rcParams["figure.figsize"] = (10, 8)
+
+######################################## COMPRESSOR FUNCTIONS ##########################################
 
 def rans_encode(state: int, cumul_count: int, incidence: int, upper_bound: int):
     # Standard rANS encode
@@ -143,7 +165,6 @@ def generate_e2e_test(multiset_size: int, alphabet_size: int = 5):
 def test_e2e_freq_map():
     # Using matplotlib, plot the % improvement in bits as a function of the
     # multiset size in the following loop
-    import matplotlib.pyplot as plt
 
     multiset_sizes = [50, 100, 200, 500, 1000]
 
@@ -163,7 +184,7 @@ def test_e2e_freq_map():
     plt.xlabel("Multiset Size")
     plt.ylabel("Improvement in Bits (%)")
     plt.legend()
-    plt.show()
+    plt.savefig("figures/freq_map_alph_test.png")
     # for multiset_size in [5, 10, 20, 50, 100, 200, 500, 1000]:
     #     generate_e2e_test(multiset_size)
 
@@ -264,15 +285,7 @@ def run_json_map_e2e_test(num_keys, num_json_entries):
 
         return sorted(outputs)
 
-    # print("Decoded multiset:", decoded_multiset)
     assert big_multiset == decoded_multiset
-    # ser1 = serialize_multiset(big_multiset)
-    # ser2 = serialize_multiset(decoded_multiset)
-    # with open("ser1.txt", "w") as f:
-    #     f.write("\n".join(ser1))
-    # with open("ser2.txt", "w") as f:
-    #     f.write("\n".join(ser2))
-    # assert ser1 == ser2
 
     state = initial_state
     for item in tqdm(data):
@@ -301,37 +314,43 @@ def run_json_map_e2e_test(num_keys, num_json_entries):
     theoretical_bits_used = baseline_bits_used - theoretical_bits_saved
 
     return {
-        "percentage_savings": 100 * ((baseline_bits_used - actual_bits_used) / baseline_bits_used),
+        "actual_percentage_savings": 100 * ((baseline_bits_used - actual_bits_used) / baseline_bits_used),
+        "theoretical_percentage_savings": 100 * ((baseline_bits_used - theoretical_bits_used) / baseline_bits_used),
         "theoretical_bits_used": theoretical_bits_used,
         "actual_bits_used": actual_bits_used,
         "bits_saved": baseline_bits_used - actual_bits_used,
-        "theoretical_bits_saved": baseline_bits_used - theoretical_bits_used,
+        "theoretical_bits_saved": theoretical_bits_saved,
         "percentage_of_theoretical_saved": 100 * ((baseline_bits_used - actual_bits_used) / (baseline_bits_used - theoretical_bits_used))
     }
 
 
 def test_json_map():
-    num_keys = 3
+    colors = ['b', 'r', 'k', 'g', 'm']
+    saved_percentages = []
+    for num_keys in [5]:
+        # Plot percentage savings for different sizes
+        outputs = []
+        sizes = [50, 100, 250, 500, 750, 1000, 1500]
+        for num_entries in sizes:
+            outputs.append(run_json_map_e2e_test(num_keys, num_json_entries=num_entries))
 
-    # Plot percentage savings for different sizes
-    import matplotlib.pyplot as plt
-    outputs = []
-    sizes = [50, 250, 500, 1000]
-    for num_entries in sizes:
-        outputs.append(run_json_map_e2e_test(num_keys, num_json_entries=num_entries))
 
-    # Plot percentage savings for different sizes
-    x = sizes
-    y = [output["percentage_savings"] for output in outputs]
+        # Plot percentage savings for different sizes
+        x = sizes
+        y_actual_saved = [output["actual_percentage_savings"] for output in outputs]
+        y_theoretical_saved = [output["theoretical_percentage_savings"] for output in outputs]
 
-    plt.plot(x, y)
+        saved_percentages.append(np.mean(y_theoretical_saved) - np.mean(y_actual_saved))
+
+        plt.plot(x, y_actual_saved, f"{colors[num_keys-1]}-o", label=f"JSON key count = {num_keys}")
+        plt.plot(x, y_theoretical_saved, f"{colors[num_keys-1]}--s", label=f"Theoretical = {num_keys}")
+
+    print(saved_percentages)
     plt.xlabel("Number of Entries")
     plt.ylabel("Percentage Savings")
-    plt.title("Percentage Savings vs Number of Entries")
-    plt.show()
-
-
-
+    plt.title("Percentage Savings vs. Number of JSON Entries")
+    plt.legend()
+    plt.savefig("figures/json_map_savings.png")
 
 
 def run_float_e2e_test(float_type, negative_proportion, num_floats):
@@ -444,7 +463,7 @@ def test_float_sign():
     print(result)
 
     # Using matplotlib, plot the % savings in bits over numpy 16, 32, 64 bit floats nicely with different lines, colors, and a plot title, legend, and labeled axes
-    import matplotlib.pyplot as plt
+
     for float_type in [np.float16, np.float32, np.float64]:
         result = run_float_e2e_test(float_type, negative_proportion, num_floats)
         print(result)
@@ -457,7 +476,7 @@ def test_float_sign():
     plt.xlabel("Theoretical Bits Used")
     plt.ylabel("Percentage Savings")
     plt.legend()
-    plt.show()
+    plt.savefig("figures/float_savings.png")
 
 
 

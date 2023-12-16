@@ -5,7 +5,7 @@ def gen_dog_info(num_keys: int, num_json_entries: int = 500, debug_mode = False)
     np.random.seed(42)
 
     assert num_keys <= len(list(dog_info.keys())), "Too many properties per dog"
-    desired_props = np.random.choice(list(dog_info.keys()), num_keys, replace=False)
+    desired_props = list(dog_info.keys())[:num_keys]
     num_entries = num_json_entries
 
     prop_lists = []
