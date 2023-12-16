@@ -8,7 +8,7 @@ import json
 
 # Progress bar and timer
 from tqdm import tqdm
-from timeit import default_timer
+import time
 
 # Plotting utils
 import matplotlib.pyplot as plt
@@ -22,7 +22,7 @@ plt.rcParams["axes.linewidth"] = 2.0
 plt.rcParams["axes.labelweight"] = "bold"
 plt.rcParams["axes.titleweight"] = "bold"
 
-plt.rcParams["lines.linewidth"] = 1
+plt.rcParams["lines.linewidth"] = 4
 plt.rcParams["lines.markersize"] = 10
 
 plt.rcParams["figure.figsize"] = (10, 8)
@@ -106,11 +106,12 @@ def generate_e2e_test(multiset_size: int, alphabet_size: int = 5):
     per_char = multiset_size // alphabet_size
     assert per_char > 0
     chars = sum([[chr(x)] * per_char for x in range(ord("A"), ord("A") + alphabet_size)], [])
+    start = time.time()
     # chars = ["a", "a", "b"]
 
     orig_multiset = MultiSetNode.from_iterable(chars)
     multiset = orig_multiset.clone()
-    print("Multiset size:", multiset_size)
+    # print("Multiset size:", multiset_size)
 
     def symbol_encode(state, symbol):
         # Uniform prior
@@ -124,19 +125,19 @@ def generate_e2e_test(multiset_size: int, alphabet_size: int = 5):
 
     initial_state = 2023
     encoded_state = multiset_encode(initial_state, multiset, symbol_encode)
-    print("Encoded state:", encoded_state)
+    # print("Encoded state:", encoded_state)
 
     output_state, decoded_multiset = multiset_decode(encoded_state, multiset_size, symbol_decode)
     assert initial_state == output_state
 
     decoded_multiset.map_values(chr)
-    print("Decoded multiset:", decoded_multiset)
+    # print("Decoded multiset:", decoded_multiset)
     assert orig_multiset == decoded_multiset
 
     char_state = initial_state
     for char in chars:
         char_state = symbol_encode(char_state, char)
-    print("Char state:", char_state)
+    # print("Char state:", char_state)
     encoded_char_state = char_state
 
     decoded_chars = []
@@ -145,12 +146,12 @@ def generate_e2e_test(multiset_size: int, alphabet_size: int = 5):
         decoded_chars.append(chr(char))
     assert decoded_chars[::-1] == chars
 
-    print("Multiset bits used:", log2(encoded_state))
-    print("Naive bits used:", log2(encoded_char_state))
-    print("Improvement (bits):", log2(encoded_char_state) - log2(encoded_state))
-    print(f"Improvement: {(log2(encoded_char_state) - log2(encoded_state)) / log2(encoded_char_state):.1%}")
-    print("Theoretical Improvement (bits):", log2(factorial(multiset_size)))
-    print(f"% Achieved of Theoretical Improvement: {(log2(encoded_char_state) - log2(encoded_state)) / log2(factorial(multiset_size)):.1%}")
+    # print("Multiset bits used:", log2(encoded_state))
+    # print("Naive bits used:", log2(encoded_char_state))
+    # print("Improvement (bits):", log2(encoded_char_state) - log2(encoded_state))
+    # print(f"Improvement: {(log2(encoded_char_state) - log2(encoded_state)) / log2(encoded_char_state):.1%}")
+    # print("Theoretical Improvement (bits):", log2(factorial(multiset_size)))
+    # print(f"% Achieved of Theoretical Improvement: {(log2(encoded_char_state) - log2(encoded_state)) / log2(factorial(multiset_size)):.1%}")
     return {
         "multiset_bits_used": log2(encoded_state),
         "naive_bits_used": log2(encoded_char_state),
@@ -159,6 +160,7 @@ def generate_e2e_test(multiset_size: int, alphabet_size: int = 5):
         "theoretical_improvement": (log2(encoded_char_state) - log2(encoded_state)) / log2(factorial(multiset_size)),
         "improvement_bits": log2(encoded_char_state) - log2(encoded_state),
         "theoretical_improvement_bits": log2(factorial(multiset_size)) - log2(encoded_state),
+        "encode_time": time.time() - start
     }
 
 
@@ -166,18 +168,23 @@ def test_e2e_freq_map():
     # Using matplotlib, plot the % improvement in bits as a function of the
     # multiset size in the following loop
 
-    multiset_sizes = [50, 100, 200, 500, 1000]
+    # multiset_sizes = [50, 100, 200, 500, 1000]
+    multiset_sizes = [30000]
 
     # plot more curves for alphabet sizes 3, 6, 12, 18, 22, and 26 with different colors
-    for alphabet_size in [3, 6, 12, 18, 22, 26]:
+    encode_times = []
+    alphabet_sizes = [12, 15, 18, 21, 24, 26]
+    for alphabet_size in alphabet_sizes:
         # when choosing multiset_size in multiset_sizes, we need to subtract the remainder to make sure the alphabet_size evenly divides the multiset_size
         adjusted_multiset_sizes = [multiset_size - (multiset_size % alphabet_size) for multiset_size in multiset_sizes]
-
-        results = [
-            generate_e2e_test(multiset_size, alphabet_size)["improvement"] * 100
-            for multiset_size in adjusted_multiset_sizes
+        test_results = [generate_e2e_test(multiset_size, alphabet_size) for multiset_size in adjusted_multiset_sizes]
+        improvement_results = [
+            test_result["improvement"] * 100
+            for test_result in test_results
         ]
-        plt.plot(adjusted_multiset_sizes, results, label=f"Alphabet Size: {alphabet_size}")
+        plt.plot(adjusted_multiset_sizes, improvement_results, '-o', label=f"Alphabet Size: {alphabet_size}")
+        # For timing, take average across multisets
+        encode_times.append(np.mean([test_result["encode_time"] for test_result in test_results]))
 
     # Add appropriate plot title, legend, axes labels, etc.
     plt.title("Improvement in Bits vs Multiset Size")
@@ -185,15 +192,25 @@ def test_e2e_freq_map():
     plt.ylabel("Improvement in Bits (%)")
     plt.legend()
     plt.savefig("figures/freq_map_alph_test.png")
-    # for multiset_size in [5, 10, 20, 50, 100, 200, 500, 1000]:
-    #     generate_e2e_test(multiset_size)
+
+    # Plot time to run an e2e test for alphebet sizes
+    plt.figure()
+    plt.ylim([0, 10])
+    plt.plot(alphabet_sizes, encode_times, '-o')
+    plt.title("Time to Encode vs. Alphabet Size")
+    plt.xlabel("Alphabet Size")
+    plt.ylabel("Time to Encode (seconds)")
+    plt.legend(["Multiset Size: 30000"])
+    plt.savefig("figures/freq_map_encode_time.png")
 
 
 def run_json_map_e2e_test(num_keys, num_json_entries):
     data = gen_dog_info(num_keys=num_keys, num_json_entries=num_json_entries)
+    start_multiset_timer = time.time()
     big_multiset = MultiSetNode.from_iterable(MultiSetNode.from_iterable(item.items()) for item in data)
     multiset = MultiSetNode.from_iterable(MultiSetNode.from_iterable(item.items()) for item in data)
     multiset_size = len(big_multiset)
+    end_multiset_timer = time.time()
 
     print("Generated initial multiset and backup")
 
@@ -266,13 +283,14 @@ def run_json_map_e2e_test(num_keys, num_json_entries):
         return state, multiset
 
 
-    print("Multiset size:", multiset_size)
-
+    start_encode_time = time.time()
     initial_state = 202347390
     encoded_state = nested_multiset_encode(initial_state, multiset)
-    print("Encoded state size:", ceil(log2(encoded_state)))
+    end_encode_time = time.time()
 
+    start_decode_time = time.time()
     output_state, decoded_multiset = nested_multiset_decode(encoded_state)
+    end_decode_time = time.time()
     assert initial_state == output_state
 
     def serialize_multiset(multiset: MultiSetNode):
@@ -287,20 +305,26 @@ def run_json_map_e2e_test(num_keys, num_json_entries):
 
     assert big_multiset == decoded_multiset
 
+    start_rans_encode_time = time.time()
     state = initial_state
     for item in tqdm(data):
         for kv in item.items():
             state = symbol_encode(state, kv)
+    end_rans_encode_time = time.time()
 
     baseline_size = ceil(log2(state))
     print("Baseline size:", baseline_size)
 
     outputs = []
+    rans_dec_time_total = 0
     for _ in tqdm(range(multiset_size)):
+        start_rans_decode_time = time.time()
         items = []
         for _ in range(num_keys):
             state, kv = symbol_decode(state)
             items.append(kv)
+        end_rans_decode_time = time.time()
+        rans_dec_time_total += end_rans_decode_time - start_rans_decode_time
 
         multiset = MultiSetNode.from_iterable(items)
         outputs.append(multiset)
@@ -310,8 +334,16 @@ def run_json_map_e2e_test(num_keys, num_json_entries):
 
     actual_bits_used = ceil(log2(encoded_state))
     baseline_bits_used = baseline_size
-    theoretical_bits_saved = log2(factorial(num_keys)) * multiset_size + log2(factorial(multiset_size))
+    theoretical_bits_saved = ceil(log2(factorial(num_keys)) * multiset_size + log2(factorial(multiset_size)))
     theoretical_bits_used = baseline_bits_used - theoretical_bits_saved
+
+    timing_info = {
+        "multiset_formation_time": end_multiset_timer - start_multiset_timer,
+        "rans_encode_time": end_rans_encode_time - start_rans_encode_time,
+        "rans_decode_time": rans_dec_time_total,
+        "encode_time": end_encode_time - start_encode_time,
+        "decode_time": end_decode_time - start_decode_time,
+    }
 
     return {
         "actual_percentage_savings": 100 * ((baseline_bits_used - actual_bits_used) / baseline_bits_used),
@@ -320,17 +352,17 @@ def run_json_map_e2e_test(num_keys, num_json_entries):
         "actual_bits_used": actual_bits_used,
         "bits_saved": baseline_bits_used - actual_bits_used,
         "theoretical_bits_saved": theoretical_bits_saved,
-        "percentage_of_theoretical_saved": 100 * ((baseline_bits_used - actual_bits_used) / (baseline_bits_used - theoretical_bits_used))
+        "percentage_of_theoretical_saved": 100 * ((baseline_bits_used - actual_bits_used) / (baseline_bits_used - theoretical_bits_used)),
+        "timing_info": timing_info
     }
-
 
 def test_json_map():
     colors = ['b', 'r', 'k', 'g', 'm']
     saved_percentages = []
-    for num_keys in [5]:
+    for num_keys in [1, 3, 5]:
         # Plot percentage savings for different sizes
         outputs = []
-        sizes = [50, 100, 250, 500, 750, 1000, 1500]
+        sizes = [50, 100, 250, 500, 750, 1000, 1250, 1500, 2000]
         for num_entries in sizes:
             outputs.append(run_json_map_e2e_test(num_keys, num_json_entries=num_entries))
 
@@ -342,8 +374,8 @@ def test_json_map():
 
         saved_percentages.append(np.mean(y_theoretical_saved) - np.mean(y_actual_saved))
 
-        plt.plot(x, y_actual_saved, f"{colors[num_keys-1]}-o", label=f"JSON key count = {num_keys}")
-        plt.plot(x, y_theoretical_saved, f"{colors[num_keys-1]}--s", label=f"Theoretical = {num_keys}")
+        plt.plot(x, y_actual_saved, f"{colors[num_keys-1]}-o", label=f"Actual Savings: num_keys={num_keys}")
+        plt.plot(x, y_theoretical_saved, f"{colors[num_keys-1]}-.s", label=(f"--: Theoretical Savings" if num_keys == 1 else ""))
 
     print(saved_percentages)
     plt.xlabel("Number of Entries")
@@ -352,6 +384,55 @@ def test_json_map():
     plt.legend()
     plt.savefig("figures/json_map_savings.png")
 
+def test_json_map_runtime():
+    num_keys = 5
+    num_entries = 200
+    timing_info = run_json_map_e2e_test(num_keys, num_json_entries=num_entries)["timing_info"]
+
+    # Create stacked bar chart displaying the runtime from multiset formation size, encode, and decode vs rans_encode, rans_decode
+    x = ["Multiset Formation", "Encode", "Decode", "RANS Encode", "RANS Decode"]
+    y = [timing_info["multiset_formation_time"], timing_info["encode_time"], timing_info["decode_time"], timing_info["rans_encode_time"], timing_info["rans_decode_time"]]
+    
+    species = (
+        "Multiset Compressor",
+        "rANS Compressor"
+    )
+    times = {
+        "Multiset Formation": [timing_info["multiset_formation_time"], 0],
+        "Encode": [timing_info["encode_time"], timing_info["rans_encode_time"]],
+        "Decode": [timing_info["decode_time"], timing_info["rans_decode_time"]],
+    }
+    width = 0.5
+
+    fig, ax = plt.subplots()
+    bottom = np.zeros(2)
+
+    for boolean, weight_count in times.items():
+        p = ax.bar(species, weight_count, width, label=boolean, bottom=bottom)
+        bottom += weight_count
+
+    ax.set_title("Runtime vs. Compressor (Breakdown)")
+    ax.legend(loc="upper right")
+    plt.xlabel("Compressor Type")
+    plt.ylabel("Time (s)")
+    plt.savefig("figures/json_map_runtime.png")
+
+def test_json_multiset_runtime():
+    num_keys = 3
+    times = []
+    multiset_sizes = [50, 250, 500, 750, 1000, 1250, 1500, 1750, 2000]
+    for num_entries in multiset_sizes:
+        timing_info = run_json_map_e2e_test(num_keys, num_json_entries=num_entries)["timing_info"]
+
+        times.append(timing_info["multiset_formation_time"] + timing_info["encode_time"] + timing_info["decode_time"])
+
+    # Plot times against multiset size, which is the number of entries
+    plt.plot(multiset_sizes, times, "-o")
+    plt.xlabel("Multiset Size |M|")
+    plt.ylabel("Time (s)")
+    plt.title("Time vs. Multiset Size")
+    plt.legend(["Algorithm Runtime"])
+    plt.savefig("figures/json_multiset_runtime_scaling.png")
 
 def run_float_e2e_test(float_type, negative_proportion, num_floats):
     float_len = len(float_type().tobytes())
@@ -459,16 +540,14 @@ def test_float_sign():
     num_floats = 1000
     negative_proportion = 0.25
 
-    result = run_float_e2e_test(float_type, negative_proportion, num_floats)
-    print(result)
-
     # Using matplotlib, plot the % savings in bits over numpy 16, 32, 64 bit floats nicely with different lines, colors, and a plot title, legend, and labeled axes
 
     for float_type in [np.float16, np.float32, np.float64]:
         result = run_float_e2e_test(float_type, negative_proportion, num_floats)
-        print(result)
 
         # Plot in matplotlib with a scatter plot and x-axis as float size and y-axis as % savings
+        print(result["percentage_savings"])
+        print(result["actual_bits_used"])
         plt.scatter(len(float_type().tobytes()) * 8, result["percentage_savings"], label=f"np.{float_type.__name__}")
 
     # Add appropriate plot title, legend, axes labels, etc.
