@@ -5,6 +5,7 @@ https://en.wikipedia.org/w/index.php?title=Shannon–Fano_coding&oldid=107652002
 
 This document uses Fano coding as described in the wiki article above.
 """
+
 from typing import Any, Tuple
 from scl.utils.bitarray_utils import BitArray
 from scl.utils.test_utils import get_random_data_block, try_lossless_compression

@@ -70,7 +70,7 @@ class HuffmanTree(PrefixFreeTree):
         # We are concerned about finding the top two smallest elements from the list
         # Heaps are efficient at such operations O(log(n)) -> push/pop, O(1) -> min val
         node_heap = node_list  # shallow copy
-        # create a min-heap (in-place) from the node list, so that we can get 
+        # create a min-heap (in-place) from the node list, so that we can get
         # the two smallest elements efficiently
         heapq.heapify(node_heap)
 

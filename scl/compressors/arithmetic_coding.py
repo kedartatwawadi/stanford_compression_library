@@ -420,7 +420,7 @@ def test_adaptive_order_k_arithmetic_coding():
     # print newline so it shows up nicely on testing
     print()
 
-    for (model_params, expected_bitrate) in [
+    for model_params, expected_bitrate in [
         (([0, 1, 2], 0), np.log2(3)),
         (([0, 1, 2], 1), np.log2(3)),
         (([0, 1, 2], 2), 1),

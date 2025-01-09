@@ -29,6 +29,7 @@ d. If the "binary" floating point representation is clear, then the Shannon code
    \left\lceil \log_2 \frac{1}{p_r} \right\rceil $ can be obtained by simply truncating the binary floating point
    representation of $c_r$
 """
+
 from typing import Any, Tuple
 from scl.utils.bitarray_utils import float_to_bitarrays, BitArray
 from scl.utils.test_utils import get_random_data_block, try_lossless_compression
