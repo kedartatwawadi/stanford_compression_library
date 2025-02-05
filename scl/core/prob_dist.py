@@ -132,7 +132,7 @@ class ProbabilityDistTest(unittest.TestCase):
         sorted_PD = ProbabilityDist.get_sorted_prob_dist(dist, descending=True)
         # initialize to max prob
         prev_symbol_prob = 1
-        for (s, curr_symbol_prob) in sorted_PD.prob_dict.items():
+        for s, curr_symbol_prob in sorted_PD.prob_dict.items():
             assert curr_symbol_prob <= prev_symbol_prob
             prev_symbol_prob = curr_symbol_prob
 

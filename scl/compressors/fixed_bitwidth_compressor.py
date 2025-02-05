@@ -2,6 +2,7 @@
 Contains one of the simplest compressors: 
 Fixed Bitwidth compressor -> uses a fixed bitwidth for each symbol
 """
+
 import tempfile
 import os
 from scl.core.data_block import DataBlock
