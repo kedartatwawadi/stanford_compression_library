@@ -2,6 +2,7 @@ import bitarray
 from bitarray.util import ba2int, int2ba
 import numpy as np
 from typing import Tuple
+from typing_extensions import TypeAlias
 
 
 def get_bit_width(x) -> int:
@@ -21,7 +22,7 @@ def get_bit_width(x) -> int:
 
 # remap bitarray.bitarray for now..
 # TODO: we could add more functions later
-BitArray = bitarray.bitarray
+BitArray: TypeAlias = bitarray.bitarray
 
 
 def uint_to_bitarray(x: int, bit_width=None) -> BitArray:

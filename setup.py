@@ -13,5 +13,7 @@ setup(
         "numpy",
         "bitarray",
         "zstandard",
+        "scipy",
+        "typing_extensions",
     ],
 )
