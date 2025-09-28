@@ -194,7 +194,7 @@ class ArithmeticDecoder(DataDecoder):
         # FIXME: simplify this search.
         rng = high - low
         search_list = (
-            low + (np.array(list(freqs.cumulative_freq_dict.values())) * rng) // freqs.total_freq
+            low + (np.array(list(freqs.cumulative_freq_dict.values()), dtype=np.int64) * rng) // freqs.total_freq
         )
         start_bin = np.searchsorted(search_list, state, side="right") - 1
         s = freqs.alphabet[start_bin]
