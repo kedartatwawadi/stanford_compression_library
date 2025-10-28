@@ -1,0 +1,28 @@
+{
+  "id": 78,
+  "num": "078",
+  "name": "Rapidash",
+  "img": "http://www.serebii.net/pokemongo/pokemon/078.png",
+  "type": [
+    "Fire"
+  ],
+  "height": "1.70 m",
+  "weight": "95.0 kg",
+  "candy": "Ponyta Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.011,
+  "avg_spawns": 1.1,
+  "spawn_time": "04:00",
+  "multipliers": null,
+  "weaknesses": [
+    "Water",
+    "Ground",
+    "Rock"
+  ],
+  "prev_evolution": [
+    {
+      "num": "077",
+      "name": "Ponyta"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "id": 80,
+  "num": "080",
+  "name": "Slowbro",
+  "img": "http://www.serebii.net/pokemongo/pokemon/080.png",
+  "type": [
+    "Water",
+    "Psychic"
+  ],
+  "height": "1.60 m",
+  "weight": "78.5 kg",
+  "candy": "Slowpoke Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.036,
+  "avg_spawns": 3.6,
+  "spawn_time": "02:56",
+  "multipliers": null,
+  "weaknesses": [
+    "Electric",
+    "Grass",
+    "Bug",
+    "Ghost",
+    "Dark"
+  ],
+  "prev_evolution": [
+    {
+      "num": "079",
+      "name": "Slowpoke"
+    }
+  ]
+}

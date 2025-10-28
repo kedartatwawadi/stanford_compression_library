@@ -1,0 +1,20 @@
+{
+  "id": 132,
+  "num": "132",
+  "name": "Ditto",
+  "img": "http://www.serebii.net/pokemongo/pokemon/132.png",
+  "type": [
+    "Normal"
+  ],
+  "height": "0.30 m",
+  "weight": "4.0 kg",
+  "candy": "None",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0,
+  "avg_spawns": 0,
+  "spawn_time": "N/A",
+  "multipliers": null,
+  "weaknesses": [
+    "Fighting"
+  ]
+}

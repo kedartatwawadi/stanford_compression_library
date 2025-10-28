@@ -1,0 +1,20 @@
+{
+  "id": 115,
+  "num": "115",
+  "name": "Kangaskhan",
+  "img": "http://www.serebii.net/pokemongo/pokemon/115.png",
+  "type": [
+    "Normal"
+  ],
+  "height": "2.21 m",
+  "weight": "80.0 kg",
+  "candy": "None",
+  "egg": "5 km",
+  "spawn_chance": 0.0086,
+  "avg_spawns": 0.86,
+  "spawn_time": "02:40",
+  "multipliers": null,
+  "weaknesses": [
+    "Fighting"
+  ]
+}

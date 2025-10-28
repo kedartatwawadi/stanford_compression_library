@@ -1,0 +1,33 @@
+{
+  "id": 6,
+  "num": "006",
+  "name": "Charizard",
+  "img": "http://www.serebii.net/pokemongo/pokemon/006.png",
+  "type": [
+    "Fire",
+    "Flying"
+  ],
+  "height": "1.70 m",
+  "weight": "90.5 kg",
+  "candy": "Charmander Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.0031,
+  "avg_spawns": 0.31,
+  "spawn_time": "13:34",
+  "multipliers": null,
+  "weaknesses": [
+    "Water",
+    "Electric",
+    "Rock"
+  ],
+  "prev_evolution": [
+    {
+      "num": "004",
+      "name": "Charmander"
+    },
+    {
+      "num": "005",
+      "name": "Charmeleon"
+    }
+  ]
+}

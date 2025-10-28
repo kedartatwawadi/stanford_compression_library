@@ -1,0 +1,37 @@
+{
+  "id": 148,
+  "num": "148",
+  "name": "Dragonair",
+  "img": "http://www.serebii.net/pokemongo/pokemon/148.png",
+  "type": [
+    "Dragon"
+  ],
+  "height": "3.99 m",
+  "weight": "16.5 kg",
+  "candy": "Dratini Candy",
+  "candy_count": 100,
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.02,
+  "avg_spawns": 2,
+  "spawn_time": "11:57",
+  "multipliers": [
+    2.05
+  ],
+  "weaknesses": [
+    "Ice",
+    "Dragon",
+    "Fairy"
+  ],
+  "prev_evolution": [
+    {
+      "num": "147",
+      "name": "Dratini"
+    }
+  ],
+  "next_evolution": [
+    {
+      "num": "149",
+      "name": "Dragonite"
+    }
+  ]
+}

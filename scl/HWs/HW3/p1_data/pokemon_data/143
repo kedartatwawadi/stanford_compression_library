@@ -1,0 +1,20 @@
+{
+  "id": 143,
+  "num": "143",
+  "name": "Snorlax",
+  "img": "http://www.serebii.net/pokemongo/pokemon/143.png",
+  "type": [
+    "Normal"
+  ],
+  "height": "2.11 m",
+  "weight": "460.0 kg",
+  "candy": "None",
+  "egg": "10 km",
+  "spawn_chance": 0.016,
+  "avg_spawns": 1.6,
+  "spawn_time": "23:40",
+  "multipliers": null,
+  "weaknesses": [
+    "Fighting"
+  ]
+}

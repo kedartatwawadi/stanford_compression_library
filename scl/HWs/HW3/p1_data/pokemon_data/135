@@ -1,0 +1,26 @@
+{
+  "id": 135,
+  "num": "135",
+  "name": "Jolteon",
+  "img": "http://www.serebii.net/pokemongo/pokemon/135.png",
+  "type": [
+    "Electric"
+  ],
+  "height": "0.79 m",
+  "weight": "24.5 kg",
+  "candy": "None",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.012,
+  "avg_spawns": 1.2,
+  "spawn_time": "02:30",
+  "multipliers": null,
+  "weaknesses": [
+    "Ground"
+  ],
+  "prev_evolution": [
+    {
+      "num": "133",
+      "name": "Eevee"
+    }
+  ]
+}

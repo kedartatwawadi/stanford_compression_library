@@ -1,0 +1,37 @@
+{
+  "id": 5,
+  "num": "005",
+  "name": "Charmeleon",
+  "img": "http://www.serebii.net/pokemongo/pokemon/005.png",
+  "type": [
+    "Fire"
+  ],
+  "height": "1.09 m",
+  "weight": "19.0 kg",
+  "candy": "Charmander Candy",
+  "candy_count": 100,
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.012,
+  "avg_spawns": 1.2,
+  "spawn_time": "19:00",
+  "multipliers": [
+    1.79
+  ],
+  "weaknesses": [
+    "Water",
+    "Ground",
+    "Rock"
+  ],
+  "prev_evolution": [
+    {
+      "num": "004",
+      "name": "Charmander"
+    }
+  ],
+  "next_evolution": [
+    {
+      "num": "006",
+      "name": "Charizard"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "id": 35,
+  "num": "035",
+  "name": "Clefairy",
+  "img": "http://www.serebii.net/pokemongo/pokemon/035.png",
+  "type": [
+    "Normal"
+  ],
+  "height": "0.61 m",
+  "weight": "7.5 kg",
+  "candy": "Clefairy Candy",
+  "candy_count": 50,
+  "egg": "2 km",
+  "spawn_chance": 0.92,
+  "avg_spawns": 92,
+  "spawn_time": "03:30",
+  "multipliers": [
+    2.03,
+    2.14
+  ],
+  "weaknesses": [
+    "Fighting"
+  ],
+  "next_evolution": [
+    {
+      "num": "036",
+      "name": "Clefable"
+    }
+  ]
+}

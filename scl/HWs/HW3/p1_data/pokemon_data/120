@@ -1,0 +1,31 @@
+{
+  "id": 120,
+  "num": "120",
+  "name": "Staryu",
+  "img": "http://www.serebii.net/pokemongo/pokemon/120.png",
+  "type": [
+    "Water"
+  ],
+  "height": "0.79 m",
+  "weight": "34.5 kg",
+  "candy": "Staryu Candy",
+  "candy_count": 50,
+  "egg": "5 km",
+  "spawn_chance": 1.95,
+  "avg_spawns": 195,
+  "spawn_time": "22:59",
+  "multipliers": [
+    2.38,
+    2.41
+  ],
+  "weaknesses": [
+    "Electric",
+    "Grass"
+  ],
+  "next_evolution": [
+    {
+      "num": "121",
+      "name": "Starmie"
+    }
+  ]
+}

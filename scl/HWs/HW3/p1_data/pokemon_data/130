@@ -1,0 +1,28 @@
+{
+  "id": 130,
+  "num": "130",
+  "name": "Gyarados",
+  "img": "http://www.serebii.net/pokemongo/pokemon/130.png",
+  "type": [
+    "Water",
+    "Flying"
+  ],
+  "height": "6.50 m",
+  "weight": "235.0 kg",
+  "candy": "Magikarp Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.0032,
+  "avg_spawns": 0.32,
+  "spawn_time": "02:15",
+  "multipliers": null,
+  "weaknesses": [
+    "Electric",
+    "Rock"
+  ],
+  "prev_evolution": [
+    {
+      "num": "129",
+      "name": "Magikarp"
+    }
+  ]
+}

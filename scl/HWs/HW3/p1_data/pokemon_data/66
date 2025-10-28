@@ -1,0 +1,36 @@
+{
+  "id": 66,
+  "num": "066",
+  "name": "Machop",
+  "img": "http://www.serebii.net/pokemongo/pokemon/066.png",
+  "type": [
+    "Fighting"
+  ],
+  "height": "0.79 m",
+  "weight": "19.5 kg",
+  "candy": "Machop Candy",
+  "candy_count": 25,
+  "egg": "5 km",
+  "spawn_chance": 0.49,
+  "avg_spawns": 49,
+  "spawn_time": "01:55",
+  "multipliers": [
+    1.64,
+    1.65
+  ],
+  "weaknesses": [
+    "Flying",
+    "Psychic",
+    "Fairy"
+  ],
+  "next_evolution": [
+    {
+      "num": "067",
+      "name": "Machoke"
+    },
+    {
+      "num": "068",
+      "name": "Machamp"
+    }
+  ]
+}

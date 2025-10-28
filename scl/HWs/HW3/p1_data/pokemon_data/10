@@ -1,0 +1,35 @@
+{
+  "id": 10,
+  "num": "010",
+  "name": "Caterpie",
+  "img": "http://www.serebii.net/pokemongo/pokemon/010.png",
+  "type": [
+    "Bug"
+  ],
+  "height": "0.30 m",
+  "weight": "2.9 kg",
+  "candy": "Caterpie Candy",
+  "candy_count": 12,
+  "egg": "2 km",
+  "spawn_chance": 3.032,
+  "avg_spawns": 303.2,
+  "spawn_time": "16:35",
+  "multipliers": [
+    1.05
+  ],
+  "weaknesses": [
+    "Fire",
+    "Flying",
+    "Rock"
+  ],
+  "next_evolution": [
+    {
+      "num": "011",
+      "name": "Metapod"
+    },
+    {
+      "num": "012",
+      "name": "Butterfree"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "id": 7,
+  "num": "007",
+  "name": "Squirtle",
+  "img": "http://www.serebii.net/pokemongo/pokemon/007.png",
+  "type": [
+    "Water"
+  ],
+  "height": "0.51 m",
+  "weight": "9.0 kg",
+  "candy": "Squirtle Candy",
+  "candy_count": 25,
+  "egg": "2 km",
+  "spawn_chance": 0.58,
+  "avg_spawns": 58,
+  "spawn_time": "04:25",
+  "multipliers": [
+    2.1
+  ],
+  "weaknesses": [
+    "Electric",
+    "Grass"
+  ],
+  "next_evolution": [
+    {
+      "num": "008",
+      "name": "Wartortle"
+    },
+    {
+      "num": "009",
+      "name": "Blastoise"
+    }
+  ]
+}

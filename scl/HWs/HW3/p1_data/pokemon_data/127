@@ -1,0 +1,22 @@
+{
+  "id": 127,
+  "num": "127",
+  "name": "Pinsir",
+  "img": "http://www.serebii.net/pokemongo/pokemon/127.png",
+  "type": [
+    "Bug"
+  ],
+  "height": "1.50 m",
+  "weight": "55.0 kg",
+  "candy": "None",
+  "egg": "10 km",
+  "spawn_chance": 0.99,
+  "avg_spawns": 99,
+  "spawn_time": "03:25",
+  "multipliers": null,
+  "weaknesses": [
+    "Fire",
+    "Flying",
+    "Rock"
+  ]
+}

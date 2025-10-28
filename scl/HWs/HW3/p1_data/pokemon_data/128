@@ -1,0 +1,20 @@
+{
+  "id": 128,
+  "num": "128",
+  "name": "Tauros",
+  "img": "http://www.serebii.net/pokemongo/pokemon/128.png",
+  "type": [
+    "Normal"
+  ],
+  "height": "1.40 m",
+  "weight": "88.4 kg",
+  "candy": "None",
+  "egg": "5 km",
+  "spawn_chance": 0.12,
+  "avg_spawns": 12,
+  "spawn_time": "00:37",
+  "multipliers": null,
+  "weaknesses": [
+    "Fighting"
+  ]
+}

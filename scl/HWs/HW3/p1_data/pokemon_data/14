@@ -1,0 +1,40 @@
+{
+  "id": 14,
+  "num": "014",
+  "name": "Kakuna",
+  "img": "http://www.serebii.net/pokemongo/pokemon/014.png",
+  "type": [
+    "Bug",
+    "Poison"
+  ],
+  "height": "0.61 m",
+  "weight": "10.0 kg",
+  "candy": "Weedle Candy",
+  "candy_count": 50,
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.44,
+  "avg_spawns": 44,
+  "spawn_time": "02:30",
+  "multipliers": [
+    3.01,
+    3.41
+  ],
+  "weaknesses": [
+    "Fire",
+    "Flying",
+    "Psychic",
+    "Rock"
+  ],
+  "prev_evolution": [
+    {
+      "num": "013",
+      "name": "Weedle"
+    }
+  ],
+  "next_evolution": [
+    {
+      "num": "015",
+      "name": "Beedrill"
+    }
+  ]
+}

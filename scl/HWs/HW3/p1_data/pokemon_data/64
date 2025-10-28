@@ -1,0 +1,37 @@
+{
+  "id": 64,
+  "num": "064",
+  "name": "Kadabra",
+  "img": "http://www.serebii.net/pokemongo/pokemon/064.png",
+  "type": [
+    "Psychic"
+  ],
+  "height": "1.30 m",
+  "weight": "56.5 kg",
+  "candy": "Abra Candy",
+  "candy_count": 100,
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.027,
+  "avg_spawns": 2.7,
+  "spawn_time": "11:25",
+  "multipliers": [
+    1.4
+  ],
+  "weaknesses": [
+    "Bug",
+    "Ghost",
+    "Dark"
+  ],
+  "prev_evolution": [
+    {
+      "num": "063",
+      "name": "Abra"
+    }
+  ],
+  "next_evolution": [
+    {
+      "num": "065",
+      "name": "Alakazam"
+    }
+  ]
+}

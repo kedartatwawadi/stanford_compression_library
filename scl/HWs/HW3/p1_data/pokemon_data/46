@@ -1,0 +1,35 @@
+{
+  "id": 46,
+  "num": "046",
+  "name": "Paras",
+  "img": "http://www.serebii.net/pokemongo/pokemon/046.png",
+  "type": [
+    "Bug",
+    "Grass"
+  ],
+  "height": "0.30 m",
+  "weight": "5.4 kg",
+  "candy": "Paras Candy",
+  "candy_count": 50,
+  "egg": "5 km",
+  "spawn_chance": 2.36,
+  "avg_spawns": 236,
+  "spawn_time": "01:42",
+  "multipliers": [
+    2.02
+  ],
+  "weaknesses": [
+    "Fire",
+    "Ice",
+    "Poison",
+    "Flying",
+    "Bug",
+    "Rock"
+  ],
+  "next_evolution": [
+    {
+      "num": "047",
+      "name": "Parasect"
+    }
+  ]
+}

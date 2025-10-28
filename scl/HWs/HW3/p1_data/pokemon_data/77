@@ -1,0 +1,32 @@
+{
+  "id": 77,
+  "num": "077",
+  "name": "Ponyta",
+  "img": "http://www.serebii.net/pokemongo/pokemon/077.png",
+  "type": [
+    "Fire"
+  ],
+  "height": "0.99 m",
+  "weight": "30.0 kg",
+  "candy": "Ponyta Candy",
+  "candy_count": 50,
+  "egg": "5 km",
+  "spawn_chance": 0.51,
+  "avg_spawns": 51,
+  "spawn_time": "02:50",
+  "multipliers": [
+    1.48,
+    1.5
+  ],
+  "weaknesses": [
+    "Water",
+    "Ground",
+    "Rock"
+  ],
+  "next_evolution": [
+    {
+      "num": "078",
+      "name": "Rapidash"
+    }
+  ]
+}

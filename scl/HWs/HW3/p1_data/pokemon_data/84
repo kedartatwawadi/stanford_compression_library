@@ -1,0 +1,32 @@
+{
+  "id": 84,
+  "num": "084",
+  "name": "Doduo",
+  "img": "http://www.serebii.net/pokemongo/pokemon/084.png",
+  "type": [
+    "Normal",
+    "Flying"
+  ],
+  "height": "1.40 m",
+  "weight": "39.2 kg",
+  "candy": "Doduo Candy",
+  "candy_count": 50,
+  "egg": "5 km",
+  "spawn_chance": 0.52,
+  "avg_spawns": 52,
+  "spawn_time": "05:10",
+  "multipliers": [
+    2.19,
+    2.24
+  ],
+  "weaknesses": [
+    "Electric",
+    "Rock"
+  ],
+  "next_evolution": [
+    {
+      "num": "085",
+      "name": "Dodrio"
+    }
+  ]
+}

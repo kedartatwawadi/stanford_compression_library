@@ -1,0 +1,33 @@
+{
+  "id": 138,
+  "num": "138",
+  "name": "Omanyte",
+  "img": "http://www.serebii.net/pokemongo/pokemon/138.png",
+  "type": [
+    "Rock",
+    "Water"
+  ],
+  "height": "0.41 m",
+  "weight": "7.5 kg",
+  "candy": "Omanyte Candy",
+  "candy_count": 50,
+  "egg": "10 km",
+  "spawn_chance": 0.14,
+  "avg_spawns": 14,
+  "spawn_time": "10:23",
+  "multipliers": [
+    2.12
+  ],
+  "weaknesses": [
+    "Electric",
+    "Grass",
+    "Fighting",
+    "Ground"
+  ],
+  "next_evolution": [
+    {
+      "num": "139",
+      "name": "Omastar"
+    }
+  ]
+}

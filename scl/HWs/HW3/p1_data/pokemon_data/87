@@ -1,0 +1,30 @@
+{
+  "id": 87,
+  "num": "087",
+  "name": "Dewgong",
+  "img": "http://www.serebii.net/pokemongo/pokemon/087.png",
+  "type": [
+    "Water",
+    "Ice"
+  ],
+  "height": "1.70 m",
+  "weight": "120.0 kg",
+  "candy": "Seel Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.013,
+  "avg_spawns": 1.3,
+  "spawn_time": "06:04",
+  "multipliers": null,
+  "weaknesses": [
+    "Electric",
+    "Grass",
+    "Fighting",
+    "Rock"
+  ],
+  "prev_evolution": [
+    {
+      "num": "086",
+      "name": "Seel"
+    }
+  ]
+}

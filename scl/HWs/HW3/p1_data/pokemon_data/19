@@ -1,0 +1,30 @@
+{
+  "id": 19,
+  "num": "019",
+  "name": "Rattata",
+  "img": "http://www.serebii.net/pokemongo/pokemon/019.png",
+  "type": [
+    "Normal"
+  ],
+  "height": "0.30 m",
+  "weight": "3.5 kg",
+  "candy": "Rattata Candy",
+  "candy_count": 25,
+  "egg": "2 km",
+  "spawn_chance": 13.05,
+  "avg_spawns": 1.305,
+  "spawn_time": "01:55",
+  "multipliers": [
+    2.55,
+    2.73
+  ],
+  "weaknesses": [
+    "Fighting"
+  ],
+  "next_evolution": [
+    {
+      "num": "020",
+      "name": "Raticate"
+    }
+  ]
+}

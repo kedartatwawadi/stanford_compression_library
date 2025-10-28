@@ -1,0 +1,24 @@
+{
+  "id": 114,
+  "num": "114",
+  "name": "Tangela",
+  "img": "http://www.serebii.net/pokemongo/pokemon/114.png",
+  "type": [
+    "Grass"
+  ],
+  "height": "0.99 m",
+  "weight": "35.0 kg",
+  "candy": "None",
+  "egg": "5 km",
+  "spawn_chance": 0.228,
+  "avg_spawns": 22.8,
+  "spawn_time": "23:13",
+  "multipliers": null,
+  "weaknesses": [
+    "Fire",
+    "Ice",
+    "Poison",
+    "Flying",
+    "Bug"
+  ]
+}

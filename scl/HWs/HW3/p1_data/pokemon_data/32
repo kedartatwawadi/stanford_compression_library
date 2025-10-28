@@ -1,0 +1,35 @@
+{
+  "id": 32,
+  "num": "032",
+  "name": "Nidoran \u2642 (Male)",
+  "img": "http://www.serebii.net/pokemongo/pokemon/032.png",
+  "type": [
+    "Poison"
+  ],
+  "height": "0.51 m",
+  "weight": "9.0 kg",
+  "candy": "Nidoran \u2642 (Male) Candy",
+  "candy_count": 25,
+  "egg": "5 km",
+  "spawn_chance": 1.31,
+  "avg_spawns": 131,
+  "spawn_time": "01:12",
+  "multipliers": [
+    1.64,
+    1.7
+  ],
+  "weaknesses": [
+    "Ground",
+    "Psychic"
+  ],
+  "next_evolution": [
+    {
+      "num": "033",
+      "name": "Nidorino"
+    },
+    {
+      "num": "034",
+      "name": "Nidoking"
+    }
+  ]
+}

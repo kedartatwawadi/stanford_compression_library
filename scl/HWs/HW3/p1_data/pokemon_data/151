@@ -1,0 +1,22 @@
+{
+  "id": 151,
+  "num": "151",
+  "name": "Mew",
+  "img": "http://www.serebii.net/pokemongo/pokemon/151.png",
+  "type": [
+    "Psychic"
+  ],
+  "height": "0.41 m",
+  "weight": "4.0 kg",
+  "candy": "None",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0,
+  "avg_spawns": 0,
+  "spawn_time": "N/A",
+  "multipliers": null,
+  "weaknesses": [
+    "Bug",
+    "Ghost",
+    "Dark"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "id": 15,
+  "num": "015",
+  "name": "Beedrill",
+  "img": "http://www.serebii.net/pokemongo/pokemon/015.png",
+  "type": [
+    "Bug",
+    "Poison"
+  ],
+  "height": "0.99 m",
+  "weight": "29.5 kg",
+  "candy": "Weedle Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.051,
+  "avg_spawns": 5.1,
+  "spawn_time": "04:50",
+  "multipliers": null,
+  "weaknesses": [
+    "Fire",
+    "Flying",
+    "Psychic",
+    "Rock"
+  ],
+  "prev_evolution": [
+    {
+      "num": "013",
+      "name": "Weedle"
+    },
+    {
+      "num": "014",
+      "name": "Kakuna"
+    }
+  ]
+}

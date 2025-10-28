@@ -1,0 +1,40 @@
+{
+  "id": 93,
+  "num": "093",
+  "name": "Haunter",
+  "img": "http://www.serebii.net/pokemongo/pokemon/093.png",
+  "type": [
+    "Ghost",
+    "Poison"
+  ],
+  "height": "1.60 m",
+  "weight": "0.1 kg",
+  "candy": "Gastly Candy",
+  "candy_count": 100,
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.052,
+  "avg_spawns": 5.2,
+  "spawn_time": "00:10",
+  "multipliers": [
+    1.56,
+    1.8
+  ],
+  "weaknesses": [
+    "Ground",
+    "Psychic",
+    "Ghost",
+    "Dark"
+  ],
+  "prev_evolution": [
+    {
+      "num": "092",
+      "name": "Gastly"
+    }
+  ],
+  "next_evolution": [
+    {
+      "num": "094",
+      "name": "Gengar"
+    }
+  ]
+}

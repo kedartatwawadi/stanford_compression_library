@@ -1,0 +1,28 @@
+{
+  "id": 28,
+  "num": "028",
+  "name": "Sandslash",
+  "img": "http://www.serebii.net/pokemongo/pokemon/028.png",
+  "type": [
+    "Ground"
+  ],
+  "height": "0.99 m",
+  "weight": "29.5 kg",
+  "candy": "Sandshrew Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.037,
+  "avg_spawns": 3.7,
+  "spawn_time": "12:34",
+  "multipliers": null,
+  "weaknesses": [
+    "Water",
+    "Grass",
+    "Ice"
+  ],
+  "prev_evolution": [
+    {
+      "num": "027",
+      "name": "Sandshrew"
+    }
+  ]
+}

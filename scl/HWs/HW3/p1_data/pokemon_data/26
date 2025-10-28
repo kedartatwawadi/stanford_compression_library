@@ -1,0 +1,26 @@
+{
+  "id": 26,
+  "num": "026",
+  "name": "Raichu",
+  "img": "http://www.serebii.net/pokemongo/pokemon/026.png",
+  "type": [
+    "Electric"
+  ],
+  "height": "0.79 m",
+  "weight": "30.0 kg",
+  "candy": "Pikachu Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.0076,
+  "avg_spawns": 0.76,
+  "spawn_time": "23:58",
+  "multipliers": null,
+  "weaknesses": [
+    "Ground"
+  ],
+  "prev_evolution": [
+    {
+      "num": "025",
+      "name": "Pikachu"
+    }
+  ]
+}

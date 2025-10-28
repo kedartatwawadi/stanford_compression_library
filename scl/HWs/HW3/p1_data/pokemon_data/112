@@ -1,0 +1,32 @@
+{
+  "id": 112,
+  "num": "112",
+  "name": "Rhydon",
+  "img": "http://www.serebii.net/pokemongo/pokemon/112.png",
+  "type": [
+    "Ground",
+    "Rock"
+  ],
+  "height": "1.91 m",
+  "weight": "120.0 kg",
+  "candy": "Rhyhorn Candy",
+  "egg": "Not in Eggs",
+  "spawn_chance": 0.022,
+  "avg_spawns": 2.2,
+  "spawn_time": "05:50",
+  "multipliers": null,
+  "weaknesses": [
+    "Water",
+    "Grass",
+    "Ice",
+    "Fighting",
+    "Ground",
+    "Steel"
+  ],
+  "prev_evolution": [
+    {
+      "num": "111",
+      "name": "Rhyhorn"
+    }
+  ]
+}
