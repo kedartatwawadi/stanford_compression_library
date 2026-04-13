@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stanford_compression_library"
+version = "0.0.1"
+description = "A library of common compressors"
+license = {text = "MIT"}
+authors = [
+    {name = "Kedar Tatwawadi", email = "ktatwawadi@gmail.com"},
+    {name = "Shubham Chandak"},
+    {name = "Pulkit Tandon"},
+]
+dependencies = [
+    "pytest",
+    "numpy",
+    "bitarray",
+    "zstandard",
+    "scipy",
+    "typing_extensions",
+]
+
+[tool.setuptools.packages.find]
+include = ["scl", "scl.*"]
