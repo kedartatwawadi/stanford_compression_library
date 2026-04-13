@@ -48,10 +48,15 @@ NOTE -> the tests in each file should be helpful as a "usage" example of each of
     git clone https://github.com/kedartatwawadi/stanford_compression_library.git
     cd stanford_compression_library
     ```
-- Install the `scl` package
+- Install the `scl` package for local use
     ```
-    pip install -e . #install the package in a editable mode
-    ``` 
+    pip install .
+    ```
+- Or install the `scl` package in editable mode for development
+    ```
+    pip install -e .  # install the package in editable mode
+    ```
+  Dependencies and package discovery are configured in `pyproject.toml`.
 
 - **Run unit tests**
 
