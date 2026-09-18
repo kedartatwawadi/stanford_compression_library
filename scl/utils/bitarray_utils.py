@@ -1,6 +1,7 @@
 import bitarray
 from bitarray.util import ba2int, int2ba
 import numpy as np
+from operator import index
 from typing import Tuple
 from typing_extensions import TypeAlias
 
@@ -14,10 +15,10 @@ def get_bit_width(x) -> int:
     Returns:
         int:
     """
-    assert x >= 0
-    if x == 0:
-        return 1
-    return int(np.ceil(np.log2(x + 1)))
+    x = index(x)
+    if x < 0:
+        raise ValueError("x must be a nonnegative integer")
+    return max(1, x.bit_length())
 
 
 # remap bitarray.bitarray for now..
@@ -108,6 +109,25 @@ def test_get_bit_width():
     assert get_bit_width(1) == 1
     assert get_bit_width(1 << 16) == 17
     assert get_bit_width(255) == 8
+
+
+def test_get_bit_width_exact_boundaries():
+    for exponent in [1, 2, 31, 32, 53, 63, 64, 127, 1024]:
+        assert get_bit_width((1 << exponent) - 1) == exponent
+        assert get_bit_width(1 << exponent) == exponent + 1
+        assert get_bit_width((1 << exponent) + 1) == exponent + 1
+    assert get_bit_width(np.uint8(255)) == 8
+    assert get_bit_width(np.int64(2**63 - 1)) == 63
+    assert get_bit_width(np.uint64(2**64 - 1)) == 64
+
+
+def test_get_bit_width_rejects_invalid_inputs():
+    for value in [-1, np.int64(-1)]:
+        with np.testing.assert_raises(ValueError):
+            get_bit_width(value)
+    for value in [0.0, 1.5, np.float64(2), "1"]:
+        with np.testing.assert_raises(TypeError):
+            get_bit_width(value)
 
 
 def test_bitarray_to_int():
