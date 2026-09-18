@@ -1,3 +1,4 @@
+from operator import index
 import numpy as np
 import unittest
 from scl.utils.misc_utils import cache
@@ -88,6 +89,31 @@ class ProbabilityDist:
         # FIXME: check if this needs a tolerance range
         if abs(sum_of_probs - 1.0) > 1e-8:
             raise ValueError("probabilities do not sum to 1")
+
+
+class FrequenciesArithmeticTest(unittest.TestCase):
+    def test_numpy_counts_use_exact_python_arithmetic(self):
+        largest = np.uint64(2**64 - 1)
+        freqs = Frequencies({"A": largest, "B": largest, "C": np.int64(1)})
+        self.assertEqual(freqs.total_freq, 2**65 - 1)
+        self.assertIs(type(freqs.total_freq), int)
+        self.assertEqual(freqs.cumulative_freq_dict, {"A": 0, "B": 2**64 - 1, "C": 2**65 - 2})
+        self.assertTrue(all(type(freq) is int for freq in freqs.cumulative_freq_dict.values()))
+        self.assertEqual(freqs.frequency("A"), 2**64 - 1)
+        self.assertIs(type(freqs.frequency("A")), int)
+
+    def test_frequency_dictionary_remains_mutable(self):
+        freqs = Frequencies({"A": np.int64(2), "B": 1})
+        freqs.freq_dict["A"] += 1
+        self.assertEqual(freqs.frequency("A"), 3)
+        self.assertEqual(freqs.total_freq, 4)
+        self.assertEqual(freqs.cumulative_freq_dict, {"A": 0, "B": 3})
+
+        freqs.freq_dict["A"] = np.uint64(2**64 - 1)
+        self.assertIs(type(freqs.frequency("A")), int)
+        self.assertEqual(freqs.total_freq, 2**64)
+        self.assertIs(type(freqs.total_freq), int)
+        self.assertIs(type(freqs.cumulative_freq_dict["B"]), int)
 
 
 class ProbabilityDistTest(unittest.TestCase):
@@ -188,7 +214,7 @@ class Frequencies:
     @property
     def total_freq(self) -> int:
         """returns the sum of all the frequencies"""
-        return np.sum(self.freq_list)
+        return sum(index(freq) for freq in self.freq_dict.values())
 
     @property
     def cumulative_freq_dict(self) -> dict:
@@ -201,11 +227,11 @@ class Frequencies:
         _sum = 0
         for a, p in self.freq_dict.items():
             cum_freq_dict[a] = _sum
-            _sum += p
+            _sum += index(p)
         return cum_freq_dict
 
     def frequency(self, symbol):
-        return self.freq_dict[symbol]
+        return index(self.freq_dict[symbol])
 
     def get_prob_dist(self) -> ProbabilityDist:
         """_summary_
