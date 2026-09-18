@@ -202,11 +202,18 @@ class ArithmeticDecoder(DataDecoder):
 
     def decode_block(self, encoded_bitarray: BitArray):
 
+        if len(encoded_bitarray) < self.params.DATA_BLOCK_SIZE_BITS:
+            raise ValueError("Truncated arithmetic block-size header")
         data_block_size_bitarray = encoded_bitarray[: self.params.DATA_BLOCK_SIZE_BITS]
         encoded_bitarray = encoded_bitarray[self.params.DATA_BLOCK_SIZE_BITS :]
 
         # get data size
         input_data_block_size = bitarray_to_uint(data_block_size_bitarray)
+        if input_data_block_size == 0:
+            # With no interval updates, the encoder always terminates with 01.
+            if encoded_bitarray[:2] != BitArray("01"):
+                raise ValueError("Invalid or truncated empty arithmetic block termination")
+            return DataBlock([]), self.params.DATA_BLOCK_SIZE_BITS + 2
 
         # initialize return variables
         decoded_data_list = []
@@ -400,6 +407,47 @@ def _generate_2nd_order_markov(num_samples: int, seed: int = 0):
     for i in range(2, num_samples):
         markov_samples[i] = (markov_samples[i - 1] + markov_samples[i - 2] + random_bits[i - 2]) % 3
     return DataBlock(markov_samples)
+
+
+def test_arithmetic_empty_block_consumes_only_its_termination():
+    for precision in (16, 32):
+        params = AECParams(DATA_BLOCK_SIZE_BITS=8, PRECISION=precision)
+        freq_model_enc = AdaptiveIIDFreqModel(
+            Frequencies({"A": 1, "B": 1}),
+            max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ,
+        )
+        freq_model_dec = copy.deepcopy(freq_model_enc)
+        encoder = ArithmeticEncoder(params, freq_model_enc)
+        decoder = ArithmeticDecoder(params, freq_model_dec)
+        empty_bits = encoder.encode_block(DataBlock([]))
+        assert empty_bits == BitArray("0" * params.DATA_BLOCK_SIZE_BITS + "01")
+        for trailing_bits in (BitArray(""), BitArray("01101"), BitArray("1" * 100)):
+            decoded, consumed = decoder.decode_block(empty_bits + trailing_bits)
+            assert decoded.data_list == []
+            assert consumed == len(empty_bits)
+            assert freq_model_dec.freqs_current.freq_dict == {"A": 1, "B": 1}
+
+        message = DataBlock(list("ABBAAB"))
+        message_bits = encoder.encode_block(message)
+        combined = empty_bits + message_bits
+        _, consumed = decoder.decode_block(combined)
+        decoded, message_consumed = decoder.decode_block(combined[consumed:])
+        assert decoded.data_list == message.data_list
+        assert message_consumed == len(message_bits)
+
+
+def test_arithmetic_empty_block_rejects_missing_or_invalid_termination():
+    import pytest
+
+    params = AECParams()
+    freq_model = AdaptiveIIDFreqModel(
+        Frequencies({"A": 1}), max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ
+    )
+    decoder = ArithmeticDecoder(params, freq_model)
+    header = BitArray("0" * params.DATA_BLOCK_SIZE_BITS)
+    for invalid in (header[:-1], header, header + "0", header + "00", header + "10"):
+        with pytest.raises(ValueError):
+            decoder.decode_block(invalid)
 
 
 def test_adaptive_order_k_arithmetic_coding():
