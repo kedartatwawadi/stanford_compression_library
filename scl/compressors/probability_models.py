@@ -141,20 +141,38 @@ class AdaptiveOrderKFreqModel(FreqModelBase):
         Args:
             s (Symbol): the next symbol
         """
-        # updates the model based on the new symbol
-        # index self.freqs_kplus1_tuple using (past_k, s) [need to map s to index]
-        current_tuple = (*self.past_k, self.alphabet_to_idx[s])
-        self.freqs_kplus1_tuple[current_tuple] += 1
+        # Rescale the full distribution for the context used to code this symbol.
+        context_counts = self.freqs_kplus1_tuple[tuple(self.past_k)]
+        context_counts[self.alphabet_to_idx[s]] += 1
+        if np.sum(context_counts) >= self.max_allowed_total_freq:
+            context_counts[:] = np.maximum(context_counts // 2, 1)
 
-        # if k > 0, update past_k list
         if self.k > 0:
             self.past_k = self.past_k[1:] + [self.alphabet_to_idx[s]]
 
-        # if total_freq goes beyond a certain value, divide by 2
-        # NOTE: there can be different strategies here
-        # NOTE: we only need the frequencies for each (k+1) tuple to
-        # sum to less than max_allowed_total_freq
-        if np.sum(self.freqs_kplus1_tuple[current_tuple]) >= self.max_allowed_total_freq:
-            self.freqs_kplus1_tuple[current_tuple] = np.max(
-                self.freqs_kplus1_tuple[current_tuple] // 2, 1
-            )
+
+def test_adaptive_order_zero_matches_iid_after_rescaling():
+    alphabet = ["A", "B", "C"]
+    order_zero = AdaptiveOrderKFreqModel(alphabet, k=0, max_allowed_total_freq=8)
+    iid = AdaptiveIIDFreqModel(Frequencies(dict.fromkeys(alphabet, 1)), max_allowed_total_freq=8)
+    for symbol in "AAAABCCABBBC" * 20:
+        order_zero.update_model(symbol)
+        iid.update_model(symbol)
+        assert order_zero.freqs_current.freq_dict == iid.freqs_current.freq_dict
+        assert order_zero.freqs_current.total_freq < 8
+        assert min(order_zero.freqs_current.freq_dict.values()) >= 1
+
+
+def test_adaptive_order_k_rescales_only_the_updated_context():
+    for order in (1, 2, 3):
+        model = AdaptiveOrderKFreqModel(["A", "B", "C"], order, max_allowed_total_freq=8)
+        model.past_k = [1] * order
+        context = tuple(model.past_k)
+        model.freqs_kplus1_tuple[context] = [5, 1, 1]
+        expected = model.freqs_kplus1_tuple.copy()
+        expected[context] = [2, 1, 1]
+
+        # The row total reaches 8 even though no individual count does.
+        model.update_model("C")
+        np.testing.assert_array_equal(model.freqs_kplus1_tuple, expected)
+        assert model.past_k == [1] * (order - 1) + [2]

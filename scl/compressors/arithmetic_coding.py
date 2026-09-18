@@ -294,6 +294,21 @@ def test_bitarray_for_specific_input():
     # TODO: Kedar
 
 
+def test_adaptive_order_k_arithmetic_coding_with_rescaling():
+    params = AECParams(DATA_BLOCK_SIZE_BITS=12, PRECISION=6)
+    message = DataBlock(list("A" * 100 + "ABC" * 100 + "AAAABBBBCCCC" * 100))
+    for order in (0, 1, 2):
+        model = AdaptiveOrderKFreqModel(
+            ["A", "B", "C"], order, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ
+        )
+        encoder = ArithmeticEncoder(params, model)
+        decoder = ArithmeticDecoder(params, copy.deepcopy(model))
+        encoded = encoder.encode_block(message)
+        decoded, consumed = decoder.decode_block(encoded + BitArray("1101100011"))
+        assert decoded.data_list == message.data_list
+        assert consumed == len(encoded)
+
+
 def test_arithmetic_coding():
     """
     Test if AEC coding is working as expcted for different parameter settings
