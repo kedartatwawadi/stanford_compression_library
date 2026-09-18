@@ -1,6 +1,5 @@
 import numpy as np
 import unittest
-from scl.utils.misc_utils import cache
 
 
 class ProbabilityDist:
@@ -49,7 +48,6 @@ class ProbabilityDist:
         return cls({a: b / sum_p for a, b in prob_dict.items()})
 
     @property
-    @cache
     def cumulative_prob_dict(self):
         """return a list of sum of probabilities of symbols preceeding symbol"""
         cum_prob_dict = {}
@@ -60,7 +58,6 @@ class ProbabilityDist:
         return cum_prob_dict
 
     @property
-    @cache
     def entropy(self):
         entropy = 0
         for _, prob in self.prob_dict.items():
@@ -138,6 +135,26 @@ class ProbabilityDistTest(unittest.TestCase):
 
         # assert the elements of the new sorted dict is same as pre-sorting
         assert sorted_PD.prob_dict == dist
+
+    def test_properties_follow_probability_mutations(self):
+        probabilities = {"A": 0.5, "B": 0.5}
+        dist = ProbabilityDist(probabilities)
+        self.assertEqual(dist.entropy, 1.0)
+        self.assertEqual(dist.cumulative_prob_dict, {"A": 0, "B": 0.5})
+
+        probabilities.update({"A": 0.75, "B": 0.25})
+        self.assertAlmostEqual(dist.entropy, 0.8112781244591328)
+        self.assertEqual(dist.cumulative_prob_dict, {"A": 0, "B": 0.75})
+
+        dist.prob_dict.update({"A": 0.25, "B": 0.75})
+        self.assertAlmostEqual(dist.entropy, 0.8112781244591328)
+        self.assertEqual(dist.cumulative_prob_dict, {"A": 0, "B": 0.25})
+
+    def test_mutating_cumulative_probabilities_does_not_change_distribution(self):
+        dist = ProbabilityDist({"A": 0.75, "B": 0.25})
+        cumulative = dist.cumulative_prob_dict
+        cumulative["B"] = 99
+        self.assertEqual(dist.cumulative_prob_dict, {"A": 0, "B": 0.75})
 
 
 def get_avg_neg_log_prob(prob_dist: ProbabilityDist, data_block) -> float:
