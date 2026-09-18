@@ -1,9 +1,11 @@
+from bisect import bisect_right
 from dataclasses import dataclass
 import numpy as np
 from typing import Tuple, Any
 from scl.compressors.probability_models import (
     AdaptiveIIDFreqModel,
     AdaptiveOrderKFreqModel,
+    FixedFreqModel,
     FreqModelBase,
 )
 from scl.core.data_encoder_decoder import DataDecoder, DataEncoder
@@ -191,12 +193,14 @@ class ArithmeticDecoder(DataDecoder):
             s : the decoded symbol
         """
 
-        # FIXME: simplify this search.
         rng = high - low
-        search_list = (
-            low + (np.array(list(freqs.cumulative_freq_dict.values())) * rng) // freqs.total_freq
-        )
-        start_bin = np.searchsorted(search_list, state, side="right") - 1
+        total_freq = freqs.total_freq
+        # Products can exceed 64 bits even when every state and count fits.
+        search_list = [
+            low + cumulative_freq * rng // total_freq
+            for cumulative_freq in freqs.cumulative_freq_dict.values()
+        ]
+        start_bin = bisect_right(search_list, state) - 1
         s = freqs.alphabet[start_bin]
         return s
 
@@ -461,3 +465,16 @@ def test_adaptive_order_k_arithmetic_coding():
     encoder2 = ArithmeticEncoder(params, freq_model_iid)
 
     assert encoder1.encode_block(data_block) == encoder2.encode_block(data_block)
+
+
+def test_arithmetic_wide_precision_uses_exact_decode_boundaries():
+    params = AECParams(DATA_BLOCK_SIZE_BITS=8, PRECISION=40)
+    frequencies = Frequencies({"A": 2**30, "B": 2**30, "C": 2**30})
+    model = FixedFreqModel(frequencies, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
+    encoder = ArithmeticEncoder(params, model)
+    decoder = ArithmeticDecoder(params, copy.deepcopy(model))
+    message = DataBlock(list("AABCCBABAC" * 10))
+    encoded = encoder.encode_block(message)
+    decoded, consumed = decoder.decode_block(encoded + BitArray("101" * 32))
+    assert decoded.data_list == message.data_list
+    assert consumed == len(encoded)
