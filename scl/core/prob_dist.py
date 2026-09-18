@@ -1,3 +1,4 @@
+from operator import index
 import numpy as np
 import unittest
 from scl.utils.misc_utils import cache
@@ -165,7 +166,9 @@ class Frequencies:
     """
 
     def __init__(self, freq_dict=None):
-
+        if freq_dict is None:
+            raise ValueError("freq_dict must be provided")
+        self._validate_freq_dist(freq_dict)
         # NOTE: We use the fact that since python 3.6, dictionaries in python are
         # also OrderedDicts. https://realpython.com/python-ordereddict/
         self.freq_dict = freq_dict
@@ -220,11 +223,40 @@ class Frequencies:
 
     @staticmethod
     def _validate_freq_dist(freq_dict):
-        """
-        checks if each value of the prob dist is non-negative,
-        and the dist sums to 1
-        """
-
+        """Check that every frequency is a positive integer."""
         for _, freq in freq_dict.items():
-            assert freq > 0, "frequency cannot be negative or 0"
-            assert isinstance(freq, int)
+            try:
+                frequency = index(freq)
+            except TypeError:
+                raise TypeError("frequency must be an integer") from None
+            if frequency <= 0:
+                raise ValueError("frequency cannot be negative or 0")
+
+
+class FrequenciesValidationTest(unittest.TestCase):
+    def test_invalid_frequencies_fail_during_construction(self):
+        for frequency in [0, -1, np.int64(-1)]:
+            with self.subTest(frequency=frequency), self.assertRaises(ValueError):
+                Frequencies({"A": frequency})
+        for frequency in [1.5, np.float64(2), "1", None]:
+            with self.subTest(frequency=frequency), self.assertRaises(TypeError):
+                Frequencies({"A": frequency})
+        with self.assertRaises(ValueError):
+            Frequencies()
+
+    def test_positive_numpy_integer_frequencies_are_accepted(self):
+        counts = {"A": np.int64(2), "B": np.uint64(3)}
+        freqs = Frequencies(counts)
+        self.assertIs(freqs.freq_dict, counts)
+        self.assertIs(freqs.freq_dict["A"], counts["A"])
+        self.assertIs(freqs.freq_dict["B"], counts["B"])
+        self.assertEqual(freqs.frequency("A"), 2)
+        self.assertEqual(freqs.frequency("B"), 3)
+
+    def test_frequency_dictionary_remains_shared_and_mutable(self):
+        counts = {"A": 2, "B": 1}
+        freqs = Frequencies(counts)
+        counts["A"] = 3
+        self.assertEqual(freqs.frequency("A"), 3)
+        freqs.freq_dict["B"] = 4
+        self.assertEqual(counts, {"A": 3, "B": 4})
