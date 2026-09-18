@@ -82,7 +82,7 @@ class ArithmeticEncoder(DataEncoder):
 
         # ensure data_block.size is not too big
         err_msg = "choose a larger DATA_BLOCK_SIZE_BITS, as data_block.size is too big"
-        assert data_block.size < (1 << self.params.MAX_BLOCK_SIZE), err_msg
+        assert data_block.size < self.params.MAX_BLOCK_SIZE, err_msg
 
         # initialize the low and high states
         low = 0
@@ -285,6 +285,19 @@ class ArithmeticDecoder(DataDecoder):
         num_bits_consumed += self.params.DATA_BLOCK_SIZE_BITS
 
         return DataBlock(decoded_data_list), num_bits_consumed
+
+
+def test_arithmetic_block_size_limit():
+    import pytest
+
+    params = AECParams(DATA_BLOCK_SIZE_BITS=3)
+    freq_model = AdaptiveIIDFreqModel(
+        Frequencies({"A": 1}), max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ
+    )
+    encoder = ArithmeticEncoder(params, freq_model)
+    assert len(encoder.encode_block(DataBlock(["A"] * 7))) > 0
+    with pytest.raises(AssertionError, match="DATA_BLOCK_SIZE_BITS"):
+        encoder.encode_block(DataBlock(["A"] * 8))
 
 
 def test_bitarray_for_specific_input():
