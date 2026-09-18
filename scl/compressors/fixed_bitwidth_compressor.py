@@ -181,7 +181,7 @@ def test_alphabet_encode_decode():
     assert num_bits_consumed == (1 + len(alphabet)) * 8
 
 
-def test_fixed_bitwidth_encode_decode():
+def test_text_fixed_bitwidth_encode_decode():
     """test the encode_block and decode_block functions of FixedBitWidthEncoder and FixedBitWidthDecoder"""
     # define encoder, decoder
     encoder = TextFixedBitwidthEncoder()

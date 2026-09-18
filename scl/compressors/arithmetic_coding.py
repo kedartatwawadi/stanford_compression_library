@@ -1,9 +1,11 @@
+from bisect import bisect_right
 from dataclasses import dataclass
 import numpy as np
 from typing import Tuple, Any
 from scl.compressors.probability_models import (
     AdaptiveIIDFreqModel,
     AdaptiveOrderKFreqModel,
+    FixedFreqModel,
     FreqModelBase,
 )
 from scl.core.data_encoder_decoder import DataDecoder, DataEncoder
@@ -82,7 +84,7 @@ class ArithmeticEncoder(DataEncoder):
 
         # ensure data_block.size is not too big
         err_msg = "choose a larger DATA_BLOCK_SIZE_BITS, as data_block.size is too big"
-        assert data_block.size < (1 << self.params.MAX_BLOCK_SIZE), err_msg
+        assert data_block.size < self.params.MAX_BLOCK_SIZE, err_msg
 
         # initialize the low and high states
         low = 0
@@ -191,22 +193,31 @@ class ArithmeticDecoder(DataDecoder):
             s : the decoded symbol
         """
 
-        # FIXME: simplify this search.
         rng = high - low
-        search_list = (
-            low + (np.array(list(freqs.cumulative_freq_dict.values())) * rng) // freqs.total_freq
-        )
-        start_bin = np.searchsorted(search_list, state, side="right") - 1
+        total_freq = freqs.total_freq
+        # Products can exceed 64 bits even when every state and count fits.
+        search_list = [
+            low + cumulative_freq * rng // total_freq
+            for cumulative_freq in freqs.cumulative_freq_dict.values()
+        ]
+        start_bin = bisect_right(search_list, state) - 1
         s = freqs.alphabet[start_bin]
         return s
 
     def decode_block(self, encoded_bitarray: BitArray):
 
+        if len(encoded_bitarray) < self.params.DATA_BLOCK_SIZE_BITS:
+            raise ValueError("Truncated arithmetic block-size header")
         data_block_size_bitarray = encoded_bitarray[: self.params.DATA_BLOCK_SIZE_BITS]
         encoded_bitarray = encoded_bitarray[self.params.DATA_BLOCK_SIZE_BITS :]
 
         # get data size
         input_data_block_size = bitarray_to_uint(data_block_size_bitarray)
+        if input_data_block_size == 0:
+            # With no interval updates, the encoder always terminates with 01.
+            if encoded_bitarray[:2] != BitArray("01"):
+                raise ValueError("Invalid or truncated empty arithmetic block termination")
+            return DataBlock([]), self.params.DATA_BLOCK_SIZE_BITS + 2
 
         # initialize return variables
         decoded_data_list = []
@@ -292,6 +303,88 @@ def test_bitarray_for_specific_input():
     manually perform the encoding and check if the bitarray matches
     """
     # TODO: Kedar
+
+
+def test_arithmetic_block_size_limit():
+    import pytest
+
+    params = AECParams(DATA_BLOCK_SIZE_BITS=3)
+    freq_model = AdaptiveIIDFreqModel(
+        Frequencies({"A": 1}), max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ
+    )
+    encoder = ArithmeticEncoder(params, freq_model)
+    assert len(encoder.encode_block(DataBlock(["A"] * 7))) > 0
+    with pytest.raises(AssertionError, match="DATA_BLOCK_SIZE_BITS"):
+        encoder.encode_block(DataBlock(["A"] * 8))
+
+
+def test_arithmetic_empty_block_consumes_only_its_termination():
+    for precision in (16, 32):
+        params = AECParams(PRECISION=precision)
+        freq_model_enc = AdaptiveIIDFreqModel(
+            Frequencies({"A": 1, "B": 1}),
+            max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ,
+        )
+        freq_model_dec = copy.deepcopy(freq_model_enc)
+        encoder = ArithmeticEncoder(params, freq_model_enc)
+        decoder = ArithmeticDecoder(params, freq_model_dec)
+        empty_bits = encoder.encode_block(DataBlock([]))
+        assert empty_bits == BitArray("0" * params.DATA_BLOCK_SIZE_BITS + "01")
+        for trailing_bits in (BitArray(""), BitArray("01101"), BitArray("1" * 100)):
+            decoded, consumed = decoder.decode_block(empty_bits + trailing_bits)
+            assert decoded.data_list == []
+            assert consumed == len(empty_bits)
+            assert freq_model_dec.freqs_current.freq_dict == {"A": 1, "B": 1}
+
+        message = DataBlock(list("ABBAAB"))
+        message_bits = encoder.encode_block(message)
+        combined = empty_bits + message_bits
+        _, consumed = decoder.decode_block(combined)
+        decoded, message_consumed = decoder.decode_block(combined[consumed:])
+        assert decoded.data_list == message.data_list
+        assert message_consumed == len(message_bits)
+
+
+def test_arithmetic_empty_block_rejects_missing_or_invalid_termination():
+    import pytest
+
+    params = AECParams()
+    freq_model = AdaptiveIIDFreqModel(
+        Frequencies({"A": 1}), max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ
+    )
+    decoder = ArithmeticDecoder(params, freq_model)
+    header = BitArray("0" * params.DATA_BLOCK_SIZE_BITS)
+    for invalid in (header[:-1], header, header + "0", header + "00", header + "10"):
+        with pytest.raises(ValueError):
+            decoder.decode_block(invalid)
+
+
+def test_arithmetic_wide_precision_uses_exact_decode_boundaries():
+    params = AECParams(DATA_BLOCK_SIZE_BITS=8, PRECISION=40)
+    frequencies = Frequencies({"A": 2**30, "B": 2**30, "C": 2**30})
+    model = FixedFreqModel(frequencies, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ)
+    encoder = ArithmeticEncoder(params, model)
+    decoder = ArithmeticDecoder(params, copy.deepcopy(model))
+    message = DataBlock(list("AABCCBABAC" * 10))
+    encoded = encoder.encode_block(message)
+    decoded, consumed = decoder.decode_block(encoded + BitArray("101" * 32))
+    assert decoded.data_list == message.data_list
+    assert consumed == len(encoded)
+
+
+def test_adaptive_order_k_arithmetic_coding_with_rescaling():
+    params = AECParams(PRECISION=6)
+    message = DataBlock(list("A" * 100 + "ABC" * 100 + "AAAABBBBCCCC" * 100))
+    for order in (0, 1, 2):
+        model = AdaptiveOrderKFreqModel(
+            ["A", "B", "C"], order, max_allowed_total_freq=params.MAX_ALLOWED_TOTAL_FREQ
+        )
+        encoder = ArithmeticEncoder(params, model)
+        decoder = ArithmeticDecoder(params, copy.deepcopy(model))
+        encoded = encoder.encode_block(message)
+        decoded, consumed = decoder.decode_block(encoded + BitArray("1101100011"))
+        assert decoded.data_list == message.data_list
+        assert consumed == len(encoded)
 
 
 def test_arithmetic_coding():

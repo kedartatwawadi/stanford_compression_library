@@ -10,6 +10,7 @@ care about the encoded_bitarray. More information in the respective docstrings.
 from scl.utils.bitarray_utils import BitArray, uint_to_bitarray, bitarray_to_uint
 import tempfile
 import os
+import pytest
 
 #################
 
@@ -33,7 +34,8 @@ class Padder:
         Returns:
             BitArray: padded bitarray
         """
-        assert isinstance(payload_bitarray, BitArray)
+        if not isinstance(payload_bitarray, BitArray):
+            raise TypeError("payload must be a BitArray")
 
         # compute how much padding to add
         payload_size = len(payload_bitarray)
@@ -47,14 +49,22 @@ class Padder:
 
     @classmethod
     def remove_byte_padding(cls, payload_pad_bitarray: BitArray) -> BitArray:
-        """remove added byte padding"""
-        assert isinstance(payload_pad_bitarray, BitArray)
+        """Remove byte padding, rejecting missing headers or nonzero padding bits."""
+        if not isinstance(payload_pad_bitarray, BitArray):
+            raise TypeError("padded payload must be a BitArray")
+        if len(payload_pad_bitarray) < 8 or len(payload_pad_bitarray) % 8:
+            raise ValueError("padded payload must contain at least one complete byte")
         # get padding
         pad_bitarray = payload_pad_bitarray[: cls.NUM_PAD_BITS]
         num_pad = bitarray_to_uint(pad_bitarray)
+        payload_start = cls.NUM_PAD_BITS + num_pad
+        if payload_start > len(payload_pad_bitarray):
+            raise ValueError("padding length exceeds the padded payload")
+        if any(payload_pad_bitarray[cls.NUM_PAD_BITS : payload_start]):
+            raise ValueError("padding bits must be zero")
 
         # header
-        payload_bitarray = payload_pad_bitarray[cls.NUM_PAD_BITS + num_pad :]
+        payload_bitarray = payload_pad_bitarray[payload_start:]
         return payload_bitarray
 
 
@@ -70,7 +80,7 @@ def test_padder():
         padding_removed_bits = Padder.remove_byte_padding(padded_bits_gt)
         assert bits_gt == padding_removed_bits
 
-    payloads = [BitArray("10110"), BitArray("1" * 23)]
+    payloads = [BitArray("1" * size) for size in range(32)]
     for payload in payloads:
         _test(payload)
 
@@ -94,21 +104,27 @@ class HeaderHandler:
     def add_header(cls, payload_bitarray: BitArray):
         """add header to the byte aligned payload bitarray"""
         # check if bitarray is byte aligned
-        assert len(payload_bitarray) % 8 == 0
+        if not isinstance(payload_bitarray, BitArray):
+            raise TypeError("payload must be a BitArray")
+        if len(payload_bitarray) % 8:
+            raise ValueError("payload must be byte aligned")
 
         # add header
         arr_size = len(payload_bitarray) // 8
-        assert arr_size < cls.MAX_PAYLOAD_SIZE  # maximum size of the  block
+        if arr_size >= cls.MAX_PAYLOAD_SIZE:
+            raise ValueError("payload is too large for the block header")
         header_bitarray = uint_to_bitarray(arr_size, bit_width=cls.NUM_HEADER_BITS)
         return header_bitarray + payload_bitarray
 
     @classmethod
     def get_payload_size(cls, header_bytes: bytes):
         """returns the size of the payload by reading in the header"""
-        assert isinstance(header_bytes, bytes)
+        if not isinstance(header_bytes, bytes):
+            raise TypeError("header must be bytes")
+        if len(header_bytes) != cls.NUM_HEADER_BYTES:
+            raise ValueError("block header must contain exactly four bytes")
         header_bitarray = BitArray()
         header_bitarray.frombytes(header_bytes)
-        assert len(header_bitarray) == cls.NUM_HEADER_BITS
         return bitarray_to_uint(header_bitarray)  # in bytes
 
 
@@ -162,7 +178,8 @@ class EncodedBlockWriter:
         """
 
         # check if the encoded_block is indeed a BitArray
-        assert isinstance(encoded_block, BitArray)
+        if not isinstance(encoded_block, BitArray):
+            raise TypeError("encoded block must be a BitArray")
 
         # add byte padding
         padded_encoded_block = Padder.add_byte_padding(encoded_block)
@@ -207,14 +224,16 @@ class EncodedBlockReader:
             return None
 
         # header size should be correct
-        assert len(header_bytes) == HeaderHandler.NUM_HEADER_BYTES
+        if len(header_bytes) != HeaderHandler.NUM_HEADER_BYTES:
+            raise ValueError("truncated encoded block header")
 
         # get block size (in bytes)
         payload_size = HeaderHandler.get_payload_size(header_bytes)
 
         # read the payload
         payload_bytes = self.file_reader.read(payload_size)
-        assert len(payload_bytes) == payload_size
+        if len(payload_bytes) != payload_size:
+            raise ValueError("truncated encoded block payload")
 
         # construct payload bitarray and remove padding
         payload_pad_bitarray = BitArray()
@@ -240,9 +259,11 @@ def test_encoded_block_reader_writer():
     with tempfile.TemporaryDirectory() as tmpdirname:
         # create 3 dummy encoded blocks
         payload_bitarray_blocks = [
+            BitArray(),
             BitArray("101000101010111"),
             BitArray("1" * 24),
             BitArray("0" * 20),
+            BitArray(),
         ]
 
         # write the encoded blocks to a binary file
@@ -264,3 +285,48 @@ def test_encoded_block_reader_writer():
         assert len(payload_bitarray_blocks) == len(encoded_blocks)
         for written_block, read_block in zip(payload_bitarray_blocks, encoded_blocks):
             assert written_block == read_block
+
+
+@pytest.mark.parametrize(
+    "encoded_hex",
+    [
+        "00",  # partial size header
+        "000000",  # partial size header
+        "00000000",  # no padding header
+        "00000002a0",  # declared payload is longer than the file
+        "00000001e0",  # seven pad bits cannot fit after a three-bit header
+        "00000001a1",  # padding bits must be zero
+    ],
+)
+def test_encoded_block_reader_rejects_invalid_framing(tmp_path, encoded_hex):
+    encoded_path = tmp_path / "invalid.bin"
+    encoded_path.write_bytes(bytes.fromhex(encoded_hex))
+    with EncodedBlockReader(str(encoded_path)) as reader:
+        with pytest.raises(ValueError):
+            reader.get_block()
+
+
+def test_encoded_block_reader_distinguishes_empty_payload_from_eof(tmp_path):
+    encoded_path = tmp_path / "empty.bin"
+    encoded_path.write_bytes(bytes.fromhex("00000001a0"))
+    with EncodedBlockReader(str(encoded_path)) as reader:
+        assert reader.get_block() == BitArray()
+        assert reader.get_block() is None
+
+
+@pytest.mark.parametrize("bits", ["", "101", "1010000", "101000000"])
+def test_padder_rejects_incomplete_bytes(bits):
+    with pytest.raises(ValueError):
+        Padder.remove_byte_padding(BitArray(bits))
+
+
+def test_header_rejects_invalid_input():
+    with pytest.raises(ValueError):
+        HeaderHandler.add_header(BitArray("1"))
+    with pytest.raises(TypeError):
+        HeaderHandler.add_header(b"\x00")
+    with pytest.raises(TypeError):
+        HeaderHandler.get_payload_size(BitArray("0" * 32))
+    for header_size in [0, 1, 3, 5]:
+        with pytest.raises(ValueError):
+            HeaderHandler.get_payload_size(b"\x00" * header_size)
